@@ -66,7 +66,7 @@ export function NavbarSimpleColored() {
 
           </div>
           <Code fw={700} className={classes.version}>
-            v3.1.2
+           <h1>PRueba de comits</h1>
           </Code>
         </Group>
         {links}
