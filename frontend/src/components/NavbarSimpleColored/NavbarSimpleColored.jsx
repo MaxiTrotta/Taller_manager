@@ -1,0 +1,90 @@
+import { useState } from 'react';
+import {
+  Icon2fa,
+  IconBellRinging,
+  IconDatabaseImport,
+  IconFingerprint,
+  IconKey,
+  IconLogout,
+  IconReceipt2,
+  IconSettings,
+  IconSwitchHorizontal,
+} from '@tabler/icons-react';
+import { Code, Group } from '@mantine/core';
+import classes from './NavbarSimpleColored.module.css';
+import ActionToggle from '../ActionToggle/ActionToggle';
+import { Link } from 'react-router-dom';
+
+
+const data = [
+  { link: '/cliente', label: 'Clientes', icon: IconDatabaseImport },
+  { link: '/formulario', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
+  { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
+];
+
+
+export function NavbarSimpleColored() {
+  const [active, setActive] = useState('Billing');
+
+  const links = data.map((item) => (
+    // <a
+    //   className={classes.link}
+    //   data-active={item.label === active || undefined}
+    //   href={item.link}
+    //   key={item.label}
+    //   onClick={(event) => {
+    //     event.preventDefault();
+    //     setActive(item.label);
+    //   }}
+    // >
+    //   <item.icon className={classes.linkIcon} stroke={1.5} />
+    //   <span>{item.label}</span>
+    // </a>
+    <Link
+  className={classes.link}
+  data-active={item.label === active || undefined}
+  to={item.link}
+  key={item.label}
+  onClick={() => setActive(item.label)}
+>
+  <item.icon className={classes.linkIcon} stroke={1.5} />
+  <span>{item.label}</span>
+</Link>
+  ));
+
+  return (
+    <nav className={classes.navbar}>
+      <div className={classes.navbarMain}>
+        <Group className={classes.header} justify="space-between">
+          
+          <div style={{display: "flex"}}>
+            <a href="/">
+                <img src="/images/Logo.png" alt="Logo Ortiz Hnos"  />
+            </a>
+
+            <ActionToggle/>
+
+          </div>
+          <Code fw={700} className={classes.version}>
+            v3.1.2
+          </Code>
+        </Group>
+        {links}
+      </div>
+
+      <div className={classes.footer}>
+        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
+          <IconSwitchHorizontal className={classes.linkIcon} stroke={1.5} />
+          <span>Change account</span>
+        </a>
+
+        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
+          <IconLogout className={classes.linkIcon} stroke={1.5} />
+          <span>Logout</span>
+        </a>
+      </div>
+    </nav>
+  );
+}
+
+export default NavbarSimpleColored;
