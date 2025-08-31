@@ -1,0 +1,7 @@
+# frontend/requirements.txt
+react
+react-dom
+react-router-dom
+vite
+@mantine/core
+@tabler/icons-react
