@@ -13,9 +13,29 @@ final readonly class ClientPutController {
     public function start(int $id): void
     {
         $dni = ControllerUtils::getPost("dni");
-        $firstName = ControllerUtils::getPost("firstName");
-        $lastName = ControllerUtils::getPost("lastName");
+        $name = ControllerUtils::getPost("name");
+        $cuitCuil = ControllerUtils::getPost("cuitCuil");
+        $address = ControllerUtils::getPost("address");
+        $city = ControllerUtils::getPost("city");
+        $province = ControllerUtils::getPost("province");
+        $email = ControllerUtils::getPost("email");
+        $phone = ControllerUtils::getPost("phone");
+        $createdAt = ControllerUtils::getPost("createdAt");
+        $createdBy = ControllerUtils::getPost("createdBy");
+        $modifiedBy = ControllerUtils::getPost("midifiedBy");
         
-        $this->service->update($id, $dni, $firstName, $lastName);
+        $this->service->update(
+            $dni,
+            $name,
+            $cuitCuil,
+            $address,
+            $city,
+            $province,
+            $email,
+            $phone,
+            $createdAt,
+            $createdBy,
+            $modifiedBy
+        );
     }
 }

@@ -24,8 +24,17 @@ final readonly class ClientsGetController {
             $responses[] = [
                 "id" => $client->id(),
                 "dni" => $client->dni(),
-                "firstName" => $client->firstName(),
-                "lastName" => $client->lastName(),
+                "name" => $client->name(),
+                "cuitCuil" => $client->cuitCuil(),
+                "address" => $client->address(),
+                "city" => $client->city(),
+                "provience" => $client->provience(),
+                "email" => $client->email(),
+                "phone" => $client->phone(),
+                "createdAt" => $client->createdAt(),
+                "createdBy" => $client->createdBy(),
+                "modifeidBy" => $client->modifiedBy(),
+                "deleted" => $client->deleted(),
                 
             ];
         }

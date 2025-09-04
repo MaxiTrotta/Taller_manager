@@ -11,9 +11,7 @@ final class Vehicle
         private string $brand, // Marca
         private string $model, // Modelo
         private int $year, // Año
-        private string $color,
-        private bool $deleted,
-        private bool $isFinished
+        private bool $deleted
     ) {
     }
 
@@ -47,11 +45,6 @@ final class Vehicle
         return $this->year;
     }
 
-    public function color(): ?String
-    {
-        return $this->color;
-    }
-
     public function delete(): bool
     {
         return $this->deleted = true;
@@ -61,21 +54,25 @@ final class Vehicle
     {
         return $this->deleted ? 1 : 0;
     }
-    public function isFinished(): bool
-    {
-        return $this->isFinished = true;
-    }
+
 
     public static function create(
         int $clientId,
         String $licensePlate,
         string $brand,
         string $model,
-        int $year,
-        string $color
+        int $year
     ): self 
     { 
-        return new self(null, $clientId, $licensePlate, $brand, $model, $year, $color, false, false);
+        return new self(
+            null,
+            $clientId,
+            $licensePlate,
+            $brand,
+            $model,
+            $year,
+            false,
+            );
     }
 
     public function modify(
@@ -84,7 +81,6 @@ final class Vehicle
         string $brand,
         string $model,
         int $year,
-        string $color
     ): void
     {
         $this->clientId = $clientId;
@@ -92,6 +88,5 @@ final class Vehicle
         $this->brand = $brand;
         $this->model = $model;
         $this->year = $year;
-        $this->color = $color;
     }
 }

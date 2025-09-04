@@ -1,37 +1,32 @@
 <?php 
 
-use Src\Entity\Vehicle\Vehicle;
-use Src\Service\Client\ClientDetailProjectionFinderService;
+use Src\Middleware\AuthMiddleware;
+use Src\Service\Client\ClientFinderService;
 
-final readonly class ClientGetController {
-    private ClientDetailProjectionFinderService $service;
+final readonly class ClientGetController extends AuthMiddleware {
+    private ClientFinderService $service;
 
     public function __construct() {
-        $this->service = new ClientDetailProjectionFinderService();
+        parent::__construct();
+        $this->service = new ClientFinderService();
     }
 
     public function start(int $id): void 
     {
         $client = $this->service->find($id);
 
-        $vehiculos = [];
-        foreach ($client->vehicles() as $vehiculo) {
-            $vehiculos[] = [
-                "id" => $vehiculo->id(),
-                "brand" => $vehiculo->brand(),
-                "model" => $vehiculo->model(),
-                "year" => $vehiculo->year(),
-                "color" => $vehiculo->color(),
-
-            ];
-        }
-
         echo json_encode([
             "id" => $client->id(),
             "dni" => $client->dni(),
-            "firstName" => $client->firstName(),
-            "lastName" => $client->lastName(),
-            "vehicles" => $vehiculos,
+            "cuitCuil" => $client->cuitCuil(),
+            "address" => $client->address(),
+            "city" => $client->city(),
+            "province" => $client->province(),
+            "email" => $client->email(),
+            "phone" => $client->phone(),
+            "createdAt" => $client->createdAt(),
+            "createdBy" => $client->createdBy(),
+            "modifiedBy" => $client->modifiedBy(),
         ], true);
     }
 }

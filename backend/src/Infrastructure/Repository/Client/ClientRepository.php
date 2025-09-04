@@ -51,14 +51,21 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
     public function create(Client $client): void
     {
         $query = <<<INSERT_QUERY
-                        INSERT INTO client (dni, firstName, lastName, deleted)
-                        VALUES (:dni, :firstName, :lastName, :deleted)
+                        INSERT INTO client (dni, name, cuitCuil, address, city, province, email, phone, createdAt, createdBy, deleted)
+                        VALUES (:dni, :name, :cuitCuil, :address, :city, :province, :email, :phone, :createdAT, :createdBy, :deleted)
                     INSERT_QUERY;
 
         $parameters = [
             "dni" => $client->dni(),
-            "firstName" => $client->firstName(),
-            "lastName" => $client->lastName(),
+            "name" => $client->name(),
+            "cuitCuil" => $client->cuitCuil(),
+            "address" => $client->address(),
+            "city" => $client->city(),
+            "province" => $client->province(),
+            "email" => $client->email(),
+            "phone" => $client->phone(),
+            "createdAt" => $client->createdAt(),
+            "createdBy" => $client->createdBy(),
             "deleted" => $client->isDeleted()
         ];
 
@@ -72,8 +79,16 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
                         client
                     SET
                         dni = :dni,
-                        firstName = :firstName,
-                        lastName = :lastName,
+                        name = :name,
+                        cuitCuil = :cuitCuil,
+                        address = :address,
+                        city = :city,
+                        province = :province,
+                        email = :email,
+                        phone = :phone,
+                        createdAt = :createdAt,
+                        createdBy = :createdBy,
+                        modifiedBy = :modifiedBy,
                         deleted = :deleted
                     WHERE
                         id = :id
@@ -81,8 +96,16 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
         
         $parameters = [
             "dni" => $client->dni(),
-            "firstName" => $client->firstName(),
-            "lastName" => $client->lastName(),
+            "name" => $client->name(),
+            "cuitCuil" => $client->cuitCuil(),
+            "address" => $client->address(),
+            "city" => $client->city(),
+            "province" => $client->province(),
+            "email" => $client->email(),
+            "phone" => $client->phone(),
+            "createdAt" => $client->createdAt(),
+            "createdBy" => $client->createdBy(),
+            "modifiedBy" => $client->modifiedBy(),
             "deleted" => $client->isDeleted(),
             "id" => $client->id(),
         ];
@@ -98,8 +121,16 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
         return new Client(
             $primitive["id"],
             $primitive["dni"],
-            $primitive["firstName"],
-            $primitive["lastName"],
+            $primitive["name"],
+            $primitive["cuitCuil"],
+            $primitive["address"],
+            $primitive["city"],
+            $primitive["province"],
+            $primitive["email"],
+            $primitive["phone"],
+            $primitive["createdAt"],
+            $primitive["createdBy"],
+            $primitive["modifiedBy"],
             $primitive["deleted"]
         );
     }

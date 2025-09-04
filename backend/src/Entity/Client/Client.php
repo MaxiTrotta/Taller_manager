@@ -6,9 +6,17 @@ final class Client
 {
     public function __construct(
         private readonly ?int $id,
-        private string $dni,
-        private string $firstName,
-        private string $lastName,
+        private int $dni,
+        private string $name,
+        private int $cuitCuil,
+        private string $address,
+        private string $city,
+        private string $province,
+        private string $email,
+        private int $phone,
+        private \DateTimeImmutable $createdAt,
+        private string $createdBy,
+        private ?string $modifiedBy,
         private bool $deleted
     ) {
     }
@@ -18,19 +26,59 @@ final class Client
     {
         return $this->id;
     }
-    public function dni(): string
+    public function dni(): int
     {
         return $this->dni;
     }
 
-    public function firstName(): string
+    public function name(): string
     {
-        return $this->firstName;
+        return $this->name;
     }
 
-    public function lastName(): string
+    public function cuitCuil(): string
     {
-        return $this->lastName;
+        return $this->cuitCuil;
+    }
+
+    public function address(): string
+    {
+        return $this->address;
+    }
+
+    public function city(): string
+    {
+        return $this->city;
+    }
+
+    public function province(): string
+    {
+        return $this->province;
+    }
+
+    public function email(): string
+    {
+        return $this->email;
+    }
+
+    public function phone(): string
+    {
+        return $this->phone;
+    }
+
+    public function createdAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function createdBy(): string
+    {
+        return $this->createdBy;
+    }
+
+    public function modifiedBy(): ?string
+    {
+        return $this->modifiedBy;
     }
 
     public function delete(): void
@@ -45,19 +93,55 @@ final class Client
 
     public static function create(
         int $dni,
-        string $firstName,
-        string $lastName,
+        string $name,
+        string $cuitCuil,
+        string $address,
+        string $city,
+        string $province,
+        string $email,
+        int $phone,
+        \DateTimeImmutable $createdAt,
+        string $createdBy,
+        ?string $modifiedBy
     ): self {
-        return new self(null, $dni, $firstName, $lastName, false);
+        return new self(
+            null,
+            $dni,
+            $name,
+            $cuitCuil,
+            $address,
+            $city,
+            $province,
+            $email,
+            $phone,
+            $createdAt,
+            $createdBy,
+            null,
+            false
+        );
     }
 
     public function modify(
         int $dni,
-        string $firstName,
-        string $lastName,
+        string $name,
+        int $cuitCuil,
+        string $address,
+        string $city,
+        string $province,
+        string $email,
+        int $phone,
+        string $createdBy,
+        string $modifiedBy
     ): void {
         $this->dni = $dni;
-        $this->firstName = $firstName;
-        $this->lastName = $lastName;
+        $this->name = $name;
+        $this->cuitCuil = $cuitCuil;
+        $this->address = $address;
+        $this->city = $city;
+        $this->province = $province;
+        $this->email = $email;
+        $this->phone = $phone;
+        $this->createdBy = $createdBy;
+        $this->modifiedBy = $modifiedBy;
     }
 }
