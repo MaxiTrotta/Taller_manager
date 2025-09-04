@@ -9,40 +9,57 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { useEffect, useState } from 'react';
 import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
-import NavbarSimpleColored from './components/NavbarSimpleColored/NavbarSimpleColored';
-import ActionToggle from './components/ActionToggle/ActionToggle';
+import { PrivateRoute, PublicRoute } from "./Routes";
+import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
+
+// function App() {
+
+
+//   return (
+//     <MantineProvider>
+//       <BrowserRouter>
+//         <div className="contenedor_backend">
+//           <NavbarSimpleColored/>
+//           <div className='contenido'>
+//             <Routes>
+//               <Route path="/" element={<HomePage />} />
+//               <Route path="/formulario" element={<FormularioRegistro />} />
+//               <Route path="/cliente" element={<FormularioCliente />} />
+//               <Route path="/empleado" element={<UserTable />} />
+//             </Routes>
+//           </div>
+//         </div>
+//         {/* <Footer /> */}
+//       </BrowserRouter>
+//     </MantineProvider>
+//   )
+// }
+
+// export default App
 
 function App() {
+	return (
+		<MantineProvider defaultColorScheme="dark">
+			<BrowserRouter>
+				<Routes>
+					{/*Rutas públicas*/}
+					<Route element={<PublicRoute />}>
+						<Route path="/login" element={<LoginPage />} />
+						<Route path="/register" element={<RegisterPage />} />
+					</Route>
 
-  const [mensaje, setMensaje] = useState('');
-
-  useEffect(() => {
-    fetch("http://localhost:9092/api/ping.php")
-      .then(res => res.json())
-      .then(data => setMensaje(data.message))
-      .catch(error => console.error("Error al conectar con el backend:", error));
-  }, []);
-
-
-
-  return (
-    <MantineProvider>
-      <BrowserRouter>
-        <div className="contenedor_backend">
-          <NavbarSimpleColored/>
-          <div className='contenido'>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/formulario" element={<FormularioRegistro />} />
-              <Route path="/cliente" element={<FormularioCliente />} />
-              <Route path="/empleado" element={<UserTable />} />
-            </Routes>
-          </div>
-        </div>
-        {/* <Footer /> */}
-      </BrowserRouter>
-    </MantineProvider>
-  )
+					{/*Rutas privadas */}
+					<Route element={<PrivateRoute />}>
+						<Route path="/home" element={<HomePage />} />
+						<Route path="/ordenes" element={<FormularioRegistro />} />
+						<Route path="/cliente" element={<FormularioCliente />} />
+						<Route path="/empleado" element={<UserTable />} />
+					</Route>
+				</Routes>
+			</BrowserRouter>
+		</MantineProvider >
+	);
 }
 
-export default App
+export default App;
