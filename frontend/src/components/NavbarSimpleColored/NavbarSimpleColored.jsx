@@ -13,17 +13,19 @@ import {
 import { Code, Group } from '@mantine/core';
 import classes from './NavbarSimpleColored.module.css';
 import ActionToggle from '../ActionToggle/ActionToggle';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
 
 
 const data = [
   { link: '/cliente', label: 'Clientes', icon: IconDatabaseImport },
-  { link: '/formulario', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
+  { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
 ];
 
 
 export function NavbarSimpleColored() {
+  const navigate = useNavigate();
   const [active, setActive] = useState('Billing');
 
   const links = data.map((item) => (
@@ -41,46 +43,45 @@ export function NavbarSimpleColored() {
     //   <span>{item.label}</span>
     // </a>
     <Link
-  className={classes.link}
-  data-active={item.label === active || undefined}
-  to={item.link}
-  key={item.label}
-  onClick={() => setActive(item.label)}
->
-  <item.icon className={classes.linkIcon} stroke={1.5} />
-  <span>{item.label}</span>
-</Link>
+      className={classes.link}
+      data-active={item.label === active || undefined}
+      to={item.link}
+      key={item.label}
+      onClick={() => setActive(item.label)}
+    >
+      <item.icon className={classes.linkIcon} stroke={1.5} />
+      <span>{item.label}</span>
+    </Link>
   ));
 
   return (
     <nav className={classes.navbar}>
       <div className={classes.navbarMain}>
         <Group className={classes.header} justify="space-between">
-          
-          <div style={{display: "flex"}}>
+
+          <div style={{ display: "flex" }}>
             <a href="/">
-                <img src="/images/Logo.png" alt="Logo Ortiz Hnos"  />
+              <img src="/images/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
 
-            <ActionToggle/>
+            <ActionToggle />
 
           </div>
           <Code fw={700} className={classes.version}>
-           <h1>PRueba de comits</h1>
+            <h1>PRueba de comits</h1>
           </Code>
         </Group>
         {links}
       </div>
 
       <div className={classes.footer}>
-        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-          <IconSwitchHorizontal className={classes.linkIcon} stroke={1.5} />
-          <span>Change account</span>
-        </a>
-
-        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
+        <a href="#" className={classes.link} onClick={(event) => {
+          event.preventDefault();
+          localStorage.removeItem("token")
+          navigate("/login")
+        }}>
           <IconLogout className={classes.linkIcon} stroke={1.5} />
-          <span>Logout</span>
+          <span>Cerrar sesión</span>
         </a>
       </div>
     </nav>

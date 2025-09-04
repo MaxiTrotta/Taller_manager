@@ -6,9 +6,20 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
+// Si el metodo es OPTIONS (El cliente envia un OPTIONS antes de mandar el metodo real para verificar si el SV funciona)
+// Solo manda OPTIONS si el cliente quiere mandar un GET, POST, PUT, DELETE, PATCH, OPTIONS
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    
+    // Si el cliente pide el allow methods, devolvemos los allow methods
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+        // may also be using PUT, PATCH, HEAD etc
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS");
+    
+    // Si el cliente pide las cabeceras, devolvemos las cabeceras
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+        header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+
+    exit(0);
 }
 
 // Cargamos configuración de composer
@@ -17,10 +28,6 @@ require_once dirname(__DIR__).'/html/vendor/autoload.php';
 require_once dirname(__DIR__).'/html/app/Router/Routes.php';
 // Inicializamos el autoloader
 require_once dirname(__DIR__).'/html/app/Autoloader/Autoloader.php';
-
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: *');
 
 // Utilizamos la libreria 'Dotenv' para cargar nuestros datos
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
