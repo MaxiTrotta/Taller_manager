@@ -1,5 +1,5 @@
 <?php
-
+//BORRAR ENTIDAD Y CREAR ORDERS_TASKS MANTENIENDO LOS ATRIBUTOS 
 namespace Src\Entity\VehicleTasks;
 
 use DateTime;
@@ -16,7 +16,7 @@ final class VehicleTasks{
         private string $createdBy,
         private string $assignedTo,
         private sector $idSector,
-        private int $order
+        private int $order//Cambiar por detalle
     ){
     }
 

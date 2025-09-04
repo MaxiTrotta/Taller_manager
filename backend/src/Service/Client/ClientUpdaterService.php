@@ -19,12 +19,29 @@ final readonly class ClientUpdaterService
     public function update(
         ?int $id,
         int $dni,
-        string $firstName,
-        string $lastName,
+        string $name,
+        int $cuitCuil,
+        string $address,
+        string $city,
+        string $province,
+        string $email,
+        int $phone,
+        string $createdBy,
+        ?string $modifiedBy,
     ): void {
         $client = $this->finder->find($id);
 
-        $client->modify($dni, $firstName, $lastName);
+        $client->modify(
+        $dni,
+        $name,
+        $cuitCuil,
+        $address,
+        $city,
+        $province,
+        $email,
+        $phone,
+        $createdBy,
+        $modifiedBy);
 
         $this->repository->update($client);
     }
