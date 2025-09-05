@@ -29,6 +29,12 @@ final readonly class UserRoutes
           ]
         ]
       ],
+      [
+        "name" => "users_get",
+        "url" => "/users",
+        "controller" => "User/UsersGetController.php",
+        "method" => "GET"
+      ],
     ];
   }
 }

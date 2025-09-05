@@ -1,22 +1,23 @@
 <?php
 //BORRAR ENTIDAD Y CREAR ORDERS_TASKS MANTENIENDO LOS ATRIBUTOS 
-namespace Src\Entity\VehicleTasks;
+namespace Src\Entity\OrderTask;
 
 use DateTime;
 use src\Entity\Sector\Sector;
+use src\Entity\Task\Task;
+use src\Entity\Order\Order;
 
-final class VehicleTasks{
+final class OrderTask{
 
     function __construct(
         private readonly ?int $id,
-        private ?int $idVehicle,
-        private string $name,
+        private Order $idOrder,
         private DateTime $date,
         private string $state,
         private string $createdBy,
         private string $assignedTo,
         private sector $idSector,
-        private int $order//Cambiar por detalle
+        private Task $idTask
     ){
     }
 
@@ -25,16 +26,11 @@ final class VehicleTasks{
             return $this->id;
         }
     
-        public function idVehicle(): ?int
+        public function idOrder(): ?int
         {
-            return $this->idVehicle;
+            return $this->idOrder->id();
         }
-    
-        public function name(): string
-        {
-            return $this->name;
-        }
-    
+
         public function date(): DateTime
         {
             return $this->date;
@@ -55,16 +51,38 @@ final class VehicleTasks{
             return $this->assignedTo;
         }
     
-        public function idSector(): Sector
+        public function idSector(): ?int
         {
-            return $this->idSector;
+            return $this->idSector->id();
         }
     
-        public function order(): int
+        public function idTask(): ?int
         {
-            return $this->order;
+            return $this->idTask->id();
         }
 
+        
+    public static function create(
+        ?int $id,
+        ?Order $idOrder,
+        DateTime $date,
+        string $state,
+        string $createdBy,
+        string $assignedTo,
+        ?sector $idSector,
+        ?Task $idTask
+    ):self {
+        return new self(
+            null,
+            null,
+            $date,
+            $state,
+            $createdBy,
+            $assignedTo,
+            null,
+            null
+        );
+    }
 
 
 }

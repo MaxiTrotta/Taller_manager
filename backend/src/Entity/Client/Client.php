@@ -92,6 +92,7 @@ final class Client
     }
 
     public static function create(
+        ?int $id,
         int $dni,
         string $name,
         string $cuitCuil,

@@ -58,6 +58,20 @@ final readonly class UserRepository extends PDOManager implements UserRepository
         return $this->primitiveToUser($result[0] ?? null);
     }
 
+    public function search(): array
+    {
+        $query = "SELECT * FROM users WHERE deleted = 0";
+        $results = $this->execute($query);
+
+        $userResults = [];
+        foreach ($results as $result) {
+            $userResults[] = $this->primitiveToUser($result);
+        }
+
+        return $userResults;
+    }
+
+
     public function insert(User $user): void
     {
         $query = <<<INSERT_QUERY
