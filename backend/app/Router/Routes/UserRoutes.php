@@ -24,8 +24,8 @@ final readonly class UserRoutes
         "method" => "GET",
         "parameters" => [
           [
-            "name" => "id",
-            "type" => "int"
+            "name" => "email",
+            "type" => "string"
           ]
         ]
       ],
