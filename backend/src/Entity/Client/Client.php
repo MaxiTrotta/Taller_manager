@@ -2,6 +2,8 @@
 
 namespace src\Entity\Client;
 
+use DateTime;
+
 final class Client
 {
     public function __construct(
@@ -14,7 +16,7 @@ final class Client
         private string $province,
         private string $email,
         private int $phone,
-        private \DateTimeImmutable $createdAt,
+        private ?DateTime $createdAt,
         private string $createdBy,
         private ?string $modifiedBy,
         private bool $deleted
@@ -66,7 +68,7 @@ final class Client
         return $this->phone;
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): ?DateTime
     {
         return $this->createdAt;
     }
@@ -92,7 +94,6 @@ final class Client
     }
 
     public static function create(
-        ?int $id,
         int $dni,
         string $name,
         string $cuitCuil,
@@ -101,7 +102,7 @@ final class Client
         string $province,
         string $email,
         int $phone,
-        \DateTimeImmutable $createdAt,
+        ?DateTime $createdAt,
         string $createdBy,
         ?string $modifiedBy
     ): self {

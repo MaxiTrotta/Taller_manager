@@ -128,7 +128,7 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
             $primitive["province"],
             $primitive["email"],
             $primitive["phone"],
-            $primitive["createdAt"],
+            new \DateTime($primitive["createdAt"]),
             $primitive["createdBy"],
             $primitive["modifiedBy"],
             $primitive["deleted"]

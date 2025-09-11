@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { clientService } from '../../services/clientService';
 import { IconChevronDown, IconChevronUp, IconSearch, IconSelector } from '@tabler/icons-react';
 import {
   Center,
@@ -60,113 +61,70 @@ function sortData(data, payload) {
 
 const data = [
   {
-    name: 'Athena Weissnat',
-    company: 'Little - Rippin',
-    email: 'Elouise.Prohaska@yahoo.com',
-    cuit : 14813841824812,
+    name: '',
+    company: '',
+    email: '',
+    cuit :'',
+    address :'',
+    city :'',
+    province :'',
+    phone :'',
+    createAt :'',
+    createBy :'',
+    modifiedBy :''
   },
-  {
-    name: 'Deangelo Runolfsson',
-    company: 'Greenfelder - Krajcik',
-    email: 'Kadin_Trantow87@yahoo.com',
-  },
-  {
-    name: 'Danny Carter',
-    company: 'Kohler and Sons',
-    email: 'Marina3@hotmail.com',
-  },
-  {
-    name: 'Trace Tremblay PhD',
-    company: 'Crona, Aufderhar and Senger',
-    email: 'Antonina.Pouros@yahoo.com',
-  },
-  {
-    name: 'Derek Dibbert',
-    company: 'Gottlieb LLC',
-    email: 'Abagail29@hotmail.com',
-  },
-  {
-    name: 'Viola Bernhard',
-    company: 'Funk, Rohan and Kreiger',
-    email: 'Jamie23@hotmail.com',
-  },
-  {
-    name: 'Austin Jacobi',
-    company: 'Botsford - Corwin',
-    email: 'Genesis42@yahoo.com',
-  },
-  {
-    name: 'Hershel Mosciski',
-    company: 'Okuneva, Farrell and Kilback',
-    email: 'Idella.Stehr28@yahoo.com',
-  },
-  {
-    name: 'Mylene Ebert',
-    company: 'Kirlin and Sons',
-    email: 'Hildegard17@hotmail.com',
-  },
-  {
-    name: 'Lou Trantow',
-    company: 'Parisian - Lemke',
-    email: 'Hillard.Barrows1@hotmail.com',
-  },
-  {
-    name: 'Dariana Weimann',
-    company: 'Schowalter - Donnelly',
-    email: 'Colleen80@gmail.com',
-  },
-  {
-    name: 'Dr. Christy Herman',
-    company: 'VonRueden - Labadie',
-    email: 'Lilyan98@gmail.com',
-  },
-  {
-    name: 'Katelin Schuster',
-    company: 'Jacobson - Smitham',
-    email: 'Erich_Brekke76@gmail.com',
-  },
-  {
-    name: 'Melyna Macejkovic',
-    company: 'Schuster LLC',
-    email: 'Kylee4@yahoo.com',
-  },
-  {
-    name: 'Pinkie Rice',
-    company: 'Wolf, Trantow and Zulauf',
-    email: 'Fiona.Kutch@hotmail.com',
-  },
-  {
-    name: 'Brain Kreiger',
-    company: 'Lueilwitz Group',
-    email: 'Rico98@hotmail.com',
-  },
+
 ];
 
 export function TableSort() {
   const [search, setSearch] = useState('');
-  const [sortedData, setSortedData] = useState(data);
+  const [clients, setClients] = useState([]);
+  const [sortedData, setSortedData] = useState([]);
   const [sortBy, setSortBy] = useState(null);
   const [reverseSortDirection, setReverseSortDirection] = useState(false);
+
+  useEffect(() => {
+    async function fetchClients() {
+      try {
+        const response = await clientService.getAllClients();
+        if (response.status === 200) {
+          setClients(response.data);
+          setSortedData(response.data);
+        }
+      } catch (error) {
+        // Manejo de error
+        setClients([]);
+        setSortedData([]);
+      }
+    }
+    fetchClients();
+  }, []);
 
   const setSorting = (field) => {
     const reversed = field === sortBy ? !reverseSortDirection : false;
     setReverseSortDirection(reversed);
     setSortBy(field);
-    setSortedData(sortData(data, { sortBy: field, reversed, search }));
+    setSortedData(sortData(clients, { sortBy: field, reversed, search }));
   };
 
   const handleSearchChange = (event) => {
     const { value } = event.currentTarget;
     setSearch(value);
-    setSortedData(sortData(data, { sortBy, reversed: reverseSortDirection, search: value }));
+    setSortedData(sortData(clients, { sortBy, reversed: reverseSortDirection, search: value }));
   };
 
   const rows = sortedData.map((row) => (
-    <Table.Tr key={row.name}>
+    <Table.Tr key={row.id}>
       <Table.Td>{row.name}</Table.Td>
       <Table.Td>{row.email}</Table.Td>
-      <Table.Td>{row.company}</Table.Td>
-      <Table.Td>{row.cuit}</Table.Td>
+      <Table.Td>{row.address}</Table.Td>
+      <Table.Td>{row.cuitCuil}</Table.Td>
+      <Table.Td>{row.city}</Table.Td>
+      <Table.Td>{row.province}</Table.Td>
+      <Table.Td>{row.phone}</Table.Td>
+      <Table.Td>{row.createAt}</Table.Td>
+      <Table.Td>{row.createBy}</Table.Td>
+      <Table.Td>{row.modifiedBy}</Table.Td>
     </Table.Tr>
   ));
 
@@ -179,7 +137,7 @@ export function TableSort() {
         value={search}
         onChange={handleSearchChange}
       />
-      <Table horizontalSpacing="md" verticalSpacing="xs" miw={700} layout="fixed">
+      <Table horizontalSpacing="lg" verticalSpacing="xs" miw={700} layout="fixed">
         <Table.Tbody>
           <Table.Tr>
             <Th
@@ -210,6 +168,35 @@ export function TableSort() {
             >
               Cuit
             </Th>
+            <Th
+              sorted={sortBy === 'address'}
+              reversed={reverseSortDirection}
+              onSort={() => setSorting('adress')}
+            >
+              Direccion
+            </Th>
+            <Th
+              sorted={sortBy === 'address'}
+              reversed={reverseSortDirection}
+              onSort={() => setSorting('adress')}
+            >
+              Direccion
+            </Th>
+            <Th
+              sorted={sortBy === 'address'}
+              reversed={reverseSortDirection}
+              onSort={() => setSorting('adress')}
+            >
+              Direccion
+            </Th>
+            <Th
+              sorted={sortBy === 'address'}
+              reversed={reverseSortDirection}
+              onSort={() => setSorting('adress')}
+            >
+              Direccion
+            </Th>
+            
           </Table.Tr>
         </Table.Tbody>
         <Table.Tbody>
@@ -219,7 +206,7 @@ export function TableSort() {
             <Table.Tr>
               <Table.Td colSpan={Object.keys(data[0]).length}>
                 <Text fw={500} ta="center">
-                  Nothing found
+                  Cargando ....
                 </Text>
               </Table.Td>
             </Table.Tr>
