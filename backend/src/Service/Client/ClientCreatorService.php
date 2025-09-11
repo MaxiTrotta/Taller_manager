@@ -2,6 +2,7 @@
 
 namespace Src\Service\Client;
 
+use DateTime;
 use Src\Entity\Client\Client;
 use Src\Infrastructure\Repository\Client\ClientRepository;
 
@@ -21,7 +22,7 @@ final readonly class ClientCreatorService {
         string $province,
         string $email,
         int $phone,
-        \DateTimeImmutable $createdAt,
+        ?DateTime $createdAt,
         string $createdBy,
         ?string $modifiedBy,
         ): void

@@ -12,6 +12,7 @@ import '@mantine/core/styles.css';
 import { PrivateRoute, PublicRoute } from "./Routes";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
+import { TableSort } from './components/TableSort/TableSort'
 
 // function App() {
 
@@ -45,6 +46,7 @@ function App() {
 				<Routes>
 					{/*Rutas públicas*/}
 					<Route element={<PublicRoute />}>
+						<Route path="/" element={<LoginPage />} />	
 						<Route path="/login" element={<LoginPage />} />
 						<Route path="/register" element={<RegisterPage />} />
 					</Route>
@@ -52,8 +54,8 @@ function App() {
 					{/*Rutas privadas */}
 					<Route element={<PrivateRoute />}>
 						<Route path="/home" element={<HomePage />} />
-						<Route path="/ordenes" element={<FormularioRegistro />} />
-						<Route path="/cliente" element={<FormularioCliente />} />
+						<Route path="/cliente" element={<TableSort />} />
+						<Route path="/ordenes" element={<FormularioCliente />} />
 						<Route path="/empleado" element={<UserTable />} />
 					</Route>
 				</Routes>
