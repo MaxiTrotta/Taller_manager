@@ -1,18 +1,19 @@
 import "./RegisterPage.css";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 import {
-	Button,
 	Container,
-	PasswordInput,
+	Title,
 	Text,
 	TextInput,
-	Title,
+	PasswordInput,
+	Button,
+	Paper
 } from "@mantine/core";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authService } from "../../services/authService";
 import { useState } from "react";
+import { z } from "zod";
+import { authService } from "../../services/authService";
 
 const UserSchema = z.object({
 	name: z
@@ -32,19 +33,15 @@ export function RegisterPage() {
 	const form = useForm({
 		resolver: zodResolver(UserSchema),
 	});
-
 	const navigate = useNavigate();
-
 	const [error, setError] = useState(undefined);
 
 	async function onSubmit(formData) {
 		try {
-			setError(undefined); // Eliminar cualquier error previo
-
+			setError(undefined);
 			const formDataJson = JSON.stringify(formData);
 			const response = await authService.register(formDataJson);
-			
-			if (response.status == 200) navigate("/login");
+			if (response.status === 200) navigate("/login");
 			else throw new Error("Ocurrió un error inesperado");
 		} catch (error) {
 			setError(error.message);
@@ -52,45 +49,55 @@ export function RegisterPage() {
 	}
 
 	return (
-		<main className="registerPage">
-			<Container className="container">
-				<header>
-					<Title>Bienvenido!</Title>
-					<Text>
-						¿Ya tienes una cuenta? <Link to="/login">Ingresar</Link>
-					</Text>
-				</header>
-
-				<form>
-					<TextInput
-						placeholder="Nombre"
-						error={form.formState.errors.name?.message}
-						{...form.register("name")}
-					/>
-
-					<TextInput
-						placeholder="Correo electrónico"
-						error={form.formState.errors.email?.message}
-						{...form.register("email")}
-					/>
-
-					<PasswordInput
-						placeholder="Contraseña"
-						error={form.formState.errors.password?.message}
-						{...form.register("password")}
-					/>
-
-					{error ? <p className="errorMessage">{error}</p> : null}
-
-					<Button
-						variant="filled"
-						onClick={form.handleSubmit(onSubmit)}
-						loading={form.formState.isSubmitting}
-					>
-						Registrarme
-					</Button>
-				</form>
-			</Container>
+		<main className="wrapper">
+			<Paper className="form" radius="lg" >
+				<Title order={2} className="title">
+					Completa los campos para registrarte	!
+					</Title>
+			
+					<form>
+						<TextInput
+							label="Nombre"
+							placeholder="Nombre"
+							error={form.formState.errors.name?.message}
+							{...form.register("name")}
+							size="md"
+							radius="md"
+						/>
+						<TextInput
+							label="Correo electrónico"
+							placeholder="usuario@gmail.com"
+							error={form.formState.errors.email?.message}
+							{...form.register("email")}
+							size="md"
+							radius="md"
+						/>
+						<PasswordInput
+							label="Contraseña"
+							placeholder="Contraseña"
+							error={form.formState.errors.password?.message}
+							{...form.register("password")}
+							size="md"
+							radius="md"
+						/>
+						{error ? <p className="errorMessage">{error}</p> : null}
+						<Button
+							fullWidth
+							mt="xl"
+							size="md"
+							radius="md"
+							variant="filled"
+							onClick={form.handleSubmit(onSubmit)}
+							loading={form.formState.isSubmitting}
+						>
+							Registrarme
+						</Button>
+				<Text>
+					¿Ya tienes una cuenta? <Link to="/login">Ingresar</Link>
+				</Text>
+					</form>
+			
+			</Paper>
 		</main>
 	);
 }

@@ -28,13 +28,13 @@ final readonly class ClientsGetController {
                 "cuitCuil" => $client->cuitCuil(),
                 "address" => $client->address(),
                 "city" => $client->city(),
-                "provience" => $client->provience(),
+                "province" => $client->province(),
                 "email" => $client->email(),
                 "phone" => $client->phone(),
-                "createdAt" => $client->createdAt(),
+                "createdAt" => $client->createdAt(), 
                 "createdBy" => $client->createdBy(),
                 "modifeidBy" => $client->modifiedBy(),
-                "deleted" => $client->deleted(),
+                "isDeleted" => $client->isDeleted(),
                 
             ];
         }
