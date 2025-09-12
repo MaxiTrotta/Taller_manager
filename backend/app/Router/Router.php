@@ -26,7 +26,6 @@ final readonly class Router
 
         // Cargamos el archivo correspondiente al controlador
         require $_SERVER["DOCUMENT_ROOT"].'/src/Controller/'.$route->controller();
-
         // Obtenemos los parametros
         $parameters = $this->getParameters($route, $url);
 

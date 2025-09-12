@@ -1,6 +1,5 @@
 <?php 
 
-namespace Src\Controller\User;
 use Src\Service\User\UsersSearcherService;
 
 final readonly class UsersGetController {
