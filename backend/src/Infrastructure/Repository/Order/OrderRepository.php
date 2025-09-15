@@ -11,7 +11,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
 
     public function find(int $id): ?Order 
     {
-        $query = "SELECT * FROM order WHERE id = :id AND deleted = 0";
+        $query = "SELECT * FROM order_base WHERE id = :id AND deleted = 0";
 
         $parameters = [
             "id" => $id
@@ -19,26 +19,26 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
 
         $result = $this->execute($query, $parameters);
         
-        return $this->primitiveToDomain($result[0] ?? null);
+        return $this->primitiveToOrder($result[0] ?? null);
     }
 
     public function search(): array
     {
-        $query = "SELECT * FROM order WHERE deleted = 0";
+        $query = "SELECT * FROM order_base WHERE deleted = 0";
         $results = $this->execute($query);
 
-        $domainResults = [];
+        $orderResults = [];
         foreach ($results as $result) {
-            $domainResults[] = $this->primitiveToDomain($result);
+            $orderResults[] = $this->primitiveToOrder($result);
         }
 
-        return $domainResults;
+        return $orderResults;
     }
 
     public function insert(Order $order): void
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO order (name, idClient, deleted) VALUES (:name, :idClient, :deleted)
+                    INSERT INTO order_base (name, idClient, deleted) VALUES (:name, :idClient, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
@@ -54,7 +54,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     {
         $query = <<<UPDATE_QUERY
                         UPDATE
-                            order
+                            order_base
                         SET
                             name = :name,
                             idClient = :idClient,
@@ -73,7 +73,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
         $this->execute($query, $parameters);
     }
 
-    private function primitiveToDomain(?array $primitive): ?Order
+    private function primitiveToOrder(?array $primitive): ?Order
     {
         if ($primitive === null) {
             return null;
@@ -83,7 +83,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             $primitive["id"],
             $primitive["name"],
             $primitive["idClient"],
-            (bool) $primitive["deleted"]
+            $primitive["deleted"]
         );
     }
 }

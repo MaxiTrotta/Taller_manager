@@ -3,24 +3,64 @@
 namespace Src\Entity\OrderTask;
 
 use DateTime;
-use src\Entity\Sector\Sector;
-use src\Entity\Task\Task;
-use src\Entity\Order\Order;
+
 
 final class OrderTask{
 
     function __construct(
         private readonly ?int $id,
-        private Order $idOrder,
+        private ?int $idOrder,
         private DateTime $date,
         private string $state,
         private string $createdBy,
         private string $assignedTo,
-        private sector $idSector,
-        private Task $idTask
-    ){
-    }
+        private ?int $idSector,
+        private ?int $idTask,
+        private bool $deleted
+        ){
+        }
+        public static function create(
+            ?int $idOrder,
+            DateTime $date,
+            string $state,
+            string $createdBy,
+            string $assignedTo,
+            ?int $idSector,
+            ?int $idTask
+        ):self {
+            return new self(
+                null,
+                null,
+                $date,
+                $state,
+                $createdBy,
+                $assignedTo,
+                null,
+                null,
+                false
+            );
+        }
 
+
+        public function modify(int $idOrder, DateTime $date, string $state, string $createdBy, string $assignedTo, int $id): void
+        {
+            $this->idOrder = $idOrder;
+            $this->date = $date;
+            $this->state = $state;
+            $this->createdBy = $createdBy;
+            $this->assignedTo = $assignedTo;
+            $this->id = $id;
+        }
+        public function delete(): void
+        {
+            $this->deleted = true;
+        }
+
+         public function isDeleted(): int
+        {
+            return $this->deleted ? 1 : 0;
+        }
+        
         public function id(): ?int
         {
             return $this->id;
@@ -28,7 +68,7 @@ final class OrderTask{
     
         public function idOrder(): ?int
         {
-            return $this->idOrder->id();
+            return $this->idOrder;
         }
 
         public function date(): DateTime
@@ -53,36 +93,15 @@ final class OrderTask{
     
         public function idSector(): ?int
         {
-            return $this->idSector->id();
+            return $this->idSector;
         }
     
         public function idTask(): ?int
         {
-            return $this->idTask->id();
+            return $this->idTask;
         }
 
         
-    public static function create(
-        ?int $id,
-        ?Order $idOrder,
-        DateTime $date,
-        string $state,
-        string $createdBy,
-        string $assignedTo,
-        ?sector $idSector,
-        ?Task $idTask
-    ):self {
-        return new self(
-            null,
-            null,
-            $date,
-            $state,
-            $createdBy,
-            $assignedTo,
-            null,
-            null
-        );
-    }
 
 
 }

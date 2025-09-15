@@ -1,0 +1,33 @@
+<?php 
+
+use Src\Service\Order\OrdersSearcherService;
+
+final readonly class OrdersGetController {
+
+    private OrdersSearcherService $service;
+
+    public function __construct() {
+        $this->service = new OrdersSearcherService();
+    }
+
+    public function start(): void 
+    {
+        $response = $this->service->search();
+        echo json_encode($this->filterResponses($response), true);
+    }
+
+    private function filterResponses(array $responses): array
+    {
+        $result = [];
+
+        foreach ($responses as $response) {
+            $result[] = [
+                "id" => $response->id(),
+                "name" => $response->name(),
+                "idClient" => $response->idClient()
+            ];
+        }
+
+        return $result;
+    }
+}
