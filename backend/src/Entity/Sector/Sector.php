@@ -33,4 +33,19 @@ class Sector
         return $this->id;
     }
 
+    public function name():string
+    {
+        return $this->name;
+    }
+
+    public function isDeleted():int
+    {
+        return $this->deleted ? 1 : 0;
+    }
+
+    public function delete():void
+    {
+        $this->deleted = true;
+    }
+
 }
