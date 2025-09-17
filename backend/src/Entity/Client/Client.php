@@ -10,12 +10,12 @@ final class Client
         private readonly ?int $id,
         private int $dni,
         private string $name,
-        private int $cuitCuil,
+        private string $cuitCuil,
         private string $address,
         private string $city,
         private string $province,
         private string $email,
-        private int $phone,
+        private string $phone,
         private ?DateTime $createdAt,
         private string $createdBy,
         private ?string $modifiedBy,
@@ -101,7 +101,7 @@ final class Client
         string $city,
         string $province,
         string $email,
-        int $phone,
+        string $phone,
         ?DateTime $createdAt,
         string $createdBy,
         ?string $modifiedBy
@@ -126,12 +126,12 @@ final class Client
     public function modify(
         int $dni,
         string $name,
-        int $cuitCuil,
+        string $cuitCuil,
         string $address,
         string $city,
         string $province,
         string $email,
-        int $phone,
+        string $phone,
         string $createdBy,
         string $modifiedBy
     ): void {
