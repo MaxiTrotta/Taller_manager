@@ -1,0 +1,10 @@
+INSERT INTO `client` 
+(`id`, `dni`, `name`, `cuitCuil`, `address`, `city`, `province`, `email`, `phone`, `createdAt`, `createdBy`, `modifiedBy`, `deleted`)
+ VALUES 
+
+ (NULL, '37228294', 'Maximiliano Trotta', '20-37228294-1 ', 'Tucuman 432', 'Chivilcoy', 'Buenos Aires', 'maxi@hotmail.com', '+549-2346-508311', '2025-09-03', 'admin', 'admin', '0');
+ (NULL, '35051721', 'Ivan Bontempo', '23-35051721-9 ', 'Humberto Primero 61', 'Chivilcoy', 'Buenos Aires', 'ivan@hotmail.com', '+549-2346-508314', '2025-09-03', 'admin', 'admin', '0');
+ (NULL, '47140334', 'Julia Viretto Irrazabal', '27-47140334-8 ', 'Fortin Mulitas 175', 'Norberto de la Riestra', 'Buenos Aires', 'Julia_Lobahotmail.com', '+549-2346-503311', '2025-09-03', 'admin', 'admin', '0');
+ (NULL, '41146294', 'Patricio Perroud', '20-41146294-4 ', 'General Frias 372', 'Chivilcoy', 'Buenos Aires', 'pato_perroud@hotmail.com', '+549-2346-558311', '2025-09-03', 'admin', 'admin', '0');
+ (NULL, '45626557', 'GianFranco Caporaletti', '20-45626557-0 ', 'Islas Malvinas 850', 'Pedernales', 'Buenos Aires', 'Gianfranco_capo@hotmail.com', '+549-2346-508311', '2025-09-03', 'admin', 'admin', '0');
+ (NULL, '45040569', 'Valentin Chavez', '20-45040569-9 ', 'Pellegrini 1644', 'Bragado', 'Buenos Aires', 'Valen_chavez@hotmail.com', '+549-2346-568311', '2025-09-03', 'admin', 'admin', '0');
