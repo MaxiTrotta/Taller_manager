@@ -35,9 +35,12 @@ function Th({ children, reversed, sorted, onSort }) {
 function filterData(data, search) {
   const query = search.toLowerCase().trim();
   return data.filter((item) =>
-    Object.keys(data[0]).some((key) => item[key].toLowerCase().includes(query))
+    Object.values(item).some((value) =>
+      value?.toString().toLowerCase().includes(query)
+    )
   );
 }
+
 
 function sortData(data, payload) {
   const { sortBy, reversed, search } = payload;
@@ -85,11 +88,15 @@ export function TableSort() {
 
   useEffect(() => {
     async function fetchClients() {
+      
       try {
         const response = await clientService.getAllClients();
+        console.log(response.data);
         if (response.status === 200) {
+          
           setClients(response.data);
           setSortedData(response.data);
+          
         }
       } catch (error) {
         // Manejo de error
@@ -117,35 +124,29 @@ export function TableSort() {
     <Table.Tr key={row.id}>
       <Table.Td>{row.name}</Table.Td>
       <Table.Td>{row.email}</Table.Td>
-      <Table.Td>{row.address}</Table.Td>
       <Table.Td>{row.cuitCuil}</Table.Td>
-      <Table.Td>{row.city}</Table.Td>
-      <Table.Td>{row.province}</Table.Td>
       <Table.Td>{row.phone}</Table.Td>
-      <Table.Td>{row.createAt}</Table.Td>
-      <Table.Td>{row.createBy}</Table.Td>
-      <Table.Td>{row.modifiedBy}</Table.Td>
     </Table.Tr>
   ));
 
   return (
     <ScrollArea>
       <TextInput
-        placeholder="Search by any field"
+        placeholder="Buscar Cliente"
         mb="md"
         leftSection={<IconSearch size={16} stroke={1.5} />}
         value={search}
         onChange={handleSearchChange}
       />
       <Table horizontalSpacing="lg" verticalSpacing="xs" miw={700} layout="fixed">
-        <Table.Tbody>
+        <Table.Thead>
           <Table.Tr>
             <Th
               sorted={sortBy === 'name'}
               reversed={reverseSortDirection}
               onSort={() => setSorting('name')}
             >
-              Name
+              Nombre
             </Th>
             <Th
               sorted={sortBy === 'email'}
@@ -155,51 +156,24 @@ export function TableSort() {
               Email
             </Th>
             <Th
-              sorted={sortBy === 'company'}
+              sorted={sortBy === 'cuitCuil'}
               reversed={reverseSortDirection}
-              onSort={() => setSorting('company')}
+              onSort={() => setSorting('cuitCuil')}
             >
-              Company
+              cuit / Cuil
             </Th>
             <Th
-              sorted={sortBy === 'Cuit'}
+              sorted={sortBy === 'phone'}
               reversed={reverseSortDirection}
-              onSort={() => setSorting('Cuit')}
+              onSort={() => setSorting('phone')}
             >
-              Cuit
+              Telefono
             </Th>
-            <Th
-              sorted={sortBy === 'address'}
-              reversed={reverseSortDirection}
-              onSort={() => setSorting('adress')}
-            >
-              Direccion
-            </Th>
-            <Th
-              sorted={sortBy === 'address'}
-              reversed={reverseSortDirection}
-              onSort={() => setSorting('adress')}
-            >
-              Direccion
-            </Th>
-            <Th
-              sorted={sortBy === 'address'}
-              reversed={reverseSortDirection}
-              onSort={() => setSorting('adress')}
-            >
-              Direccion
-            </Th>
-            <Th
-              sorted={sortBy === 'address'}
-              reversed={reverseSortDirection}
-              onSort={() => setSorting('adress')}
-            >
-              Direccion
-            </Th>
+         
             
           </Table.Tr>
-        </Table.Tbody>
-        <Table.Tbody>
+        </Table.Thead>
+        <Table.Thead>
           {rows.length > 0 ? (
             rows
           ) : (
@@ -211,7 +185,7 @@ export function TableSort() {
               </Table.Td>
             </Table.Tr>
           )}
-        </Table.Tbody>
+        </Table.Thead >
       </Table>
     </ScrollArea>
   );

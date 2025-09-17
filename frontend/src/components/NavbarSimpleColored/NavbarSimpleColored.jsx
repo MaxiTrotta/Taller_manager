@@ -29,19 +29,7 @@ export function NavbarSimpleColored() {
   const [active, setActive] = useState('Billing');
 
   const links = data.map((item) => (
-    // <a
-    //   className={classes.link}
-    //   data-active={item.label === active || undefined}
-    //   href={item.link}
-    //   key={item.label}
-    //   onClick={(event) => {
-    //     event.preventDefault();
-    //     setActive(item.label);
-    //   }}
-    // >
-    //   <item.icon className={classes.linkIcon} stroke={1.5} />
-    //   <span>{item.label}</span>
-    // </a>
+
     <Link
       className={classes.link}
       data-active={item.label === active || undefined}
@@ -68,7 +56,7 @@ export function NavbarSimpleColored() {
 
           </div>
           <Code fw={700} className={classes.version}>
-            <h1>PRueba de comits</h1>
+            <h1>Prueba</h1>
           </Code>
         </Group>
         {links}
