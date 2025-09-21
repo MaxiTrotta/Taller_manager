@@ -14,7 +14,6 @@ final readonly class ClientCreatorService {
     }
 
     public function create(
-        int $dni,
         string $name,
         string $cuitCuil,
         string $address,
@@ -28,7 +27,6 @@ final readonly class ClientCreatorService {
         ): void
     {
         $client = Client::create(
-            $dni,
             $name,
             $cuitCuil,
             $address,

@@ -8,7 +8,6 @@ final class Client
 {
     public function __construct(
         private readonly ?int $id,
-        private string $dni,
         private string $name,
         private string $cuitCuil,
         private string $address,
@@ -27,10 +26,6 @@ final class Client
     public function id(): ?int
     {
         return $this->id;
-    }
-    public function dni(): string
-    {
-        return $this->dni;
     }
 
     public function name(): string
@@ -94,7 +89,6 @@ final class Client
     }
 
     public static function create(
-        string $dni,
         string $name,
         string $cuitCuil,
         string $address,
@@ -108,7 +102,6 @@ final class Client
     ): self {
         return new self(
             null,
-            $dni,
             $name,
             $cuitCuil,
             $address,
@@ -125,7 +118,6 @@ final class Client
     }
 
     public function modify(
-        string $dni,
         string $name,
         string $cuitCuil,
         string $address,
@@ -136,7 +128,6 @@ final class Client
         string $createdBy,
         string $modifiedBy
     ): void {
-        $this->dni = $dni;
         $this->name = $name;
         $this->cuitCuil = $cuitCuil;
         $this->address = $address;

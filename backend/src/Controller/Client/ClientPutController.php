@@ -12,7 +12,6 @@ final readonly class ClientPutController {
 
     public function start(int $id): void
     {
-        $dni = ControllerUtils::getPost("dni");
         $name = ControllerUtils::getPost("name");
         $cuitCuil = ControllerUtils::getPost("cuitCuil");
         $address = ControllerUtils::getPost("address");
@@ -26,7 +25,6 @@ final readonly class ClientPutController {
         
         $this->service->update(
             $id,
-            $dni,
             $name,
             $cuitCuil,
             $address,
