@@ -13,6 +13,9 @@ function startRouter(): Router
     include_once "Routes/OrderRoutes.php";
     $routes = array_merge($routes, OrderRoutes::getRoutes());
 
+    include_once "Routes/OrderTaskRoutes.php";
+    $routes = array_merge($routes, OrderTaskRoutes::getRoutes());
+
     include_once "Routes/UserRoutes.php";
     $routes = array_merge($routes, UserRoutes::getRoutes());
 

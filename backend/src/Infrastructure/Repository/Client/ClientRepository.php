@@ -51,12 +51,11 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
     public function create(Client $client): void
     {
         $query = <<<INSERT_QUERY
-                        INSERT INTO client (dni, name, cuitCuil, address, city, province, email, phone, createdBy, modifiedBy, deleted)
-                        VALUES (:dni, :name, :cuitCuil, :address, :city, :province, :email, :phone, :createdBy, :modifiedBy, :deleted)
+                        INSERT INTO client ( name, cuitCuil, address, city, province, email, phone, createdBy, modifiedBy, deleted)
+                        VALUES (:name, :cuitCuil, :address, :city, :province, :email, :phone, :createdBy, :modifiedBy, :deleted)
                     INSERT_QUERY;
 
         $parameters = [
-            "dni" => $client->dni(),
             "name" => $client->name(),
             "cuitCuil" => $client->cuitCuil(),
             "address" => $client->address(),
@@ -79,7 +78,6 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
                     UPDATE
                         client
                     SET
-                        dni = :dni,
                         name = :name,
                         cuitCuil = :cuitCuil,
                         address = :address,
@@ -95,7 +93,6 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
                 UPDATE_CATEGORY;
         
         $parameters = [
-            "dni" => $client->dni(),
             "name" => $client->name(),
             "cuitCuil" => $client->cuitCuil(),
             "address" => $client->address(),
@@ -120,7 +117,6 @@ final readonly class ClientRepository extends PDOManager implements ClientReposi
 
         return new Client(
             $primitive["id"],
-            $primitive["dni"],
             $primitive["name"],
             $primitive["cuitCuil"],
             $primitive["address"],

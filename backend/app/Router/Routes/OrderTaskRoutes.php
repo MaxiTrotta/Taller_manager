@@ -1,12 +1,12 @@
 <?php 
 
-final readonly class OrderRoutes {
+final readonly class OrderTaskRoutes {
   public static function getRoutes(): array {
     return [
       [
-        "name" => "order_get",
-        "url" => "/orders",
-        "controller" => "Order/OrderGetController.php",
+        "name" => "ordertask_get",
+        "url" => "/ordertasks",
+        "controller" => "OrderTask/OrderTaskGetController.php",
         "method" => "GET",
         "parameters" => [
           [
@@ -16,21 +16,21 @@ final readonly class OrderRoutes {
         ]
       ],
       [
-        "name" => "orders_get",
-        "url" => "/orders",
-        "controller" => "Order/OrdersGetController.php",
+        "name" => "ordertasks_get",
+        "url" => "/ordertasks",
+        "controller" => "OrderTask/OrderTasksGetController.php",
         "method" => "GET"
       ],
       [
-        "name" => "order_post",
-        "url" => "/orders",
-        "controller" => "Order/OrderPostController.php",
+        "name" => "ordertask_post",
+        "url" => "/ordertasks",
+        "controller" => "OrderTask/OrderTaskPostController.php",
         "method" => "POST"
       ],
       [
-        "name" => "order_put",
-        "url" => "/orders",
-        "controller" => "Order/OrderPutController.php",
+        "name" => "ordertask_put",
+        "url" => "/ordertasks",
+        "controller" => "OrderTask/OrderTaskPutController.php",
         "method" => "PUT",
         "parameters" => [
           [
@@ -40,9 +40,9 @@ final readonly class OrderRoutes {
         ]
       ],
       [
-        "name" => "order_delete",
-        "url" => "/orders",
-        "controller" => "Order/OrderDeleteController.php",
+        "name" => "ordertask_delete",
+        "url" => "/ordertasks",
+        "controller" => "OrderTask/OrderTaskDeleteController.php",
         "method" => "DELETE",
         "parameters" => [
           [

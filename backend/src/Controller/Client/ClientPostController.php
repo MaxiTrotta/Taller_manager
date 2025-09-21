@@ -12,7 +12,6 @@ final readonly class ClientPostController {
 
     public function start(): void
     {
-        $dni = ControllerUtils::getPost("dni");
         $name = ControllerUtils::getPost("name");
         $cuitCuil = ControllerUtils::getPost("cuitCuil");
         $address = ControllerUtils::getPost("address");
@@ -25,7 +24,6 @@ final readonly class ClientPostController {
         $modifiedBy = ControllerUtils::getPost("modifiedBy");
 
         $this->service->create(
-            $dni,
             $name,
             $cuitCuil,
             $address,

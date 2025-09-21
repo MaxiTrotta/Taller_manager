@@ -23,7 +23,6 @@ final readonly class ClientsGetController {
         foreach($clients as $client) {
             $responses[] = [
                 "id" => $client->id(),
-                "dni" => $client->dni(),
                 "name" => $client->name(),
                 "cuitCuil" => $client->cuitCuil(),
                 "address" => $client->address(),

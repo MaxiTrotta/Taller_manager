@@ -18,7 +18,6 @@ final readonly class ClientUpdaterService
 
     public function update(
         ?int $id,
-        string $dni,
         string $name,
         string $cuitCuil,
         string $address,
@@ -32,7 +31,6 @@ final readonly class ClientUpdaterService
         $client = $this->finder->find($id);
 
         $client->modify(
-        $dni,
         $name,
         $cuitCuil,
         $address,
