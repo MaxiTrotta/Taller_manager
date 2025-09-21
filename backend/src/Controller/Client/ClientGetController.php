@@ -18,6 +18,7 @@ final readonly class ClientGetController extends AuthMiddleware {
         echo json_encode([
             "id" => $client->id(),
             "dni" => $client->dni(),
+            "name" => $client->name(),
             "cuitCuil" => $client->cuitCuil(),
             "address" => $client->address(),
             "city" => $client->city(),

@@ -16,13 +16,13 @@ final readonly class ClientCreatorService {
     public function create(
         int $dni,
         string $name,
-        int $cuitCuil,
+        string $cuitCuil,
         string $address,
         string $city,
         string $province,
         string $email,
-        int $phone,
-        ?DateTime $createdAt,
+        string $phone,
+        //?DateTime $createdAt,
         string $createdBy,
         ?string $modifiedBy,
         ): void
@@ -36,7 +36,7 @@ final readonly class ClientCreatorService {
             $province,
             $email,
             $phone,
-            $createdAt,
+            //$createdAt,
             $createdBy,
             $modifiedBy
         );

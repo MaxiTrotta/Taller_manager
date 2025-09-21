@@ -8,7 +8,7 @@ final class Client
 {
     public function __construct(
         private readonly ?int $id,
-        private int $dni,
+        private string $dni,
         private string $name,
         private string $cuitCuil,
         private string $address,
@@ -16,7 +16,7 @@ final class Client
         private string $province,
         private string $email,
         private string $phone,
-        private ?DateTime $createdAt,
+        private ?DateTime $createdAt = null,
         private string $createdBy,
         private ?string $modifiedBy,
         private bool $deleted
@@ -28,7 +28,7 @@ final class Client
     {
         return $this->id;
     }
-    public function dni(): int
+    public function dni(): string
     {
         return $this->dni;
     }
@@ -94,7 +94,7 @@ final class Client
     }
 
     public static function create(
-        int $dni,
+        string $dni,
         string $name,
         string $cuitCuil,
         string $address,
@@ -102,7 +102,7 @@ final class Client
         string $province,
         string $email,
         string $phone,
-        ?DateTime $createdAt,
+        //?DateTime $createdAt,
         string $createdBy,
         ?string $modifiedBy
     ): self {
@@ -116,7 +116,8 @@ final class Client
             $province,
             $email,
             $phone,
-            $createdAt,
+            null,
+            //$createdAt,
             $createdBy,
             null,
             false
@@ -124,7 +125,7 @@ final class Client
     }
 
     public function modify(
-        int $dni,
+        string $dni,
         string $name,
         string $cuitCuil,
         string $address,

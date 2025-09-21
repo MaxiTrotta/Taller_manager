@@ -18,14 +18,14 @@ final readonly class ClientUpdaterService
 
     public function update(
         ?int $id,
-        int $dni,
+        string $dni,
         string $name,
-        int $cuitCuil,
+        string $cuitCuil,
         string $address,
         string $city,
         string $province,
         string $email,
-        int $phone,
+        string $phone,
         string $createdBy,
         ?string $modifiedBy,
     ): void {

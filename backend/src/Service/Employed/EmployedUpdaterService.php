@@ -1,24 +1,24 @@
 <?php 
 
-namespace Src\Service\Domain;
+namespace Src\Service\Employed;
 
-use Src\Infrastructure\Repository\Domain\DomainRepository;
+use Src\Infrastructure\Repository\Employed\EmployedRepository;
 
-final readonly class DomainUpdaterService {
-    private DomainRepository $repository;
-    private DomainFinderService $finder;
+final readonly class EmployedUpdaterService {
+    private EmployedRepository $repository;
+    private EmployedFinderService $finder;
 
     public function __construct() {
-        $this->repository = new DomainRepository();
-        $this->finder = new DomainFinderService();
+        $this->repository = new EmployedRepository();
+        $this->finder = new EmployedFinderService();
     }
 
-    public function update(string $name, string $code, int $id): void
+    public function update(string $name, string $cuilCuit, string $phone, string $email, string $address, int $id): void
     {
-        $domain = $this->finder->find($id);
+        $employed = $this->finder->find($id);
 
-        $domain->modify($name, $code);
+        $employed->modify($name, $cuilCuit, $phone, $email, $address);
 
-        $this->repository->update($domain);
+        $this->repository->update($employed);
     }
 }

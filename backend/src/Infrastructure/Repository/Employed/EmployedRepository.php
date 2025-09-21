@@ -2,16 +2,23 @@
 
 declare(strict_types = 1);
 
-namespace Src\Infrastructure\Repository\Domain;
+namespace Src\Infrastructure\Repository\Employed;
 
 use Src\Infrastructure\PDO\PDOManager;
-use Src\Entity\Domain\Domain;
+use Src\Entity\Employed\Employed;
 
-final readonly class DomainRepository extends PDOManager implements DomainRepositoryInterface {
+final readonly class EmployedRepository extends PDOManager implements EmployedRepositoryInterface {
 
-    public function find(int $id): ?Domain 
+    public function find(int $id): ?Employed 
     {
-        $query = "SELECT * FROM domain WHERE id = :id AND deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT 
+                            *
+                        FROM
+                            employed E
+                        WHERE
+                            E.id = :id AND E.deleted = 0
+                    HEREDOC;
 
         $parameters = [
             "id" => $id
@@ -19,69 +26,85 @@ final readonly class DomainRepository extends PDOManager implements DomainReposi
 
         $result = $this->execute($query, $parameters);
         
-        return $this->primitiveToDomain($result[0] ?? null);
+        return $this->primitiveToEmployed($result[0] ?? null);
     }
 
     public function search(): array
     {
-        $query = "SELECT * FROM domain WHERE deleted = 0";
+        $query = "SELECT * FROM employed WHERE deleted = 0";
         $results = $this->execute($query);
 
-        $domainResults = [];
+        $employedResults = [];
         foreach ($results as $result) {
-            $domainResults[] = $this->primitiveToDomain($result);
+            $employedResults[] = $this->primitiveToEmployed($result);
         }
 
-        return $domainResults;
+        return $employedResults;
     }
 
-    public function insert(Domain $domain): void
+    public function insert(Employed $employed): void
     {
-        $query = "INSERT INTO domain (name, code, deleted) VALUES (:name, :code, :deleted) ";
+        $query = "INSERT INTO employed (idSector, name, cuilCuit, phone, email, address, deleted) VALUES (:idSector, :name, :cuilCuit, :phone, :email, :address, :deleted) ";
 
         $parameters = [
-            "name" => $domain->name(),
-            "code" => $domain->code(),
-            "deleted" => $domain->isDeleted()
+            "idSector" => $employed->idSector(),
+            "name" => $employed->name(),
+            "cuilCuit" => $employed->cuilCuit(),
+            "phone" => $employed->phone(),
+            "email" => $employed->email(),
+            "address" => $employed->address(),
+            "deleted" => $employed->isDeleted()
         ];
 
         $this->execute($query, $parameters);
     }
 
-    public function update(Domain $domain): void
+    public function update(Employed $employed): void
     {
         $query = <<<UPDATE_QUERY
                         UPDATE
-                            domain
+                            employed
                         SET
+                            idSector = :idSector,
                             name = :name,
-                            code = :code,
+                            cuilCuit = :cuilCuit,
+                            phone = :phone,
+                            email = :email,
+                            address = :address,
                             deleted = :deleted
                         WHERE
                             id = :id
                     UPDATE_QUERY;
 
         $parameters = [
-            "name" => $domain->name(),
-            "code" => $domain->code(),
-            "deleted" => $domain->isDeleted(),
-            "id" => $domain->id()
+            "idSector" => $employed->idSector(),
+            "name" => $employed->name(),
+            "cuilCuit" => $employed->cuilCuit(),
+            "phone" => $employed->phone(),
+            "email" => $employed->email(),
+            "address" => $employed->address(),
+            "deleted" => $employed->isDeleted(),
+            "id" => $employed->id()
         ];
 
         $this->execute($query, $parameters);
     }
 
-    private function primitiveToDomain(?array $primitive): ?Domain
+    private function primitiveToEmployed(?array $primitive): ?Employed
     {
         if ($primitive === null) {
             return null;
         }
 
-        return new Domain(
+        return new Employed(
             $primitive["id"],
+            $primitive["idSector"],
             $primitive["name"],
-            $primitive["code"],
-            (bool) $primitive["deleted"]
+            $primitive["cuilCuit"],
+            $primitive["phone"],
+            $primitive["email"],
+            $primitive["address"],
+            (bool)$primitive["deleted"]
         );
     }
 }

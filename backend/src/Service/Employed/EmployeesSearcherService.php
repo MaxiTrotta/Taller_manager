@@ -1,15 +1,15 @@
 <?php 
 
-namespace Src\Service\Domain;
+namespace Src\Service\Employed;
 
-use Src\Infrastructure\Repository\Domain\DomainRepository;
+use Src\Infrastructure\Repository\Employed\EmployedRepository;
 
-final readonly class DomainsSearcherService {
+final readonly class EmployeesSearcherService {
 
-    private DomainRepository $repository;
+    private EmployedRepository $repository;
 
     public function __construct() {
-        $this->repository = new DomainRepository();
+        $this->repository = new EmployedRepository();
     }
 
     public function search(): array

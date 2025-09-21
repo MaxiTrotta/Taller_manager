@@ -1,20 +1,23 @@
 <?php
 
 use Src\Utils\ControllerUtils;
-use Src\Service\Domain\DomainCreatorService;
+use Src\Service\Employed\EmployedCreatorService;
 
-final readonly class DomainPostController {
-    private DomainCreatorService $service;
+final readonly class EmployedPostController {
+    private EmployedCreatorService $service;
 
     public function __construct() {
-        $this->service = new DomainCreatorService();
+        $this->service = new EmployedCreatorService();
     }
 
     public function start(): void
     {
         $name = ControllerUtils::getPost("name");
-        $code = ControllerUtils::getPost("code");
+        $cuilCuit = ControllerUtils::getPost("cuilCuit");
+        $phone = ControllerUtils::getPost("phone");
+        $email = ControllerUtils::getPost("email");
+        $address = ControllerUtils::getPost("address");
 
-        $this->service->create($name, $code);
+        $this->service->create($name, $cuilCuit, $phone, $email, $address);
     }
 }
