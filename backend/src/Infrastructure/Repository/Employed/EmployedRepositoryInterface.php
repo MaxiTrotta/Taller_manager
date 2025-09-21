@@ -2,17 +2,17 @@
 
 declare(strict_types = 1);
 
-namespace Src\Infrastructure\Repository\Domain;
+namespace Src\Infrastructure\Repository\Employed;
 
-use Src\Entity\Domain\Domain;
+use Src\Entity\Employed\Employed;
 
-interface DomainRepositoryInterface {
-    public function find(int $id): ?Domain;
+interface EmployedRepositoryInterface {
+    public function find(int $id): ?Employed;
 
-    /** @return Domain[] */
+    /** @return Employed[] */
     public function search(): array;
 
-    public function insert(Domain $domain): void;
+    public function insert(Employed $employed): void;
 
-    public function update(Domain $domain): void;
+    public function update(Employed $employed): void;
 }

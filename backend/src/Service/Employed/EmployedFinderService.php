@@ -3,30 +3,30 @@
 
 declare(strict_types = 1);
 
-namespace Src\Service\Domain;
+namespace Src\Service\Employed;
 
-use Src\Entity\Domain\Domain;
-use Src\Entity\Domain\Exception\DomainNotFoundException;
-use Src\Infrastructure\Repository\Domain\DomainRepository;
+use Src\Entity\Employed\Employed;
+use Src\Entity\Employed\Exception\EmployedNotFoundException;
+use Src\Infrastructure\Repository\Employed\EmployedRepository;
 
-final readonly class DomainFinderService {
+final readonly class EmployedFinderService {
 
-    private DomainRepository $domainRepository;
+    private EmployedRepository $employedRepository;
 
     public function __construct() 
     {
-        $this->domainRepository = new DomainRepository();
+        $this->employedRepository = new EmployedRepository();
     }
 
-    public function find(int $id): Domain 
+    public function find(int $id): Employed 
     {
-        $domain = $this->domainRepository->find($id);
+        $employed = $this->employedRepository->find($id);
 
-        if ($domain === null) {
-            throw new DomainNotFoundException($id);
+        if ($employed === null) {
+            throw new EmployedNotFoundException($id);
         }
 
-        return $domain;
+        return $employed;
     }
 
 }

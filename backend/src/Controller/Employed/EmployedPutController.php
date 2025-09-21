@@ -1,20 +1,23 @@
 <?php 
 
 use Src\Utils\ControllerUtils;
-use Src\Service\Domain\DomainUpdaterService;
+use Src\Service\Employed\EmployedUpdaterService;
 
-final readonly class DomainPutController {
-    private DomainUpdaterService $service;
+final readonly class EmployedPutController {
+    private EmployedUpdaterService $service;
 
     public function __construct() {
-        $this->service = new DomainUpdaterService();
+        $this->service = new EmployedUpdaterService();
     }
 
     public function start(int $id): void
     {
         $name = ControllerUtils::getPost("name");
-        $code = ControllerUtils::getPost("code");
+        $cuilCuit = ControllerUtils::getPost("cuilCuit");
+        $phone = ControllerUtils::getPost("phone");
+        $email = ControllerUtils::getPost("email");
+        $address = ControllerUtils::getPost("address");
 
-        $this->service->update($name, $code, $id);
+        $this->service->update($name, $cuilCuit, $phone, $email, $address, $id);
     }
 }

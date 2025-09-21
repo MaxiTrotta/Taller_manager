@@ -83,7 +83,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             $primitive["id"],
             $primitive["name"],
             $primitive["idClient"],
-            $primitive["deleted"]
+            (bool)$primitive["deleted"]
         );
     }
 }

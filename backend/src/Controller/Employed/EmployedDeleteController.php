@@ -1,12 +1,12 @@
 <?php 
 
-use Src\Service\Domain\DomainDeleterService;
+use Src\Service\Employed\EmployedDeleterService;
 
-final readonly class DomainDeleteController {
-    private DomainDeleterService $service;
+final readonly class EmployedDeleteController {
+    private EmployedDeleterService $service;
 
     public function __construct() {
-        $this->service = new DomainDeleterService();
+        $this->service = new EmployedDeleterService();
     }
 
     public function start(int $id): void

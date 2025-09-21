@@ -1,20 +1,20 @@
 <?php 
 
-namespace Src\Service\Domain;
+namespace Src\Service\Employed;
 
-use Src\Entity\Domain\Domain;
-use Src\Infrastructure\Repository\Domain\DomainRepository;
+use Src\Entity\Employed\Employed;
+use Src\Infrastructure\Repository\Employed\EmployedRepository;
 
-final readonly class DomainCreatorService {
-    private DomainRepository $repository;
+final readonly class EmployedCreatorService {
+    private EmployedRepository $repository;
 
     public function __construct() {
-        $this->repository = new DomainRepository();
+        $this->repository = new EmployedRepository();
     }
 
-    public function create(string $name, string $code): void
+    public function create(string $name, string $cuilCuit, string $phone, string $email, string $address): void
     {
-        $domain = Domain::create($name, $code);
-        $this->repository->insert($domain);
+        $employed = Employed::create($name, $cuilCuit, $phone, $email, $address);
+        $this->repository->insert($employed);
     }
 }

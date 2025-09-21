@@ -77,7 +77,7 @@ final readonly class SectorRepository extends PDOManager implements SectorReposi
         return new Sector(
             $primitive["id"],
             $primitive["name"],
-            $primitive["deleted"]
+            (bool)$primitive["deleted"]
         );
     }
 }

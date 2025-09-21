@@ -25,8 +25,12 @@ function startRouter(): Router
     include_once "Routes/SectorRoutes.php";
     $routes = array_merge($routes, SectorRoutes::getRoutes());
 
+    include_once "Routes/EmployedRoutes.php";
+    $routes = array_merge($routes, EmployedRoutes::getRoutes());
+
     include_once "Routes/ClientRoutes.php";
     $routes = array_merge($routes, ClientRoutes::getRoutes());
+    
     $routesClass = [];
 
     foreach ($routes as $route) {

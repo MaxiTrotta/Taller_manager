@@ -8,7 +8,7 @@ final class Employed {
         private readonly ?int $id,
         private ?int $idSector,
         private string $name,
-        private string $cuil,
+        private string $cuilCuit,
         private string $phone,
         private string $email,
         private string $address,
@@ -16,38 +16,55 @@ final class Employed {
     ) {
     }
 
-    public static function create(string $name, string $cuil, string $phone, string $email, string $address): self
+    public static function create(string $name, string $cuilCuit, string $phone, string $email, string $address): self
     {
-        return new self(null, null, $name, $cuil, $phone, $email, $address, false);
+        return new self(null, null, $name, $cuilCuit, $phone, $email, $address, false);
     }
 
-    public function modify(string $name, string $cuil, string $phone, string $email, string $address): void
+    public function modify(string $name, string $cuilCuit, string $phone, string $email, string $address): void
     {
         $this->name = $name;
-        $this->cuil = $cuil;
+        $this->cuilCuit = $cuilCuit;
         $this->phone = $phone;
         $this->email = $email;
         $this->address = $address;
     }
 
-    public function delete(): void
-    {
-        $this->deleted = true;
-    }
-
+    
     public function id(): ?int
     {
         return $this->id;
     }
-
+    
+    public function idSector(): ?int
+    {
+        return $this->idSector;
+    }
+    
     public function name(): string
     {
         return $this->name;
     }
-
-    public function code(): string
+    
+    public function cuilCuit(): string
     {
-        return $this->code;
+        return $this->cuilCuit;
+    }
+    public function phone(): string
+    {
+        return $this->phone;
+    }
+    public function email(): string
+    {
+        return $this->email;
+    }
+    public function address(): string
+    {
+        return $this->address;
+    }
+    public function delete(): void
+    {
+        $this->deleted = true;
     }
 
     public function isDeleted(): int

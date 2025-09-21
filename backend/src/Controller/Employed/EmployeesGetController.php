@@ -1,13 +1,13 @@
 <?php 
 
-use Src\Service\Domain\DomainsSearcherService;
+use Src\Service\Employed\EmployeesSearcherService;
 
-final readonly class DomainsGetController {
+final readonly class EmployeesGetController {
 
-    private DomainsSearcherService $service;
+    private EmployeesSearcherService $service;
 
     public function __construct() {
-        $this->service = new DomainsSearcherService();
+        $this->service = new EmployeesSearcherService();
     }
 
     public function start(): void 
@@ -24,7 +24,10 @@ final readonly class DomainsGetController {
             $result[] = [
                 "id" => $response->id(),
                 "name" => $response->name(),
-                "code" => $response->code()
+                "cuilCuit" => $response->cuilCuit(),
+                "phone" => $response->phone(),
+                "email" => $response->email(),
+                "address" => $response->address()
             ];
         }
 

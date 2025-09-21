@@ -104,7 +104,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             $primitive["assignedTo"],
             $primitive["idSector"],
             $primitive["idTask"],
-            $primitive["deleted"]
+            (bool)$primitive["deleted"]
         );
     }
 }
