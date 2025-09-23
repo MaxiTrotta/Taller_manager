@@ -49,19 +49,18 @@ export function NavbarSimpleColored() {
 
           <div style={{ display: "flex" }}>
             <a href="/">
-              <img src="/images/Logo.png" alt="Logo Ortiz Hnos" />
+              <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
 
-            <ActionToggle />
+           
 
-          </div>
+          </div> 
           <Code fw={700} className={classes.version}>
-            <h1>Prueba</h1>
+            v 1.0
           </Code>
         </Group>
         {links}
       </div>
-
       <div className={classes.footer}>
         <a href="#" className={classes.link} onClick={(event) => {
           event.preventDefault();
@@ -71,6 +70,7 @@ export function NavbarSimpleColored() {
           <IconLogout className={classes.linkIcon} stroke={1.5} />
           <span>Cerrar sesión</span>
         </a>
+        
       </div>
     </nav>
   );
