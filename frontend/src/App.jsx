@@ -1,7 +1,7 @@
 import './App.css'
 import FormularioRegistro from './components/FormularioRegistro/FormularioRegistro'
 import FormularioCliente from './components/FormularioCliente/FormularioCliente'
-import UserTable from './components/UserTable/UserTable'
+import Employed from './components/Employed/Employed'
 import { HomePage } from './pages/HomePage/HomePage'
 import { Header } from "./components/Header/Header";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -32,7 +32,7 @@ function App() {
 						<Route path="/home" element={<HomePage />} />
 						<Route path="/cliente" element={<TableSort />} />
 						<Route path="/ordenes" element={<FormularioCliente />} />
-						<Route path="/empleado" element={<UserTable />} />
+						<Route path="/empleado" element={<Employed />} />
 					</Route>
 				</Routes>
 			</BrowserRouter>
