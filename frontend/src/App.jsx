@@ -14,34 +14,10 @@ import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
 import { TableSort } from './components/TableSort/TableSort'
 
-// function App() {
-
-
-//   return (
-//     <MantineProvider>
-//       <BrowserRouter>
-//         <div className="contenedor_backend">
-//           <NavbarSimpleColored/>
-//           <div className='contenido'>
-//             <Routes>
-//               <Route path="/" element={<HomePage />} />
-//               <Route path="/formulario" element={<FormularioRegistro />} />
-//               <Route path="/cliente" element={<FormularioCliente />} />
-//               <Route path="/empleado" element={<UserTable />} />
-//             </Routes>
-//           </div>
-//         </div>
-//         {/* <Footer /> */}
-//       </BrowserRouter>
-//     </MantineProvider>
-//   )
-// }
-
-// export default App
 
 function App() {
 	return (
-		<MantineProvider defaultColorScheme="dark">
+		<MantineProvider defaultColorScheme="white">
 			<BrowserRouter>
 				<Routes>
 					{/*Rutas públicas*/}
