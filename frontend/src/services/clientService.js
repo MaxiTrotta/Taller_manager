@@ -8,5 +8,17 @@ export const clientService = {
   getClientById: (id) => api.get("/clients/" + id),
 
   // Crear un nuevo cliente
-  createClient: (clientData) => api.post("/clients", clientData),
+  createClient: (payload) => 
+    api.post("/clients", payload, { 
+      headers: { "Content-Type": "application/json" } 
+    }),
+
+  // Modifica un cliente
+  updateClient: (id, payload) => 
+    api.put("/clients/" + id, payload, { 
+      headers: { "Content-Type": "application/json" } 
+    }),
+
+  // Eliminar un cliente
+  deleteClient: (id) => api.delete("/clients/" + id),
 };
