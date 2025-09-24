@@ -1,5 +1,11 @@
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { ActionIcon, Anchor, Avatar, Badge, Group, Table, Text } from '@mantine/core';
+import { ActionIcon,
+   Anchor, 
+   Avatar, 
+   Badge,
+    Group, 
+    Table, 
+    Text } from '@mantine/core';
 
 const data = [
   {
