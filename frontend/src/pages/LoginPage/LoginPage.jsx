@@ -44,7 +44,7 @@ export function LoginPage() {
             const token = response.data.token;
             if (token) {
                 localStorage.setItem("token", token);
-                navigate("/ordenes");
+                navigate("/cliente");
             } else {
                 throw new Error("Ocurrió un error inesperado");
             }
@@ -80,10 +80,6 @@ export function LoginPage() {
                         Iniciar sesión
                     </Button>
 
-                    <Text ta="center" mt="md">
-                        ¿Aún no tienes una cuenta? <Link to="/register">Registrarse</Link>
-                    
-                    </Text>
                 </Paper>
             </div>
         </>

@@ -1,21 +1,11 @@
-.wrapper {
-  width: 100vw;
-  height: 100vh; /* Ocupa toda la pantalla */
-  background-size: cover;
-  background-image: url(https://tallerortiz.com.ar/wp-content/uploads/2023/06/2023.jpg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden; /* Evita scroll */
-}
+
 
 .form {
   border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
-  max-width: 450px;
+  max-width: 750px;
   width: 100%;
-  padding: 30px;
-  padding-top: 80px;
-  background: rgba(27, 26, 26, 0.85); /* Opcional: para mejor contraste */
+  padding:50px;
+  padding-top: 50px;
   
   @media (max-width: 48em) {
     max-width: 100%;
@@ -29,9 +19,4 @@
   text-align: center;
   margin-top: var(--mantine-spacing-md);
   margin-bottom: 50px;
-}
-
-#boton_claroscuro{
-  display: flex;
-  position: absolute;
 }

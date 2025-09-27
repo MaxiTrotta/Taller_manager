@@ -1,7 +1,4 @@
 import './App.css'
-import FormularioRegistro from './components/FormularioRegistro/FormularioRegistro'
-import FormularioCliente from './components/FormularioCliente/FormularioCliente'
-import Employed from './components/Employed/Employed'
 import { HomePage } from './pages/HomePage/HomePage'
 import { Header } from "./components/Header/Header";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -13,6 +10,9 @@ import { PrivateRoute, PublicRoute } from "./Routes";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
 import { TableSort } from './components/TableSort/TableSort'
+import EmployeesTable from './components/EmployeesTable/EmployeesTable';
+import OrderCreate from './components/OrderCreate/OrderCreate';
+
 
 
 function App() {
@@ -24,15 +24,15 @@ function App() {
 					<Route element={<PublicRoute />}>
 						<Route path="/" element={<LoginPage />} />	
 						<Route path="/login" element={<LoginPage />} />
-						<Route path="/register" element={<RegisterPage />} />
 					</Route>
 
 					{/*Rutas privadas */}
-					<Route element={<PrivateRoute />}>
+						<Route element={<PrivateRoute />}>
+						<Route path="/register" element={<RegisterPage />} />
 						<Route path="/home" element={<HomePage />} />
 						<Route path="/cliente" element={<TableSort />} />
-						<Route path="/ordenes" element={<FormularioCliente />} />
-						<Route path="/empleado" element={<Employed />} />
+						<Route path="/ordenes" element={<OrderCreate />} />
+						<Route path="/empleado" element={<EmployeesTable />} />
 					</Route>
 				</Routes>
 			</BrowserRouter>
