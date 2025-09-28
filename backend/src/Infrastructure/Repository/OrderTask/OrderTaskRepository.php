@@ -17,7 +17,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
                         SELECT 
                             *
                         FROM
-                            order_task OT
+                            orderTask OT
                         WHERE
                             OT.id = :id AND OT.deleted = 0
                     HEREDOC;
@@ -34,7 +34,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
     // public function search(): array
     // {
     //     $query = "SELECT OT.* ";
-    //     $query .= "FROM order_task OT WHERE deleted = 0";
+    //     $query .= "FROM orderTask OT WHERE deleted = 0";
     //     $results = $this->execute($query);
 
     //     $orderTaskResults = [];
@@ -53,9 +53,9 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
                         SELECT
                             *
                         FROM
-                            orderTask ot
+                            orderTask
                         WHERE
-                            ot.deleted = 0
+                            deleted = 0
                     HEREDOC;
         
         $results = $this->execute($query);
@@ -70,7 +70,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
     public function insert(OrderTask $orderTask): void
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO order_task (idOrder, state, idSector, idTask, deleted) VALUES (:idOrder, :state, :idSector, :idTask, :deleted)
+                    INSERT INTO orderTask (idOrder, state, idSector, idTask, deleted) VALUES (:idOrder, :state, :idSector, :idTask, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
@@ -91,7 +91,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
     {
         $query = <<<UPDATE_QUERY
                         UPDATE
-                            order_task
+                            orderTask
                         SET
                             idOrder = :idOrder,
                             state = :state,
@@ -127,7 +127,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             (int)$primitive["id"],
             (int)$primitive["idOrder"],
             //new DateTime($primitive["date"]),
-            (string)$primitive["state"],
+            (string)$primitive["state"] ?? null,
            // $primitive["createdBy"],
            // $primitive["assignedTo"],
             (int)$primitive["idSector"],

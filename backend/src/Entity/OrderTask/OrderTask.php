@@ -10,7 +10,7 @@ final class OrderTask{
         private readonly ?int $id,
         private ?int $idOrder,
         //private ?DateTime $date,
-        private string $state = "Pendiente",
+        private ?string $state,
         // private int $createdBy,
         // private string $assignedTo,
         private ?int $idSector,
@@ -29,26 +29,28 @@ final class OrderTask{
         ):self {
             return new self(
                 null,
-                null,
+                $idOrder,
                 //$date,
                 $state,
                 //$createdBy,
                 //$assignedTo,
-                null,
-                null,
+                $idSector,
+                $idTask,
                 false
             );
         }
 
 
-        public function modify(int $idOrder,/* DateTime $date,*/ string $state, /*int $createdBy, string $assignedTo,*/ int $id): void
+        public function modify(int $idOrder,/* DateTime $date,*/ string $state, /*int $createdBy, string $assignedTo,*/ int $idSector, int $idTask): void
         {
             $this->idOrder = $idOrder;
             //$this->date = $date;
             $this->state = $state;
             //$this->createdBy = $createdBy;
             //$this->assignedTo = $assignedTo;
-            $this->id = $id;
+            $this->idSector = $idSector;
+            $this->idTask = $idTask;
+        
         }
         public function delete(): void
         {
@@ -60,12 +62,12 @@ final class OrderTask{
             return $this->deleted ? 1 : 0;
         }
         
-        public function id(): int
+        public function id(): ?int
         {
             return $this->id;
         }
     
-        public function idOrder(): int
+        public function idOrder(): ?int
         {
             return $this->idOrder;
         }
@@ -75,7 +77,7 @@ final class OrderTask{
         //     return $this->date;
         // }
     
-        public function state(): string
+        public function state(): ?string
         {
             return $this->state;
         }
@@ -90,12 +92,12 @@ final class OrderTask{
         //     return $this->assignedTo;
         // }
     
-        public function idSector(): int
+        public function idSector(): ?int
         {
             return $this->idSector;
         }
-    
-        public function idTask(): int
+
+        public function idTask(): ?int
         {
             return $this->idTask;
         }
