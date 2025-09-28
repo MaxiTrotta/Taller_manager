@@ -12,8 +12,8 @@ final readonly class TaskPostController {
 
     public function start(): void
     {
-        $name = ControllerUtils::getPost("name");
+        $description = ControllerUtils::getPost("description");
 
-        $this->service->create($name);
+        $this->service->create($description);
     }
 }

@@ -17,7 +17,6 @@ final readonly class VehiclePutController {
         $brand = ControllerUtils::getPost("brand");
         $model = ControllerUtils::getPost("model");
         $year = ControllerUtils::getPost("year");
-        $color = ControllerUtils::getPost("color");
 
         $this->service->update(
             $id, 
@@ -25,8 +24,7 @@ final readonly class VehiclePutController {
             $licensePlate, 
             $brand, 
             $model, 
-            $year,
-            $color
+            $year
         );
     }
 }

@@ -1,40 +1,39 @@
 <?php
-//BORRAR ENTIDAD Y CREAR ORDERS_TASKS MANTENIENDO LOS ATRIBUTOS 
+
 namespace Src\Entity\OrderTask;
 
-use DateTime;
-
+//use DateTime;
 
 final class OrderTask{
 
     function __construct(
         private readonly ?int $id,
         private ?int $idOrder,
-        private DateTime $date,
-        private string $state,
-        private string $createdBy,
-        private string $assignedTo,
+        //private ?DateTime $date,
+        private string $state = "Pendiente",
+        // private int $createdBy,
+        // private string $assignedTo,
         private ?int $idSector,
         private ?int $idTask,
         private bool $deleted
         ){
         }
         public static function create(
-            ?int $idOrder,
-            DateTime $date,
+            int $idOrder,
+            //?DateTime $date,
             string $state,
-            string $createdBy,
-            string $assignedTo,
-            ?int $idSector,
-            ?int $idTask
+            // int $createdBy,
+            // string $assignedTo,
+            int $idSector,
+            int $idTask
         ):self {
             return new self(
                 null,
                 null,
-                $date,
+                //$date,
                 $state,
-                $createdBy,
-                $assignedTo,
+                //$createdBy,
+                //$assignedTo,
                 null,
                 null,
                 false
@@ -42,13 +41,13 @@ final class OrderTask{
         }
 
 
-        public function modify(int $idOrder, DateTime $date, string $state, string $createdBy, string $assignedTo, int $id): void
+        public function modify(int $idOrder,/* DateTime $date,*/ string $state, /*int $createdBy, string $assignedTo,*/ int $id): void
         {
             $this->idOrder = $idOrder;
-            $this->date = $date;
+            //$this->date = $date;
             $this->state = $state;
-            $this->createdBy = $createdBy;
-            $this->assignedTo = $assignedTo;
+            //$this->createdBy = $createdBy;
+            //$this->assignedTo = $assignedTo;
             $this->id = $id;
         }
         public function delete(): void
@@ -61,42 +60,42 @@ final class OrderTask{
             return $this->deleted ? 1 : 0;
         }
         
-        public function id(): ?int
+        public function id(): int
         {
             return $this->id;
         }
     
-        public function idOrder(): ?int
+        public function idOrder(): int
         {
             return $this->idOrder;
         }
 
-        public function date(): DateTime
-        {
-            return $this->date;
-        }
+        // public function date(): ?DateTime
+        // {
+        //     return $this->date;
+        // }
     
         public function state(): string
         {
             return $this->state;
         }
     
-        public function createdBy(): string
-        {
-            return $this->createdBy;
-        }
+        // public function createdBy(): int
+        // {
+        //     return $this->createdBy;
+        // }
     
-        public function assignedTo(): string
-        {
-            return $this->assignedTo;
-        }
+        // public function assignedTo(): string
+        // {
+        //     return $this->assignedTo;
+        // }
     
-        public function idSector(): ?int
+        public function idSector(): int
         {
             return $this->idSector;
         }
     
-        public function idTask(): ?int
+        public function idTask(): int
         {
             return $this->idTask;
         }

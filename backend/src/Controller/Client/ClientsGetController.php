@@ -30,9 +30,9 @@ final readonly class ClientsGetController {
                 "province" => $client->province(),
                 "email" => $client->email(),
                 "phone" => $client->phone(),
-                "createdAt" => $client->createdAt(), 
-                "createdBy" => $client->createdBy(),
-                "modifeidBy" => $client->modifiedBy(),
+                // "createdAt" => $client->createdAt(), 
+                // "createdBy" => $client->createdBy(),
+                // "modifeidBy" => $client->modifiedBy(),
                 "isDeleted" => $client->isDeleted(),
                 
             ];

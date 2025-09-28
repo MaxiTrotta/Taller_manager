@@ -286,7 +286,7 @@ export function TableSort() {
         onRowsPerPageChange={(event) => { setRowsPerPage(parseInt(event.target.value, 10)); setPage(0); }}
         rowsPerPageOptions={[5, 10, 25, 50]}
         sx={{
-          color: 'white',
+          color: 'black',
           '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { color: 'white' },
           '.MuiSvgIcon-root': { color: 'white' },
         }}

@@ -20,8 +20,8 @@ final readonly class ClientPostController {
         $email = ControllerUtils::getPost("email");
         $phone = ControllerUtils::getPost("phone");
         //$createdAt = ControllerUtils::getPost("createdAt");
-        $createdBy = ControllerUtils::getPost("createdBy");
-        $modifiedBy = ControllerUtils::getPost("modifiedBy");
+        // $createdBy = ControllerUtils::getPost("createdBy");
+        // $modifiedBy = ControllerUtils::getPost("modifiedBy");
 
         $this->service->create(
             $name,
@@ -32,8 +32,8 @@ final readonly class ClientPostController {
             $email,
             $phone,
             //$createdAt,
-            $createdBy,
-            $modifiedBy
+            // $createdBy,
+            // $modifiedBy
         );
     }
 }

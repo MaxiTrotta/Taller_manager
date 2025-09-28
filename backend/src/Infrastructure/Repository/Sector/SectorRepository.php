@@ -11,7 +11,11 @@ final readonly class SectorRepository extends PDOManager implements SectorReposi
 
     public function find(int $id): ?Sector 
     {
-        $query = "SELECT * FROM sector WHERE id = :id AND deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT * 
+                        FROM sector
+                        WHERE id = :id AND deleted = 0
+                    HEREDOC;
 
         $parameters = [
             "id" => $id
@@ -24,7 +28,12 @@ final readonly class SectorRepository extends PDOManager implements SectorReposi
 
     public function search(): array
     {
-        $query = "SELECT * FROM sector WHERE deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT * 
+                        FROM sector 
+                        WHERE deleted = 0
+                    HEREDOC;
+
         $results = $this->execute($query);
 
         $sectorResults = [];
@@ -75,8 +84,8 @@ final readonly class SectorRepository extends PDOManager implements SectorReposi
         }
 
         return new Sector(
-            $primitive["id"],
-            $primitive["name"],
+            (int)$primitive["id"],
+            (string)$primitive["name"],
             (bool)$primitive["deleted"]
         );
     }

@@ -17,8 +17,7 @@ final readonly class VehiclePostController {
         $brand = ControllerUtils::getPost("brand");
         $model = ControllerUtils::getPost("model");
         $year = ControllerUtils::getPost("year");
-        $color = ControllerUtils::getPost("color");
 
-        $this->service->create($clientId, $licensePlate, $brand, $model, $year, $color);
+        $this->service->create($clientId, $licensePlate, $brand, $model, $year);
     }
 }

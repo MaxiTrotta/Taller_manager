@@ -13,17 +13,17 @@ final readonly class OrderTaskPutController {
     public function start(int $id): void
     {
         $idOrder = ControllerUtils::getPost("idOrder");
-        $date = ControllerUtils::getPost("date");
+        //$date = ControllerUtils::getPost("date");
         $state = ControllerUtils::getPost("state");
-        $createdBy = ControllerUtils::getPost("createdBy");
-        $assignedTo = ControllerUtils::getPost("assignedTo");
+       // $createdBy = ControllerUtils::getPost("createdBy");
+       // $assignedTo = ControllerUtils::getPost("assignedTo");
 
         $this->service->update(
             $idOrder,
-            $date,
+            //$date,
             $state,
-            $createdBy,
-            $assignedTo,
+            //$createdBy,
+            //$assignedTo,
             $id
         );
     }

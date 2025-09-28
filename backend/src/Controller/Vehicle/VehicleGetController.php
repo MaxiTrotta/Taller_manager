@@ -20,7 +20,6 @@ final readonly class VehicleGetController {
             "brand" => $vehicle->brand(),
             "model" => $vehicle->model(),
             "year" => $vehicle->year(),
-            "color" => $vehicle->color(),
         ], true);
     }
 }

@@ -20,8 +20,8 @@ final readonly class ClientPutController {
         $email = ControllerUtils::getPost("email");
         $phone = ControllerUtils::getPost("phone");
        // $createdAt = ControllerUtils::getPost("createdAt");
-        $createdBy = ControllerUtils::getPost("createdBy");
-        $modifiedBy = ControllerUtils::getPost("modifiedBy");
+        // $createdBy = ControllerUtils::getPost("createdBy");
+        // $modifiedBy = ControllerUtils::getPost("modifiedBy");
         
         $this->service->update(
             $id,
@@ -33,8 +33,8 @@ final readonly class ClientPutController {
             $email,
             $phone,
             //$createdAt,
-            $createdBy,
-            $modifiedBy
+            // $createdBy,
+            // $modifiedBy
         );
     }
 }

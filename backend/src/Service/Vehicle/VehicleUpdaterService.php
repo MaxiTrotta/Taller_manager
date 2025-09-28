@@ -22,8 +22,7 @@ final readonly class VehicleUpdaterService
         string $licensePlate,
         string $brand,
         string $model,
-        ?int $year,
-        ?string $color
+        ?int $year
     ): void {
         $vehicle = $this->finder->find($id);
 
@@ -32,8 +31,7 @@ final readonly class VehicleUpdaterService
             $licensePlate,
             $brand,
             $model,
-            $year, 
-            $color,
+            $year
         );
 
         $this->repository->update($vehicle);

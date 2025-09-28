@@ -25,8 +25,8 @@ final readonly class ClientUpdaterService
         string $province,
         string $email,
         string $phone,
-        string $createdBy,
-        ?string $modifiedBy,
+        // string $createdBy,
+        // ?string $modifiedBy,
     ): void {
         $client = $this->finder->find($id);
 
@@ -38,8 +38,9 @@ final readonly class ClientUpdaterService
         $province,
         $email,
         $phone,
-        $createdBy,
-        $modifiedBy);
+        // $createdBy,
+        // $modifiedBy
+    );
 
         $this->repository->update($client);
     }

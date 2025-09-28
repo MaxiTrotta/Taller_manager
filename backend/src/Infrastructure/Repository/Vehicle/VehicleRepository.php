@@ -57,7 +57,7 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
                         FROM
                             vehicle V
                         WHERE
-                            V.deleted = 0 AND V.client_id = :clientId
+                            V.deleted = 0 AND V.clientId = :clientId
                     HEREDOC;
         
         $parameters = [
@@ -78,8 +78,8 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
     public function create(Vehicle $vehicle): void
     {
         $query = <<<INSERT_QUERY
-                        INSERT INTO vehicle (client_id, licensePlate, brand, model, year, color, deleted)
-                        VALUES (:clientId, :licensePlate, :brand, :model, :year, :color,:deleted)
+                        INSERT INTO vehicle (clientId, licensePlate, brand, model, year, deleted)
+                        VALUES (:clientId, :licensePlate, :brand, :model, :year, :deleted)
                     INSERT_QUERY;
 
         $parameters = [
@@ -88,7 +88,6 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
             "brand" => $vehicle->brand(),
             "model" => $vehicle->model(),
             "year" => $vehicle->year(),
-            "color" => $vehicle->color(),
             "deleted" => $vehicle->isDeleted(),
         ];
 
@@ -101,12 +100,11 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
                     UPDATE
                         vehicle
                     SET
-                        client_id = :clientId,
+                        clientId = :clientId,
                         licensePlate = :licensePlate,
                         brand = :brand,
                         model = :model,
                         year = :year,
-                        color = :color,
                         deleted = :deleted
                     WHERE
                         id = :id
@@ -118,8 +116,7 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
             "brand" => $vehicle->brand(),
             "model" => $vehicle->model(),
             "year" => $vehicle->year(),
-            "color" => $vehicle->color(),
-            "deleted" => $vehicle->delete(),
+            "deleted" => $vehicle->isDeleted(),
             "id" => $vehicle->id(),
         ];
 
@@ -132,14 +129,13 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
         }
 
         return new Vehicle(
-            $primitive["id"],
-            $primitive["client_id"],
-            $primitive["licensePlate"],
-            $primitive["brand"],
-            $primitive["model"],
-            $primitive["year"],
-            $primitive["color"],
-            $primitive["deleted"]
+            (int)$primitive["id"],
+            (int)$primitive["clientId"],
+            (string)$primitive["licensePlate"],
+            (string)$primitive["brand"],
+            (string)$primitive["model"],
+            (int)$primitive["year"],
+            (bool)$primitive["deleted"]
         );
     }
 }
