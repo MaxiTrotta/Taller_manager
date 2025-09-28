@@ -97,13 +97,13 @@ final readonly class EmployedRepository extends PDOManager implements EmployedRe
         }
 
         return new Employed(
-            $primitive["id"],
-            $primitive["idSector"],
-            $primitive["name"],
-            $primitive["cuilCuit"],
-            $primitive["phone"],
-            $primitive["email"],
-            $primitive["address"],
+            (int)$primitive["id"],
+            (int)$primitive["idSector"],
+            (string)$primitive["name"],
+            (string)$primitive["cuilCuit"],
+            (string)$primitive["phone"],
+            (string)$primitive["email"],
+            (string)$primitive["address"],
             (bool)$primitive["deleted"]
         );
     }

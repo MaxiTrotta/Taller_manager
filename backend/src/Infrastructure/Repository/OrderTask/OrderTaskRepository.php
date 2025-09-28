@@ -6,13 +6,21 @@ namespace Src\Infrastructure\Repository\OrderTask;
 
 use Src\Infrastructure\PDO\PDOManager;
 use Src\Entity\OrderTask\OrderTask;
+//use Src\Entity\OrderTask\OrderTaskInformation;
 use DateTime;
 
 final readonly class OrderTaskRepository extends PDOManager implements OrderTaskRepositoryInterface {
 
     public function find(int $id): ?OrderTask 
     {
-        $query = "SELECT * FROM order_task WHERE id = :id AND deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT 
+                            *
+                        FROM
+                            order_task OT
+                        WHERE
+                            OT.id = :id AND OT.deleted = 0
+                    HEREDOC;
 
         $parameters = [
             "id" => $id
@@ -23,31 +31,54 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
         return $this->primitiveToOrderTask($result[0] ?? null);
     }
 
+    // public function search(): array
+    // {
+    //     $query = "SELECT OT.* ";
+    //     $query .= "FROM order_task OT WHERE deleted = 0";
+    //     $results = $this->execute($query);
+
+    //     $orderTaskResults = [];
+    //     foreach ($results as $result) {
+    //         $orderTaskResults[] = $this->primitiveToOrderTaskInformation($result);
+    //     }
+
+    //     return $orderTaskResults;
+    // }
+
+
+    /** @return OrderTask[] */
     public function search(): array
     {
-        $query = "SELECT * FROM order_task WHERE deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT
+                            *
+                        FROM
+                            orderTask ot
+                        WHERE
+                            ot.deleted = 0
+                    HEREDOC;
+        
         $results = $this->execute($query);
 
         $orderTaskResults = [];
-        foreach ($results as $result) {
+        foreach($results as $result) {
             $orderTaskResults[] = $this->primitiveToOrderTask($result);
         }
 
         return $orderTaskResults;
     }
-
     public function insert(OrderTask $orderTask): void
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO order_task (idOrder, date, state, createdBy, assignedTo, idSector, idTask, deleted) VALUES (:idOrder, :date, :state, :createdBy, :assignedTo, :idSector, :idTask, :deleted)
+                    INSERT INTO order_task (idOrder, state, idSector, idTask, deleted) VALUES (:idOrder, :state, :idSector, :idTask, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
             "idOrder" => $orderTask->idOrder(),
-            "date" => $orderTask->date(),
+            // "date" => $orderTask->date(),
             "state" => $orderTask->state(),
-            "createdBy" => $orderTask->createdBy(),
-            "assignedTo" => $orderTask->assignedTo(),
+            // "createdBy" => $orderTask->createdBy(),
+            // "assignedTo" => $orderTask->assignedTo(),
             "idSector" => $orderTask->idSector(),
             "idTask" => $orderTask->idTask(),
             "deleted" => $orderTask->isDeleted()
@@ -63,10 +94,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
                             order_task
                         SET
                             idOrder = :idOrder,
-                            date = :date,
                             state = :state,
-                            createdBy = :createdBy,
-                            assignedTo = :assignedTo,
                             idSector = :idSector,
                             idTask = :idTask,
                             deleted = :deleted
@@ -76,10 +104,10 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
 
         $parameters = [
             "idOrder" => $orderTask->idOrder(),
-            "date" => $orderTask->date(),
+            // "date" => $orderTask->date(),
             "state" => $orderTask->state(),
-            "createdBy" => $orderTask->createdBy(),
-            "assignedTo" => $orderTask->assignedTo(),
+            // "createdBy" => $orderTask->createdBy(),
+            // "assignedTo" => $orderTask->assignedTo(),
             "idSector" => $orderTask->idSector(),
             "idTask" => $orderTask->idTask(),
             "deleted" => $orderTask->isDeleted(),
@@ -96,15 +124,28 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
         }
 
         return new OrderTask(
-            $primitive["id"],
-            $primitive["idOrder"],
-            new DateTime($primitive["date"]),
-            $primitive["state"],
-            $primitive["createdBy"],
-            $primitive["assignedTo"],
-            $primitive["idSector"],
-            $primitive["idTask"],
+            (int)$primitive["id"],
+            (int)$primitive["idOrder"],
+            //new DateTime($primitive["date"]),
+            (string)$primitive["state"],
+           // $primitive["createdBy"],
+           // $primitive["assignedTo"],
+            (int)$primitive["idSector"],
+            (int)$primitive["idTask"],
             (bool)$primitive["deleted"]
         );
     }
+
+    // private function primitiveToOrderTaskInformation(?array $primitive): ?OrderTaskInformation
+    // {
+    //     if ($primitive === null) {
+    //         return null;
+    //     }
+
+    //     return new OrderTaskInformation(
+    //         $primitive["idOrder"],
+    //         $primitive["sectorName"],
+    //         $primitive["loquequiers"],
+    //     );
+    // }
 }

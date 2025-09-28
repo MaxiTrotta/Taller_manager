@@ -6,19 +6,19 @@ final class Task {
 
     public function __construct(
         private readonly ?int $id,
-        private string $name,
+        private string $description,
         private bool $deleted
     ) {
     }
 
-    public static function create(string $name): self
+    public static function create(string $description): self
     {
-        return new self(null, $name, false);
+        return new self(null, $description, false);
     }
 
-    public function modify(string $name): void
+    public function modify(string $description): void
     {
-        $this->name = $name;
+        $this->description = $description;
     }
 
     public function delete(): void
@@ -31,9 +31,9 @@ final class Task {
         return $this->id;
     }
 
-    public function name(): string
+    public function description(): string
     {
-        return $this->name;
+        return $this->description;
     }
 
     public function isDeleted(): int

@@ -1,13 +1,13 @@
 <?php 
 
-use Src\Service\Order\OrdersSearcherService;
+use Src\Service\OrderTask\OrderTasksSearcherService;
 
-final readonly class OrdersGetController {
+final readonly class OrderTasksGetController {
 
-    private OrdersSearcherService $service;
+    private OrderTasksSearcherService $service;
 
     public function __construct() {
-        $this->service = new OrdersSearcherService();
+        $this->service = new OrderTasksSearcherService();
     }
 
     public function start(): void 
@@ -23,8 +23,12 @@ final readonly class OrdersGetController {
         foreach ($responses as $response) {
             $result[] = [
                 "id" => $response->id(),
-                "name" => $response->name(),
-                "idClient" => $response->idClient()
+               // "date" => $response->date(),
+                "state" => $response->state(),
+                //"createdBy" => $response->createdBy(),
+                //"assignedTo" => $response->assignedTo(),
+                "idSector" => $response->idSector(),
+                "idTask" => $response->idTask(),
             ];
         }
 

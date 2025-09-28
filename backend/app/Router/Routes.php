@@ -34,6 +34,9 @@ function startRouter(): Router
     include_once "Routes/ClientRoutes.php";
     $routes = array_merge($routes, ClientRoutes::getRoutes());
     
+    include_once "Routes/VehicleRoutes.php";
+    $routes = array_merge($routes, VehicleRoutes::getRoutes());
+
     $routesClass = [];
 
     foreach ($routes as $route) {

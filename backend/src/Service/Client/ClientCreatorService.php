@@ -22,8 +22,8 @@ final readonly class ClientCreatorService {
         string $email,
         string $phone,
         //?DateTime $createdAt,
-        string $createdBy,
-        ?string $modifiedBy,
+        // string $createdBy,
+        // ?string $modifiedBy,
         ): void
     {
         $client = Client::create(
@@ -35,8 +35,8 @@ final readonly class ClientCreatorService {
             $email,
             $phone,
             //$createdAt,
-            $createdBy,
-            $modifiedBy
+            // $createdBy,
+            // $modifiedBy
         );
         $this->repository->create($client);
     } 

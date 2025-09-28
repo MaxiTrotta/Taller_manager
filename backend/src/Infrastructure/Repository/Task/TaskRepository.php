@@ -11,7 +11,11 @@ final readonly class TaskRepository extends PDOManager implements TaskRepository
 
     public function find(int $id): ?Task 
     {
-        $query = "SELECT * FROM task WHERE id = :id AND deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT * 
+                        FROM task 
+                        WHERE id = :id AND deleted = 0
+                    HEREDOC;
 
         $parameters = [
             "id" => $id
@@ -37,10 +41,10 @@ final readonly class TaskRepository extends PDOManager implements TaskRepository
 
     public function insert(Task $task): void
     {
-        $query = "INSERT INTO task (name, deleted) VALUES (:name, :deleted) ";
+        $query = "INSERT INTO task (description, deleted) VALUES (:description, :deleted) ";
 
         $parameters = [
-            "name" => $task->name(),
+            "description" => $task->description(),
             "deleted" => $task->isDeleted()
         ];
 
@@ -53,14 +57,14 @@ final readonly class TaskRepository extends PDOManager implements TaskRepository
                         UPDATE
                             task
                         SET
-                            name = :name,
+                            description = :description,
                             deleted = :deleted
                         WHERE
                             id = :id
                     UPDATE_QUERY;
 
         $parameters = [
-            "name" => $task->name(),
+            "description" => $task->description(),
             "deleted" => $task->isDeleted(),
             "id" => $task->id()
         ];
@@ -75,9 +79,9 @@ final readonly class TaskRepository extends PDOManager implements TaskRepository
         }
 
         return new Task(
-            $primitive["id"],
-            $primitive["name"],
-            $primitive["deleted"]
+            (int)$primitive["id"],
+            (string)$primitive["description"],
+            (bool)$primitive["deleted"]
         );
     }
 }

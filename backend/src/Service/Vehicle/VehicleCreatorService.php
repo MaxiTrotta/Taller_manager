@@ -20,8 +20,7 @@ final readonly class VehicleCreatorService {
         string $licensePlate, 
         string $brand,
         string $model, 
-        ?int $year,
-        ?string $color,
+        ?int $year
     ): void
     {
         $client = $this->clientFinder->find($clientId);
@@ -31,8 +30,7 @@ final readonly class VehicleCreatorService {
             $licensePlate,
             $brand,
             $model,
-            $year,
-            $color
+            $year
         );
 
         $this->repository->create($vehicle);

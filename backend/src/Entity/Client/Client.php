@@ -15,9 +15,9 @@ final class Client
         private string $province,
         private string $email,
         private string $phone,
-        private ?DateTime $createdAt = null,
-        private string $createdBy,
-        private ?string $modifiedBy,
+        // private ?DateTime $createdAt = null,
+        // private string $createdBy,
+        // private ?string $modifiedBy,
         private bool $deleted
     ) {
     }
@@ -63,20 +63,20 @@ final class Client
         return $this->phone;
     }
 
-    public function createdAt(): ?DateTime
-    {
-        return $this->createdAt;
-    }
+    // public function createdAt(): ?DateTime
+    // {
+    //     return $this->createdAt;
+    // }
 
-    public function createdBy(): string
-    {
-        return $this->createdBy;
-    }
+    // public function createdBy(): string
+    // {
+    //     return $this->createdBy;
+    // }
 
-    public function modifiedBy(): ?string
-    {
-        return $this->modifiedBy;
-    }
+    // public function modifiedBy(): ?string
+    // {
+    //     return $this->modifiedBy;
+    // }
 
     public function delete(): void
     {
@@ -97,8 +97,8 @@ final class Client
         string $email,
         string $phone,
         //?DateTime $createdAt,
-        string $createdBy,
-        ?string $modifiedBy
+        // string $createdBy,
+        // ?string $modifiedBy
     ): self {
         return new self(
             null,
@@ -109,11 +109,11 @@ final class Client
             $province,
             $email,
             $phone,
-            null,
+            false,
             //$createdAt,
-            $createdBy,
-            null,
-            false
+            //$createdBy,
+            //null,
+
         );
     }
 
@@ -125,8 +125,8 @@ final class Client
         string $province,
         string $email,
         string $phone,
-        string $createdBy,
-        string $modifiedBy
+        // string $createdBy,
+        // string $modifiedBy
     ): void {
         $this->name = $name;
         $this->cuitCuil = $cuitCuil;
@@ -135,7 +135,7 @@ final class Client
         $this->province = $province;
         $this->email = $email;
         $this->phone = $phone;
-        $this->createdBy = $createdBy;
-        $this->modifiedBy = $modifiedBy;
+        // $this->createdBy = $createdBy;
+        // $this->modifiedBy = $modifiedBy;
     }
 }

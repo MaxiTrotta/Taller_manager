@@ -15,15 +15,15 @@ final readonly class OrderTaskUpdaterService {
 
     public function update(
         int $idOrder,
-        DateTime $date,
+        //DateTime $date,
         string $state,
-        string $createdBy,
-        string $assignedTo,
+        //string $createdBy,
+        //string $assignedTo,
         int $id
     ): void {
         $orderTask = $this->finder->find($id);
 
-        $orderTask->modify($idOrder, $date, $state, $createdBy, $assignedTo, $id);
+        $orderTask->modify($idOrder,$state, $id);
 
         $this->repository->update($orderTask);
     }

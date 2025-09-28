@@ -13,11 +13,11 @@ final readonly class TaskUpdaterService {
         $this->finder = new TaskFinderService();
     }
 
-    public function update(string $name, int $id): void
+    public function update(string $description, int $id): void
     {
         $task = $this->finder->find($id);
 
-        $task->modify($name);
+        $task->modify($description);
 
         $this->repository->update($task);
     }

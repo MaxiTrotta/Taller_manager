@@ -27,8 +27,7 @@ final readonly class VehiclesGetController {
                 "licensePlate" => $vehicle->licensePlate(),
                 "brand" => $vehicle->brand(),
                 "model" => $vehicle->model(),
-                "year" => $vehicle->year(),
-                "color" => $vehicle->color()
+                "year" => $vehicle->year()
             ];
         }
 

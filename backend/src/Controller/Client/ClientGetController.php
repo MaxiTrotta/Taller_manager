@@ -24,9 +24,9 @@ final readonly class ClientGetController extends AuthMiddleware {
             "province" => $client->province(),
             "email" => $client->email(),
             "phone" => $client->phone(),
-            "createdAt" => $client->createdAt(),
-            "createdBy" => $client->createdBy(),
-            "modifiedBy" => $client->modifiedBy(),
+            // "createdAt" => $client->createdAt(),
+            // "createdBy" => $client->createdBy(),
+            // "modifiedBy" => $client->modifiedBy(),
         ], true);
     }
 }

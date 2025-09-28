@@ -49,4 +49,19 @@ final readonly class ControllerUtils {
     {
         return $_FILES;
     }
+
+    public static function getHeader(string $name): string
+    {
+        $headers = getallheaders();
+        $header = $headers[$name];
+        if ($header === null) {
+            throw new Exception(sprintf("Header %s not found", $name));
+        }
+        return $header;
+    }
+
+    public static function getHeaderToken(): string
+    {
+        return self::getHeader("x-api-key");
+    }
 }

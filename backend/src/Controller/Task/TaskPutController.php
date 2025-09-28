@@ -12,8 +12,8 @@ final readonly class TaskPutController {
 
     public function start(int $id): void
     {
-        $name = ControllerUtils::getPost("name");
+        $description = ControllerUtils::getPost("description");
 
-        $this->service->update($name, $id);
+        $this->service->update($description, $id);
     }
 }

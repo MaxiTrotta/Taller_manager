@@ -17,10 +17,10 @@ final readonly class OrderTaskGetController extends AuthMiddleware {
 
         echo json_encode([
             "id" => $orderTask->id(),
-            "date" => $orderTask->date(),
+            //"date" => $orderTask->date(),
             "state" => $orderTask->state(),
-            "createdBy" => $orderTask->createdBy(),
-            "assignedTo" => $orderTask->assignedTo(),
+            //"createdBy" => $orderTask->createdBy(),
+            //"assignedTo" => $orderTask->assignedTo(),
             "idSector" => $orderTask->idSector(),
             "idTask" => $orderTask->idTask(),
         ], true);

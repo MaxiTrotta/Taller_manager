@@ -17,7 +17,7 @@ final readonly class TaskGetController extends AuthMiddleware {
 
         echo json_encode([
             "id" => $task->id(),
-            "name" => $task->name(),
+            "description" => $task->description(),
         ], true);
     }
 }

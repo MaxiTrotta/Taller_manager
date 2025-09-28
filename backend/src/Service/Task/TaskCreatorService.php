@@ -12,9 +12,9 @@ final readonly class TaskCreatorService {
         $this->repository = new TaskRepository();
     }
 
-    public function create(string $name): void
+    public function create(string $description): void
     {
-        $task = Task::create($name);
+        $task = Task::create($description);
         $this->repository->insert($task);
     }
 }

@@ -23,7 +23,7 @@ final readonly class TasksGetController {
         foreach ($responses as $response) {
             $result[] = [
                 "id" => $response->id(),
-                "name" => $response->name()
+                "description" => $response->description()
             ];
         }
 
