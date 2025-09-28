@@ -1,7 +1,4 @@
 import './App.css'
-import FormularioRegistro from './components/FormularioRegistro/FormularioRegistro'
-import FormularioCliente from './components/FormularioCliente/FormularioCliente'
-import UserTable from './components/UserTable/UserTable'
 import { HomePage } from './pages/HomePage/HomePage'
 import { Header } from "./components/Header/Header";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -13,50 +10,29 @@ import { PrivateRoute, PublicRoute } from "./Routes";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
 import { TableSort } from './components/TableSort/TableSort'
+import EmployeesTable from './components/EmployeesTable/EmployeesTable';
+import OrderCreate from './components/OrderCreate/OrderCreate';
 
-// function App() {
 
-
-//   return (
-//     <MantineProvider>
-//       <BrowserRouter>
-//         <div className="contenedor_backend">
-//           <NavbarSimpleColored/>
-//           <div className='contenido'>
-//             <Routes>
-//               <Route path="/" element={<HomePage />} />
-//               <Route path="/formulario" element={<FormularioRegistro />} />
-//               <Route path="/cliente" element={<FormularioCliente />} />
-//               <Route path="/empleado" element={<UserTable />} />
-//             </Routes>
-//           </div>
-//         </div>
-//         {/* <Footer /> */}
-//       </BrowserRouter>
-//     </MantineProvider>
-//   )
-// }
-
-// export default App
 
 function App() {
 	return (
-		<MantineProvider defaultColorScheme="dark">
+		<MantineProvider defaultColorScheme="white">
 			<BrowserRouter>
 				<Routes>
 					{/*Rutas públicas*/}
 					<Route element={<PublicRoute />}>
 						<Route path="/" element={<LoginPage />} />	
 						<Route path="/login" element={<LoginPage />} />
-						<Route path="/register" element={<RegisterPage />} />
 					</Route>
 
 					{/*Rutas privadas */}
-					<Route element={<PrivateRoute />}>
+						<Route element={<PrivateRoute />}>
+						<Route path="/register" element={<RegisterPage />} />
 						<Route path="/home" element={<HomePage />} />
 						<Route path="/cliente" element={<TableSort />} />
-						<Route path="/ordenes" element={<FormularioCliente />} />
-						<Route path="/empleado" element={<UserTable />} />
+						<Route path="/ordenes" element={<OrderCreate />} />
+						<Route path="/empleado" element={<EmployeesTable />} />
 					</Route>
 				</Routes>
 			</BrowserRouter>

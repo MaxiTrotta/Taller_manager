@@ -21,9 +21,9 @@ const data = [
   { link: '/cliente', label: 'Clientes', icon: IconDatabaseImport },
   { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
+  { link: '/register', label: 'Registrar Nuevo Sector', icon: IconKey },
+  
 ];
-
-
 export function NavbarSimpleColored() {
   const navigate = useNavigate();
   const [active, setActive] = useState('Billing');
