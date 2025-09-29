@@ -44,7 +44,10 @@ final readonly class EmployedRepository extends PDOManager implements EmployedRe
 
     public function insert(Employed $employed): void
     {
-        $query = "INSERT INTO employed (idSector, name, cuilCuit, phone, email, address, deleted) VALUES (:idSector, :name, :cuilCuit, :phone, :email, :address, :deleted) ";
+        $query = <<<INSERT_QUERY
+                        INSERT INTO employed (idSector, name, cuilCuit, phone, email, address, deleted)
+                        VALUES (:idSector, :name, :cuilCuit, :phone, :email, :address, :deleted)
+                    INSERT_QUERY;
 
         $parameters = [
             "idSector" => $employed->idSector(),

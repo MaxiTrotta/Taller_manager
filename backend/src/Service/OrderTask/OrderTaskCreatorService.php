@@ -16,7 +16,7 @@ final readonly class OrderTaskCreatorService {
     public function create(
             ?int $idOrder,
            // ?DateTime $date,
-            string $state,
+           ?string $state,
            // int $createdBy,
             //string $assignedTo,
             ?int $idSector,
@@ -30,7 +30,8 @@ final readonly class OrderTaskCreatorService {
                // $createdBy,
                 //$assignedTo,
                 $idSector,
-                $idTask);
+                $idTask
+            );
         $this->repository->insert($orderTask);
     }
 }
