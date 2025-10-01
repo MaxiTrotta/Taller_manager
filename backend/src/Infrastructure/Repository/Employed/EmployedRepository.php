@@ -6,16 +6,20 @@ namespace Src\Infrastructure\Repository\Employed;
 
 use Src\Infrastructure\PDO\PDOManager;
 use Src\Entity\Employed\Employed;
+use Src\Entity\Employed\EmployeeProjection;
 
 final readonly class EmployedRepository extends PDOManager implements EmployedRepositoryInterface {
 
-    public function find(int $id): ?Employed 
+    public function find(int $id): ?EmployeeProjection 
     {
         $query = <<<HEREDOC
                         SELECT 
-                            *
+                            E.*,
+                            S.name AS sectorName
                         FROM
                             employed E
+                        INNER JOIN 
+                            sector S ON E.idSector = S.id
                         WHERE
                             E.id = :id AND E.deleted = 0
                     HEREDOC;
@@ -26,17 +30,28 @@ final readonly class EmployedRepository extends PDOManager implements EmployedRe
 
         $result = $this->execute($query, $parameters);
         
-        return $this->primitiveToEmployed($result[0] ?? null);
+        return $this->primitiveToEmployeeProjection($result[0] ?? null);
     }
 
     public function search(): array
     {
-        $query = "SELECT * FROM employed WHERE deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT 
+                            E.*,
+                            S.name AS sectorName
+                        FROM
+                            employed E
+                        INNER JOIN 
+                            sector S ON E.idSector = S.id
+                        WHERE
+                            E.deleted = 0
+                    HEREDOC;
+
         $results = $this->execute($query);
 
         $employedResults = [];
         foreach ($results as $result) {
-            $employedResults[] = $this->primitiveToEmployed($result);
+            $employedResults[] = $this->primitiveToEmployeeProjection($result);
         }
 
         return $employedResults;
@@ -110,6 +125,24 @@ final readonly class EmployedRepository extends PDOManager implements EmployedRe
             (string)$primitive["address"],
 
             (bool)$primitive["deleted"]
+        );
+    }
+
+    private function primitiveToEmployeeProjection(?array $primitive): ?EmployeeProjection
+    {
+        if ($primitive === null) {
+            return null;
+        }
+
+        return new EmployeeProjection(
+            (int) $primitive["id"],
+            (int) $primitive["idSector"],
+            $primitive["sectorName"],
+            $primitive["name"],
+            $primitive["cuilCuit"],
+            $primitive["phone"],
+            $primitive["email"],
+            $primitive["address"],
         );
     }
 }

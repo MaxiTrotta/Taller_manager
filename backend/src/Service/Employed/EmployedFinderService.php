@@ -5,7 +5,7 @@ declare(strict_types = 1);
 
 namespace Src\Service\Employed;
 
-use Src\Entity\Employed\Employed;
+use Src\Entity\Employed\EmployeeProjection;
 use Src\Entity\Employed\Exception\EmployedNotFoundException;
 use Src\Infrastructure\Repository\Employed\EmployedRepository;
 
@@ -18,7 +18,7 @@ final readonly class EmployedFinderService {
         $this->employedRepository = new EmployedRepository();
     }
 
-    public function find(int $id): Employed 
+    public function find(int $id): EmployeeProjection 
     {
         $employed = $this->employedRepository->find($id);
 

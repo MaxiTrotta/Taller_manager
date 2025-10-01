@@ -5,11 +5,12 @@ declare(strict_types = 1);
 namespace Src\Infrastructure\Repository\Employed;
 
 use Src\Entity\Employed\Employed;
+use Src\Entity\Employed\EmployeeProjection;
 
 interface EmployedRepositoryInterface {
-    public function find(int $id): ?Employed;
+    public function find(int $id): ?EmployeeProjection;
 
-    /** @return Employed[] */
+    /** @return EmployeeProjection[] */
     public function search(): array;
 
     public function insert(Employed $employed): void;

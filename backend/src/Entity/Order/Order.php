@@ -6,21 +6,23 @@ final class Order {
 
     public function __construct(
         private readonly ?int $id,
-        private string $name,
         private int $idClient,
+        private int $idVehicle,
+        private int $idOrderTask,
         private bool $deleted
     ) {
     }
 
-    public static function create(string $name, int $idClient): self
+    public static function create(int $idClient, int $idVehicle, int $idOrderTask): self
     {
-        return new self(null, $name, $idClient, false);
+        return new self(null, $idClient, $idVehicle, $idOrderTask, false);
     }
 
-    public function modify(string $name, int $idClient): void
+    public function modify(int $idClient, int $idVehicle, int $idOrderTask): void
     {
-        $this->name = $name;
         $this->idClient = $idClient;
+        $this->idVehicle = $idVehicle;
+        $this->idOrderTask = $idOrderTask;
     }
 
     public function delete(): void
@@ -33,14 +35,19 @@ final class Order {
         return $this->id;
     }
 
-    public function name(): string
-    {
-        return $this->name;
-    }
-
-    public function idClient(): string
+    public function idClient(): int
     {
         return $this->idClient;
+    }
+
+    public function idVehicle(): int
+    {
+        return $this->idVehicle;
+    }
+
+    public function idOrderTask(): int
+    {
+        return $this->idOrderTask;
     }
 
     public function isDeleted(): int

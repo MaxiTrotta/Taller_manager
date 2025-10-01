@@ -12,9 +12,9 @@ final readonly class EmployedCreatorService {
         $this->repository = new EmployedRepository();
     }
 
-    public function create(string $name, string $cuilCuit, string $phone, string $email, string $address): void
+    public function create(int $idSector, string $name, string $cuilCuit, string $phone, string $email, string $address): void
     {
-        $employed = Employed::create($name, $cuilCuit, $phone, $email, $address);
+        $employed = Employed::create($idSector,$name, $cuilCuit, $phone, $email, $address);
         $this->repository->insert($employed);
     }
 }

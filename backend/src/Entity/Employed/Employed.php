@@ -16,13 +16,14 @@ final class Employed {
     ) {
     }
 
-    public static function create(string $name, string $cuilCuit, string $phone, string $email, string $address): self
+    public static function create(int $idSector, string $name, string $cuilCuit, string $phone, string $email, string $address): self
     {
-        return new self(null, null, $name, $cuilCuit, $phone, $email, $address, false);
+        return new self(null, $idSector, $name, $cuilCuit, $phone, $email, $address, false);
     }
 
-    public function modify(string $name, string $cuilCuit, string $phone, string $email, string $address): void
+    public function modify(int $idSector, string $name, string $cuilCuit, string $phone, string $email, string $address): void
     {
+        $this->idSector = $idSector;
         $this->name = $name;
         $this->cuilCuit = $cuilCuit;
         $this->phone = $phone;
