@@ -18,6 +18,7 @@ final readonly class EmployedGetController extends AuthMiddleware {
         echo json_encode([
             "id" => $employed->id(),
             "idSector" => $employed->idSector(),
+            "sectorName" => $employed->sectorName(),
             "name" => $employed->name(),
             "cuilCuit" => $employed->cuilCuit(),
             "phone" => $employed->phone(),

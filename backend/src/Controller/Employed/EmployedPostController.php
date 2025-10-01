@@ -12,12 +12,13 @@ final readonly class EmployedPostController {
 
     public function start(): void
     {
+        $idSector = ControllerUtils::getPost("idSector");
         $name = ControllerUtils::getPost("name");
         $cuilCuit = ControllerUtils::getPost("cuilCuit");
         $phone = ControllerUtils::getPost("phone");
         $email = ControllerUtils::getPost("email");
         $address = ControllerUtils::getPost("address");
 
-        $this->service->create($name, $cuilCuit, $phone, $email, $address);
+        $this->service->create($idSector, $name, $cuilCuit, $phone, $email, $address);
     }
 }

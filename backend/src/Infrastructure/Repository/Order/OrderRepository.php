@@ -11,7 +11,12 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
 
     public function find(int $id): ?Order 
     {
-        $query = "SELECT * FROM order_base WHERE id = :id AND deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT T.description
+                        FROM task T
+                        JOIN orderTask OT ON T.id = OT.idTask
+                        WHERE OT.idOrder = :id AND OT.deleted = 0
+                    HEREDOC;
 
         $parameters = [
             "id" => $id
@@ -24,7 +29,17 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
 
     public function search(): array
     {
-        $query = "SELECT * FROM order_base WHERE deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT 
+                            O.*,
+                            T.description AS taskDescription
+                        FROM
+                            order_base O
+                        INNER JOIN 
+                            task T ON O.idOrderTask = T.id
+                        WHERE
+                            E.deleted = 0
+                    HEREDOC;
         $results = $this->execute($query);
 
         $orderResults = [];
@@ -42,8 +57,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                 INSERT_QUERY;
 
         $parameters = [
-            "name" => $order->name(),
             "idClient" => $order->idClient(),
+            "idVehicle" => $order->idVehicle(),
+            "idOrderTask" => $order->idOrderTask(),
             "deleted" => $order->isDeleted()
         ];
 
@@ -64,8 +80,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                     UPDATE_QUERY;
 
         $parameters = [
-            "name" => $order->name(),
             "idClient" => $order->idClient(),
+            "idVehicle" => $order->idVehicle(),
+            "idOrderTask" => $order->idOrderTask(),
             "deleted" => $order->isDeleted(),
             "id" => $order->id()
         ];
@@ -81,8 +98,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
 
         return new Order(
             (int)$primitive["id"],
-            (string)$primitive["name"],
             (int)$primitive["idClient"],
+            (int)$primitive["idVehicle"],
+            (int)$primitive["idOrderTask"],
             (bool)$primitive["deleted"]
         );
     }

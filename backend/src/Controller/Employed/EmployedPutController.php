@@ -12,12 +12,13 @@ final readonly class EmployedPutController {
 
     public function start(int $id): void
     {
+        $idSector = ControllerUtils::getPost("idSector");
         $name = ControllerUtils::getPost("name");
         $cuilCuit = ControllerUtils::getPost("cuilCuit");
         $phone = ControllerUtils::getPost("phone");
         $email = ControllerUtils::getPost("email");
         $address = ControllerUtils::getPost("address");
 
-        $this->service->update($name, $cuilCuit, $phone, $email, $address, $id);
+        $this->service->update($idSector, $name, $cuilCuit, $phone, $email, $address, $id);
     }
 }

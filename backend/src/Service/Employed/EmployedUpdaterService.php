@@ -13,11 +13,11 @@ final readonly class EmployedUpdaterService {
         $this->finder = new EmployedFinderService();
     }
 
-    public function update(string $name, string $cuilCuit, string $phone, string $email, string $address, int $id): void
+    public function update(int $idSector,string $name, string $cuilCuit, string $phone, string $email, string $address, int $id): void
     {
         $employed = $this->finder->find($id);
 
-        $employed->modify($name, $cuilCuit, $phone, $email, $address);
+        $employed->modify($idSector,$name, $cuilCuit, $phone, $email, $address);
 
         $this->repository->update($employed);
     }
