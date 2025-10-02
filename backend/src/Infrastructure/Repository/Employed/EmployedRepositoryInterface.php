@@ -8,7 +8,8 @@ use Src\Entity\Employed\Employed;
 use Src\Entity\Employed\EmployeeProjection;
 
 interface EmployedRepositoryInterface {
-    public function find(int $id): ?EmployeeProjection;
+    public function findProjection(int $id): ?EmployeeProjection;
+    public function find(int $id): ?Employed;
 
     /** @return EmployeeProjection[] */
     public function search(): array;
