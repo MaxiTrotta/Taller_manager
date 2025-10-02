@@ -17,7 +17,7 @@ import OrderCreate from './components/OrderCreate/OrderCreate';
 
 function App() {
 	return (
-		<MantineProvider defaultColorScheme="white">
+		<MantineProvider defaultColorScheme="white" forceColorScheme='dark'>
 			<BrowserRouter>
 				<Routes>
 					{/*Rutas públicas*/}

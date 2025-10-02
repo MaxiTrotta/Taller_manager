@@ -10,7 +10,7 @@ use Src\Entity\Employed\EmployeeProjection;
 
 final readonly class EmployedRepository extends PDOManager implements EmployedRepositoryInterface {
 
-    public function find(int $id): ?EmployeeProjection 
+    public function findProjection(int $id): ?EmployeeProjection 
     {
         $query = <<<HEREDOC
                         SELECT 
@@ -31,6 +31,25 @@ final readonly class EmployedRepository extends PDOManager implements EmployedRe
         $result = $this->execute($query, $parameters);
         
         return $this->primitiveToEmployeeProjection($result[0] ?? null);
+    }
+    public function find(int $id): ?Employed 
+    {
+        $query = <<<HEREDOC
+                        SELECT 
+                            *
+                        FROM
+                            employed E
+                        WHERE
+                            E.id = :id AND E.deleted = 0
+                    HEREDOC;
+
+        $parameters = [
+            "id" => $id
+        ];
+
+        $result = $this->execute($query, $parameters);
+        
+        return $this->primitiveToEmployed($result[0] ?? null);
     }
 
     public function search(): array
