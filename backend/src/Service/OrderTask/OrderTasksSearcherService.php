@@ -12,8 +12,8 @@ final readonly class OrderTasksSearcherService {
         $this->repository = new OrderTaskRepository();
     }
 
-    public function search(): array
+    public function searchProjections(): array
     {
-        return $this->repository->search();
+        return $this->repository->searchProjections();
     }
 }

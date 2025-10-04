@@ -13,7 +13,7 @@ final readonly class EmployedGetController extends AuthMiddleware {
 
     public function start(int $id): void 
     {
-        $employed = $this->service->find($id);
+        $employed = $this->service->findProjection($id);
 
         echo json_encode([
             "id" => $employed->id(),

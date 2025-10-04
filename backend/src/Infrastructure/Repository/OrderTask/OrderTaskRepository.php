@@ -6,6 +6,7 @@ namespace Src\Infrastructure\Repository\OrderTask;
 
 use Src\Infrastructure\PDO\PDOManager;
 use Src\Entity\OrderTask\OrderTask;
+use Src\Entity\OrderTask\OrderTaskProjection;
 //use Src\Entity\OrderTask\OrderTaskInformation;
 use DateTime;
 
@@ -31,19 +32,31 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
         return $this->primitiveToOrderTask($result[0] ?? null);
     }
 
-    // public function search(): array
-    // {
-    //     $query = "SELECT OT.* ";
-    //     $query .= "FROM orderTask OT WHERE deleted = 0";
-    //     $results = $this->execute($query);
+    public function findProjection(int $id): ?OrderTaskProjection
+    {
+        $query = <<<HEREDOC
+                        SELECT 
+                            OT.*,
+                            S.name AS sectorName,
+                            T.description AS taskDescription
+                        FROM
+                            orderTask OT
+                        INNER JOIN
+                            sector S ON OT.idSector = S.id
+                        INNER JOIN
+                            task T ON OT.idTask = T.id
+                        WHERE
+                            OT.id = :id AND OT.deleted = 0
+                    HEREDOC;
 
-    //     $orderTaskResults = [];
-    //     foreach ($results as $result) {
-    //         $orderTaskResults[] = $this->primitiveToOrderTaskInformation($result);
-    //     }
+        $parameters = [
+            "id" => $id
+        ];
 
-    //     return $orderTaskResults;
-    // }
+        $result = $this->execute($query, $parameters);
+        
+        return $this->primitiveToOrderTaskProjection($result[0] ?? null);
+    }
 
 
     /** @return OrderTask[] */
@@ -67,6 +80,37 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
 
         return $orderTaskResults;
     }
+
+
+    /** @return OrderTaskProjection[] */
+    public function searchProjections(): array
+    {
+        $query = <<<HEREDOC
+                        SELECT
+                            OT.*,
+                            S.name AS sectorName,
+                            T.description AS taskDescription
+                        FROM
+                            orderTask OT
+                        INNER JOIN
+                            sector S ON OT.idSector = S.id
+                        INNER JOIN
+                            task T ON OT.idTask = T.id
+                        WHERE
+                            deleted = 0
+                    HEREDOC;
+        
+        $results = $this->execute($query);
+
+        $orderTaskResults = [];
+        foreach($results as $result) {
+            $orderTaskResults[] = $this->primitiveToOrderTaskProjection($result);
+        }
+
+        return $orderTaskResults;
+    }
+
+
     public function insert(OrderTask $orderTask): void
     {
         $query = <<<INSERT_QUERY
@@ -135,17 +179,17 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             (bool)$primitive["deleted"]
         );
     }
+    private function primitiveToOrderTaskProjection(?array $primitive): ?OrderTaskProjection
+    {
+        if ($primitive === null) {
+            return null;
+        }
 
-    // private function primitiveToOrderTaskInformation(?array $primitive): ?OrderTaskInformation
-    // {
-    //     if ($primitive === null) {
-    //         return null;
-    //     }
-
-    //     return new OrderTaskInformation(
-    //         $primitive["idOrder"],
-    //         $primitive["sectorName"],
-    //         $primitive["loquequiers"],
-    //     );
-    // }
+        return new OrderTaskProjection(
+            (int)$primitive["idOrder"],
+            (string)$primitive["state"] ?? null,
+            (string)$primitive["sectorName"] ?? null,
+            (string)$primitive["taskDescription"] ?? null
+        );
+    }
 }

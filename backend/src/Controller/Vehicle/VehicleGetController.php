@@ -11,11 +11,12 @@ final readonly class VehicleGetController {
 
     public function start(int $id): void 
     {
-        $vehicle = $this->service->find($id);
+        $vehicle = $this->service->findProjection($id);
 
         echo json_encode([
             "id" => $vehicle->id(),
             "clientId" => $vehicle->clientId(),
+            "clientName" => $vehicle->clientName(),
             "licensePlate" => $vehicle->licensePlate(),
             "brand" => $vehicle->brand(),
             "model" => $vehicle->model(),

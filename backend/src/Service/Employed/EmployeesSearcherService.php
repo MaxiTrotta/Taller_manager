@@ -12,8 +12,8 @@ final readonly class EmployeesSearcherService {
         $this->repository = new EmployedRepository();
     }
 
-    public function search(): array
+    public function searchProjections(): array
     {
-        return $this->repository->search();
+        return $this->repository->searchProjections();
     }
 }
