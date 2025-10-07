@@ -7,6 +7,32 @@ namespace Src\Utils;
 use Exception;
 
 final readonly class ControllerUtils {
+    
+    public static function getGet(string $name, bool $required = true, mixed $default = null): mixed 
+    {
+        $postData = self::getGetData();
+        
+        $value = $postData[$name] ?? null;
+
+        if ($required && $value === null) {
+            throw new Exception(sprintf("Parameter %s not found", $name));
+        } 
+
+        return $value ?? $default;
+    }
+
+    private static function getGetData(): array
+    {
+        $data = $_GET;
+        
+        if (empty($data)) {
+            return [];
+        }
+        
+        return $data;
+    }
+
+
     public static function getPost(string $name, bool $required = true, mixed $default = null): mixed 
     {
         $postData = self::getPostData();

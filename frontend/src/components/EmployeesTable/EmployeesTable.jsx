@@ -92,7 +92,7 @@ export function EmployeesTable() {
       if (response.status === 201 || response.status === 200) {
         const created = response.data ?? { id: Math.random(), ...newEmployee };
         setEmployees([...employees, created]);
-        closeAdd();
+        closeAdd();np
         setNewEmployee({ idSector: "", name: "", cuilCuit: "", phone: "", email: "", address: "", avatar: "" });
       }
     } catch (err) {

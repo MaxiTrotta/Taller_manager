@@ -1,5 +1,6 @@
 <?php 
 
+use Src\Utils\ControllerUtils;
 use Src\Service\Vehicle\VehiclesSearcherService;
 
 final readonly class VehiclesGetController {
@@ -11,7 +12,9 @@ final readonly class VehiclesGetController {
 
     public function start(): void
     {
-        $vehicles = $this->service->search();
+        $clientId = ControllerUtils::getGet('clientId');
+
+        $vehicles = $this->service->search($clientId);
 
         echo json_encode($this->toResponse($vehicles));
     }

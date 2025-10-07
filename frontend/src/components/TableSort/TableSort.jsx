@@ -1,23 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { clientService } from '../../services/clientService';
+import { ClientCreatorService } from '../../services/ClientCreatorService';
 import { VehicleCreatorService } from '../../services/VehicleCreatorService';
-import { IconChevronDown, IconChevronUp, IconSearch, IconSelector, IconPencil, IconTrash, IconEye } from '@tabler/icons-react';
 import {
-  Center,
-  Group,
-  ScrollArea,
-  Table,
-  Text,
-  TextInput,
-  UnstyledButton,
-  Modal,
-  Button,
-  ActionIcon
+  IconChevronDown, IconChevronUp, IconSearch, IconSelector,
+  IconPencil, IconTrash, IconEye
+} from '@tabler/icons-react';
+import {
+  Center, Group, ScrollArea, Table, Text, TextInput, UnstyledButton,
+  Modal, Button, ActionIcon, Select
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import classes from './TableSort.module.css';
-import * as React from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import TablePagination from '@mui/material/TablePagination';
@@ -110,7 +104,7 @@ export function TableSort() {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const response = await clientService.getAllClients();
+      const response = await ClientCreatorService.getAll();
       if (response.status === 200) {
         setClients(response.data);
         setSortedData(sortData(response.data, { sortBy, reversed: reverseSortDirection, search }));
@@ -314,13 +308,7 @@ export function TableSort() {
           <Button
             variant="filled"
             color="blue"
-            onClick={() => {
-              if (!selectedClient) {
-                alert("Primero selecciona un cliente para agregar un vehículo.");
-                return;
-              }
-              openAddVehicleModal();
-            }}
+            onClick={openAddVehicleModal} // se abre directo
           >
             Agregar Vehículo
           </Button>
@@ -408,18 +396,34 @@ export function TableSort() {
       </Modal>
 
       {/* Modal Agregar Vehículo */}
-      <Modal opened={addVehicleModalOpened} onClose={closeAddVehicleModal} title={`Agregar Vehículo a ${selectedClient?.name}`} centered size="md">
+      <Modal opened={addVehicleModalOpened} onClose={closeAddVehicleModal} title="Agregar Vehículo" centered size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <Select
+            label="Seleccionar Cliente"
+            placeholder="Busca un cliente..."
+            searchable
+            nothingFoundMessage="No se encontraron clientes"
+            value={selectedClient?.id?.toString() || ''}
+            onChange={(value) => {
+              const client = clients.find(c => c.id.toString() === value);
+              setSelectedClient(client || null);
+            }}
+            data={clients.map(c => ({
+              value: c.id.toString(),
+              label: `${c.name} - ${c.email}`,
+            }))}
+          />
           <TextInput label="Patente" name="licensePlate" value={newVehicle.licensePlate} onChange={handleNewVehicleChange} />
           <TextInput label="Marca" name="brand" value={newVehicle.brand} onChange={handleNewVehicleChange} />
           <TextInput label="Modelo" name="model" value={newVehicle.model} onChange={handleNewVehicleChange} />
           <TextInput label="Año" name="year" type="number" value={newVehicle.year} onChange={handleNewVehicleChange} />
-          <Button color="blue" onClick={handleAddVehicle}>Guardar Vehículo</Button>
+          <Button color="blue" onClick={handleAddVehicle} disabled={!selectedClient}>
+            Guardar Vehículo
+          </Button>
         </div>
       </Modal>
 
-      {/* Los modales de agregar, editar y eliminar cliente se mantienen iguales */}
-      {/* Agregar Cliente */}
+      {/* Modales Agregar, Editar y Eliminar Cliente */}
       <Modal opened={addModalOpened} onClose={closeAddModal} title="Agregar Cliente" centered size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <TextInput label="Nombre" name="name" value={newClient.name} onChange={handleNewClientChange} />
@@ -433,23 +437,21 @@ export function TableSort() {
         </div>
       </Modal>
 
-      {/* Editar Cliente */}
       <Modal opened={editModalOpened} onClose={closeEditModal} title="Editar Cliente" centered size="md">
         {clientToEdit && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <TextInput label="Nombre" name="name" value={clientToEdit.name} onChange={(e) => setClientToEdit({...clientToEdit, name: e.currentTarget.value})} />
-            <TextInput label="Email" name="email" value={clientToEdit.email} onChange={(e) => setClientToEdit({...clientToEdit, email: e.currentTarget.value})} />
-            <TextInput label="CUIT/CUIL" name="cuitCuil" value={clientToEdit.cuitCuil} onChange={(e) => setClientToEdit({...clientToEdit, cuitCuil: e.currentTarget.value})} />
-            <TextInput label="Teléfono" name="phone" value={clientToEdit.phone} onChange={(e) => setClientToEdit({...clientToEdit, phone: e.currentTarget.value})} />
-            <TextInput label="Dirección" name="address" value={clientToEdit.address} onChange={(e) => setClientToEdit({...clientToEdit, address: e.currentTarget.value})} />
-            <TextInput label="Ciudad" name="city" value={clientToEdit.city} onChange={(e) => setClientToEdit({...clientToEdit, city: e.currentTarget.value})} />
-            <TextInput label="Provincia" name="province" value={clientToEdit.province} onChange={(e) => setClientToEdit({...clientToEdit, province: e.currentTarget.value})} />
+            <TextInput label="Nombre" value={clientToEdit.name} onChange={(e) => setClientToEdit({ ...clientToEdit, name: e.currentTarget.value })} />
+            <TextInput label="Email" value={clientToEdit.email} onChange={(e) => setClientToEdit({ ...clientToEdit, email: e.currentTarget.value })} />
+            <TextInput label="CUIT/CUIL" value={clientToEdit.cuitCuil} onChange={(e) => setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value })} />
+            <TextInput label="Teléfono" value={clientToEdit.phone} onChange={(e) => setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value })} />
+            <TextInput label="Dirección" value={clientToEdit.address} onChange={(e) => setClientToEdit({ ...clientToEdit, address: e.currentTarget.value })} />
+            <TextInput label="Ciudad" value={clientToEdit.city} onChange={(e) => setClientToEdit({ ...clientToEdit, city: e.currentTarget.value })} />
+            <TextInput label="Provincia" value={clientToEdit.province} onChange={(e) => setClientToEdit({ ...clientToEdit, province: e.currentTarget.value })} />
             <Button color="blue" onClick={handleEditClient} loading={isEditing}>Actualizar Cliente</Button>
           </div>
         )}
       </Modal>
 
-      {/* Eliminar Cliente */}
       <Modal opened={deleteModalOpened} onClose={closeDeleteModal} title="Eliminar Cliente" centered size="sm">
         <Text>¿Estás seguro que deseas eliminar a {clientToDelete?.name}?</Text>
         <Group position="apart" mt="md">
@@ -460,4 +462,3 @@ export function TableSort() {
     </ScrollArea>
   );
 }
-
