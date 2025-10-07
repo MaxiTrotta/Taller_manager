@@ -13,8 +13,12 @@ final readonly class VehiclesSearcherService {
     }
 
     /** @return Vehicle[] */
-    public function search(): array
+    public function search(?int $clientId): array
     {
+        if (!empty($clientId)) {
+            return $this->repository->searchByClient($clientId);
+        }
+
         return $this->repository->search();
     }
 }
