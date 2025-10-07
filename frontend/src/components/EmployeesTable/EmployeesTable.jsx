@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { employeesService } from "../../services/employeeService";
-import { sectorsService } from "../../services/sectorsService"; // Servicio para obtener sectores
+import { sectorsService } from "../../services/sectorsService";
 
 import {
   ActionIcon,
@@ -19,7 +19,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconPencil, IconTrash, IconEye, IconSearch } from "@tabler/icons-react";
 import { CircularIndeterminate } from "../TableSort/TableSort"; // Loader reutilizado
 
-// Colores según sector/puesto
 const jobColors = {
   reparacion: "blue",
   alineacion: "red",
@@ -34,13 +33,11 @@ export function EmployeesTable() {
   const [search, setSearch] = useState("");
   const [sectors, setSectors] = useState([]);
 
-  // Modales
   const [addModalOpened, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [editModalOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
   const [deleteModalOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const [viewModalOpened, { open: openView, close: closeView }] = useDisclosure(false);
 
-  // Empleado seleccionado y nuevo empleado
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [newEmployee, setNewEmployee] = useState({
     idSector: "",
@@ -52,46 +49,43 @@ export function EmployeesTable() {
     avatar: "",
   });
 
-  // Cargar empleados
+  // =================== FETCH ===================
+  const fetchEmployees = async () => {
+    setLoading(true);
+    try {
+      const response = await employeesService.getAllEmployees();
+      setEmployees(response.data ?? []);
+    } catch (err) {
+      console.error("Error al cargar empleados:", err);
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSectors = async () => {
+    try {
+      const response = await sectorsService.getAllSectors();
+      setSectors(response.data ?? []);
+    } catch (err) {
+      console.error("Error al cargar sectores:", err);
+      setSectors([]);
+    }
+  };
+
   useEffect(() => {
-    async function fetchEmployees() {
-      setLoading(true);
-      try {
-        const response = await employeesService.getAllEmployees();
-        const employeesArray = Array.isArray(response.data)
-          ? response.data
-          : response.data?.data ?? [];
-        setEmployees(employeesArray);
-      } catch (err) {
-        console.error("Error al cargar empleados:", err);
-        setEmployees([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function fetchSectors() {
-      try {
-        const response = await sectorsService.getAllSectors();
-        setSectors(response.data ?? []);
-      } catch (err) {
-        console.error("Error al cargar sectores:", err);
-        setSectors([]);
-      }
-    }
-
     fetchEmployees();
     fetchSectors();
   }, []);
 
-  // Filtrar empleados
+  // =================== FILTRO ===================
   const filtered = employees.filter((emp) =>
     Object.values(emp).some((val) =>
       val?.toString().toLowerCase().includes(search.toLowerCase())
     )
   );
 
-  // =================== Handlers ===================
+  // =================== HANDLERS ===================
   const handleAddEmployee = async () => {
     try {
       const response = await employeesService.createEmployed(newEmployee);
@@ -110,7 +104,8 @@ export function EmployeesTable() {
     try {
       const response = await employeesService.updateEmployed(selectedEmployee.id, selectedEmployee);
       if (response.status === 200) {
-        setEmployees(employees.map((emp) => (emp.id === selectedEmployee.id ? selectedEmployee : emp)));
+        // Actualiza tabla sin recargar
+        setEmployees(employees.map(emp => (emp.id === selectedEmployee.id ? selectedEmployee : emp)));
         closeEdit();
       }
     } catch (err) {
@@ -122,7 +117,7 @@ export function EmployeesTable() {
     try {
       const response = await employeesService.deleteEmployed(selectedEmployee.id);
       if (response.status === 200 || response.status === 204) {
-        setEmployees(employees.filter((emp) => emp.id !== selectedEmployee.id));
+        setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
         closeDelete();
       }
     } catch (err) {
@@ -130,7 +125,7 @@ export function EmployeesTable() {
     }
   };
 
-  // =================== Render rows ===================
+  // =================== RENDER ROWS ===================
   const rows = filtered.map((emp) => {
     const sector = sectors.find((s) => s.id === emp.idSector)?.name ?? "Desconocido";
     return (
@@ -165,6 +160,7 @@ export function EmployeesTable() {
     );
   });
 
+  // =================== RENDER ===================
   return (
     <ScrollArea>
       <Group justify="space-between" mb="sm">
@@ -201,7 +197,8 @@ export function EmployeesTable() {
         </Table.Tbody>
       </Table>
 
-      {/* =================== Modal Ver =================== */}
+      {/* =================== MODALES =================== */}
+      {/* Ver */}
       <Modal opened={viewModalOpened} onClose={closeView} title="Detalles del empleado" centered>
         {selectedEmployee && (
           <>
@@ -215,7 +212,7 @@ export function EmployeesTable() {
         )}
       </Modal>
 
-      {/* =================== Modal Agregar =================== */}
+      {/* Agregar */}
       <Modal opened={addModalOpened} onClose={closeAdd} title="Agregar empleado" centered>
         <TextInput label="Nombre" value={newEmployee.name} onChange={(e) => setNewEmployee({ ...newEmployee, name: e.currentTarget.value })} />
         <TextInput label="CUIL/CUIT" value={newEmployee.cuilCuit} onChange={(e) => setNewEmployee({ ...newEmployee, cuilCuit: e.currentTarget.value })} />
@@ -233,7 +230,7 @@ export function EmployeesTable() {
         <Button mt="md" color="green" onClick={handleAddEmployee}>Guardar</Button>
       </Modal>
 
-      {/* =================== Modal Editar =================== */}
+      {/* Editar */}
       <Modal opened={editModalOpened} onClose={closeEdit} title="Editar empleado" centered>
         {selectedEmployee && (
           <>
@@ -255,7 +252,7 @@ export function EmployeesTable() {
         )}
       </Modal>
 
-      {/* =================== Modal Eliminar =================== */}
+      {/* Eliminar */}
       <Modal opened={deleteModalOpened} onClose={closeDelete} title="Eliminar empleado" centered>
         {selectedEmployee && (
           <>

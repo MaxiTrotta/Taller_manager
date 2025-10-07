@@ -1,25 +1,28 @@
 import { api } from "./api";
 
 export const employeesService = {
-  // Obtener todos los empleados
-    getAllEmployees: () => api.get("/employees"),
-    
+  // Listar todos los empleados con sectorName incluido
+  getAllEmployees: async () => {
+    return api.get("/employees"); // llama a EmployeesGetController.php
+  },
 
-  // Obtener un Empleado por ID
-  getEmployedById: (id) => api.get("/employees/" + id),
+  // Obtener un empleado por ID
+  getEmployeeById: async (id) => {
+    return api.get(`/employees?id=${id}`); // llama a EmployedGetController.php
+  },
 
-  // Crear un nuevo Empleado
-  createEmployed: (payload) => 
-    api.post("/employees", payload, { 
-      headers: { "Content-Type": "application/json" } 
-    }),
+  // Crear empleado
+  createEmployed: async (employee) => {
+    return api.post("/employees", employee);
+  },
 
-  // Modifica un Empleado
-  updateEmployed: (id, payload) => 
-    api.put("/employees/" + id, payload, { 
-      headers: { "Content-Type": "application/json" } 
-    }),
+  // Actualizar empleado
+  updateEmployed: async (id, employee) => {
+  return api.put(`/employees/${id}`, employee);
+  },
 
-  // Eliminar un Empleado
-  deleteEmployed: (id) => api.delete("/employees/" + id),
+  // Eliminar empleado
+  deleteEmployed: async (id) => {
+  return api.delete(`/employees/${id}`);
+  },
 };
