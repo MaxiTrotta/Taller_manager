@@ -6,6 +6,7 @@ declare(strict_types = 1);
 namespace Src\Service\Vehicle;
 
 use Src\Entity\Vehicle\Vehicle;
+use Src\Entity\Vehicle\VehicleProjection;;
 use Src\Entity\Vehicle\Exception\VehicleNotFoundException;
 use Src\Infrastructure\Repository\Vehicle\VehicleRepository;
 
@@ -27,6 +28,17 @@ final readonly class VehicleFinderService {
         }
 
         return $vehicle;
+    }
+
+    public function findProjection(int $id): VehicleProjection
+    {
+        $vehicleProjection = $this->vehicleRepository->findProjection($id);
+
+        if ($vehicleProjection === null) {
+            throw new VehicleNotFoundException($id);
+        }
+
+        return $vehicleProjection;
     }
 
 }

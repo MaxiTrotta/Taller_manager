@@ -55,6 +55,27 @@ final readonly class EmployedRepository extends PDOManager implements EmployedRe
     public function search(): array
     {
         $query = <<<HEREDOC
+                        SELECT
+                            *
+                        FROM
+                            employed
+                        WHERE
+                            deleted = 0
+                    HEREDOC;
+
+        $results = $this->execute($query);
+
+        $employedResults = [];
+        foreach ($results as $result) {
+            $employedResults[] = $this->primitiveToEmployed($result);
+        }
+
+        return $employedResults;
+    }
+
+    public function searchProjections(): array
+    {
+        $query = <<<HEREDOC
                         SELECT 
                             E.*,
                             S.name AS sectorName

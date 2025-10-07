@@ -4,8 +4,32 @@ namespace Src\Infrastructure\Repository\Vehicle;
 
 use Src\Infrastructure\PDO\PDOManager;
 use Src\Entity\Vehicle\Vehicle;
+use Src\Entity\Vehicle\VehicleProjection;
 
 final readonly class VehicleRepository extends PDOManager implements VehicleRepositoryInterface {
+    public function findProjection(int $id): ?VehicleProjection
+    {
+        $query = <<<HEREDOC
+                        SELECT 
+                            V.*,
+                            C.name AS clientName
+                        FROM
+                            vehicle V
+                        INNER JOIN
+                            client C ON V.clientId = C.id
+                        WHERE
+                            V.id = :id AND V.deleted = 0
+                    HEREDOC;
+
+        $parameters = [
+            "id" => $id,
+        ];
+
+        $result = $this->execute($query, $parameters);
+
+        return $this->toVehicle($result[0] ?? null);
+    }
+
     public function find(int $id): ?Vehicle
     {
         $query = <<<HEREDOC
@@ -26,14 +50,17 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
         return $this->toVehicle($result[0] ?? null);
     }
 
-    /** @return Vehicle[] */
+    /** @return VehicleProjection[] */
     public function search(): array
     {
         $query = <<<HEREDOC
                         SELECT
-                            V.*
+                            V.*,
+                            C.name AS clientName
                         FROM
                             vehicle V
+                        INNER JOIN
+                            client C ON V.clientId = C.id
                         WHERE
                             V.deleted = 0
                     HEREDOC;
@@ -42,7 +69,7 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
 
         $vehicles = [];
         foreach($results as $result) {
-            $vehicles[] = $this->toVehicle($result);
+            $vehicles[] = $this->toVehicleProjection($result);
         }
 
         return $vehicles;
@@ -138,4 +165,20 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
             (bool)$primitive["deleted"]
         );
     }
+    private function toVehicleProjection(?array $primitive): ?VehicleProjection {
+        if ($primitive === null) {
+            return null;
+        }
+
+        return new VehicleProjection(
+            (int)$primitive["id"],
+            (int)$primitive["clientId"],
+            $primitive["clientName"],
+            $primitive["licensePlate"],
+            $primitive["brand"],
+            $primitive["model"],
+            (int)$primitive["year"]
+        );
+    }
+      
 }
