@@ -38,7 +38,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                         INNER JOIN 
                             task T ON O.idOrderTask = T.id
                         WHERE
-                            E.deleted = 0
+                            O.deleted = 0
                     HEREDOC;
         $results = $this->execute($query);
 
