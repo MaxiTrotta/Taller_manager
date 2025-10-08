@@ -16,6 +16,9 @@ import { useState } from "react";
 import classes from './LoginPage.module.css';
 import { Link, useNavigate } from "react-router";
 
+import LiteYouTubeEmbed from 'react-lite-youtube-embed';
+import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
+
 const UserSchema = z.object({
     email: z
         .email("El Correo electrónico no es válido")
@@ -56,7 +59,18 @@ export function LoginPage() {
         <>
 
             <div className={classes.wrapper}>
-                <Paper className={classes.form} radius="lg">
+                <div className={classes.videoWrapper}>
+                    <LiteYouTubeEmbed
+                        id="BkBkN5-x3ss"
+                        title="Talleres Ortiz Institucional 2023"
+                        alwaysLoadIframe
+                        autoplay
+                        muted
+                    />
+                </div>
+
+                <div className={classes.formWrapper}>
+                    <Paper className={classes.form} radius="lg">
                     <Title order={2} className={classes.title}>
                         Bienvenido a Ortiz Hnos!
                     </Title>
@@ -81,6 +95,7 @@ export function LoginPage() {
                     </Button>
 
                 </Paper>
+                </div>
             </div>
         </>
     );
