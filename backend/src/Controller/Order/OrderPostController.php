@@ -12,9 +12,10 @@ final readonly class OrderPostController {
 
     public function start(): void
     {
-        $name = ControllerUtils::getPost("name");
         $idClient = ControllerUtils::getPost("idClient");
+        $idVehicle = ControllerUtils::getPost("idVehicle");
+        $idOrderTask = ControllerUtils::getPost("idOrderTask");
 
-        $this->service->create($name, $idClient);
+        $this->service->create($idClient, $idVehicle, $idOrderTask);
     }
 }

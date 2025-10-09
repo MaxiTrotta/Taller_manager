@@ -12,6 +12,7 @@ final readonly class OrdersGetController {
 
     public function start(): void 
     {
+
         $response = $this->service->search();
         echo json_encode($this->filterResponses($response), true);
     }
@@ -23,8 +24,9 @@ final readonly class OrdersGetController {
         foreach ($responses as $response) {
             $result[] = [
                 "id" => $response->id(),
-                "name" => $response->name(),
-                "idClient" => $response->idClient()
+                "idClient" => $response->idClient(),
+                "idVehicle" => $response->idVehicle(),
+                "idOrderTask" => $response->idOrderTask()
             ];
         }
 
