@@ -12,10 +12,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     public function find(int $id): ?Order 
     {
         $query = <<<HEREDOC
-                        SELECT T.description
-                        FROM task T
-                        JOIN orderTask OT ON T.id = OT.idTask
-                        WHERE OT.idOrder = :id AND OT.deleted = 0
+                        SELECT *
+                        FROM order_base O
+                        WHERE O.id = :id AND O.deleted = 0
                     HEREDOC;
 
         $parameters = [
@@ -31,12 +30,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     {
         $query = <<<HEREDOC
                         SELECT 
-                            O.*,
-                            T.description AS taskDescription
+                            O.*
                         FROM
                             order_base O
-                        INNER JOIN 
-                            task T ON O.idOrderTask = T.id
                         WHERE
                             O.deleted = 0
                     HEREDOC;
@@ -53,7 +49,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     public function insert(Order $order): void
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO order_base (name, idClient, deleted) VALUES (:name, :idClient, :deleted)
+                    INSERT INTO order_base (idClient, idVehicle, idOrderTask, deleted) VALUES (:idClient, :idVehicle, :idOrderTask, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
@@ -72,8 +68,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                         UPDATE
                             order_base
                         SET
-                            name = :name,
                             idClient = :idClient,
+                            idVehicle = :idVehicle,
+                            idOrderTask = :idOrderTask,
                             deleted = :deleted
                         WHERE
                             id = :id

@@ -12,9 +12,10 @@ final readonly class OrderPutController {
 
     public function start(int $id): void
     {
-        $name = ControllerUtils::getPost("name");
         $idClient = ControllerUtils::getPost("idClient");
+        $idVehicle = ControllerUtils::getPost("idVehicle");
+        $idOrderTask = ControllerUtils::getPost("idOrderTask");
 
-        $this->service->update($name, $idClient, $id);
+        $this->service->update( $idClient, $idVehicle, $idOrderTask, $id);
     }
 }

@@ -17,8 +17,9 @@ final readonly class OrderGetController extends AuthMiddleware {
 
         echo json_encode([
             "id" => $order->id(),
-            "name" => $order->name(),
             "idClient" => $order->idClient(),
+            "idVehicle" => $order->idVehicle(),
+            "idOrderTask" => $order->idOrderTask(),
         ], true);
     }
 }
