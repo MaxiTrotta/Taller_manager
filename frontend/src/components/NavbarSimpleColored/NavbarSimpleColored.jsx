@@ -48,7 +48,7 @@ export function NavbarSimpleColored() {
         <Group className={classes.header} justify="space-between">
 
           <div style={{ display: "flex" }}>
-            <a href="/">
+            <a href="/cliente">
               <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
 
