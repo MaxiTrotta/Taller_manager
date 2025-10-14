@@ -97,7 +97,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
                         INNER JOIN
                             task T ON OT.idTask = T.id
                         WHERE
-                            deleted = 0
+                            OT.deleted = 0
                     HEREDOC;
         
         $results = $this->execute($query);
@@ -110,7 +110,37 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
         return $orderTaskResults;
     }
 
+    /** @return OrderTaskProjection[] */
+    public function searchProjectionsByOrder(int $orderId): array
+    {
+        $query = <<<HEREDOC
+                        SELECT
+                            OT.*,
+                            S.name AS sectorName,
+                            T.description AS taskDescription
+                        FROM
+                            orderTask OT
+                        INNER JOIN
+                            sector S ON OT.idSector = S.id
+                        INNER JOIN
+                            task T ON OT.idTask = T.id
+                        WHERE
+                            OT.deleted = 0 AND OT.idOrder = :orderId
+                    HEREDOC;
+        
+        $parameters = [
+            "orderId" => $orderId
+        ];
 
+        $results = $this->execute($query, $parameters);
+
+        $orderTaskResults = [];
+        foreach($results as $result) {
+            $orderTaskResults[] = $this->primitiveToOrderTaskProjection($result);
+        }
+
+        return $orderTaskResults;
+    }
     public function insert(OrderTask $orderTask): void
     {
         $query = <<<INSERT_QUERY

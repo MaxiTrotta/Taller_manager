@@ -13,13 +13,32 @@ final readonly class OrderGetController extends AuthMiddleware {
 
     public function start(int $id): void 
     {
-        $order = $this->service->find($id);
+        $order = $this->service->findProjection($id);
+
+        // echo json_encode([
+        //     "id" => $order->id(),
+        //     "client" => $order->client(),
+        //     "vehicle" => $order->vehicle(),
+        //     "orderTaskProjection" => $order->orderTaskProjection(),
+        // ], true);
+
+        $tasks = [];
+
+        foreach ($order->orderTaskProjection() as $task) {
+            $tasks[] = [
+                "idOrder" => $task->idOrder(),
+                "state" => $task->state(),
+                "sectorName" => $task->sectorName(),
+                "taskDescription" => $task->taskDescription(),
+            ];
+        }
 
         echo json_encode([
             "id" => $order->id(),
-            "idClient" => $order->idClient(),
-            "idVehicle" => $order->idVehicle(),
-            "idOrderTask" => $order->idOrderTask(),
-        ], true);
+            "client" => $order->client(),
+            "vehicle" => $order->vehicle(),
+            "state" => $order->getOrderTaskState(),
+            "tasks" => $tasks,
+        ], JSON_PRETTY_PRINT);
     }
 }

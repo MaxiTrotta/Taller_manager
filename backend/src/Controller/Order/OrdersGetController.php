@@ -13,23 +13,26 @@ final readonly class OrdersGetController {
     public function start(): void 
     {
 
-        $response = $this->service->search();
+        $response = $this->service->searchProjections();
         echo json_encode($this->filterResponses($response), true);
     }
 
     private function filterResponses(array $responses): array
-    {
-        $result = [];
+{
+    $result = [];
 
-        foreach ($responses as $response) {
-            $result[] = [
-                "id" => $response->id(),
-                "idClient" => $response->idClient(),
-                "idVehicle" => $response->idVehicle(),
-                "idOrderTask" => $response->idOrderTask()
-            ];
-        }
+    foreach ($responses as $response) {
+        $orderTaskProjection = $response->orderTaskProjection();
 
-        return $result;
+        $result[] = [
+            "id" => $response->id(),
+            "client" => $response->client(),
+            "vehicle" => $response->vehicle(),
+            "state" => $response->getOrderTaskState(),
+        ];
     }
+
+    return $result;
+}
+
 }
