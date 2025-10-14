@@ -12,8 +12,12 @@ final readonly class OrderTasksSearcherService {
         $this->repository = new OrderTaskRepository();
     }
 
-    public function searchProjections(): array
+    public function searchProjections(?int $orderId = null): array
     {
+        if (!empty($orderId)) {  
+            return $this->repository->searchProjectionsByOrder($orderId);  
+        }
+
         return $this->repository->searchProjections();
     }
 }
