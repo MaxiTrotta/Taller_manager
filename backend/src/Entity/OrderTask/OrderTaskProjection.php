@@ -8,7 +8,8 @@ final readonly class OrderTaskProjection
         private int $idOrder,
         private string $state,
         private string $sectorName,
-        private string $taskDescription
+        private string $taskDescription,
+        private string $note,
     ){
     }
     
@@ -30,5 +31,10 @@ final readonly class OrderTaskProjection
     public function taskDescription(): string
     {
         return $this->taskDescription;
+    }
+
+    public function note(): string
+    {
+        return $this->note;
     }
 }

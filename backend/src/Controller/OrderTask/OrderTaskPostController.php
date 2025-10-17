@@ -21,6 +21,7 @@ final readonly class OrderTaskPostController {
         //$assignedTo = ControllerUtils::getPost("assignedTo");
         $idSector = ControllerUtils::getPost("idSector");
         $idTask = ControllerUtils::getPost("idTask");
+        $note = ControllerUtils::getPost("note");
 
         // if ($date !== null) {
         //     $date = new DateTime($date);
@@ -36,7 +37,8 @@ final readonly class OrderTaskPostController {
             //$createdBy->id(),
             //$assignedTo,
             $idSector,
-            $idTask
+            $idTask,
+            $note
         );
     }
 }
