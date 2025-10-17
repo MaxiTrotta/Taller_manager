@@ -23,6 +23,7 @@ final readonly class OrderTaskGetController extends AuthMiddleware {
             //"assignedTo" => $orderTask->assignedTo(),
             "idSector" => $orderTask->idSector(),
             "idTask" => $orderTask->idTask(),
+            "note" => $orderTask->note(),
         ], true);
     }
 }

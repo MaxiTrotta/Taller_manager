@@ -20,7 +20,8 @@ final readonly class OrderTaskCreatorService {
            // int $createdBy,
             //string $assignedTo,
             ?int $idSector,
-            ?int $idTask
+            ?int $idTask,
+            ?string $note,
         ): void
     {
         $orderTask = OrderTask::create(
@@ -30,7 +31,8 @@ final readonly class OrderTaskCreatorService {
                // $createdBy,
                 //$assignedTo,
                 $idSector,
-                $idTask
+                $idTask,
+                $note
             );
         $this->repository->insert($orderTask);
     }

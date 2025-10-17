@@ -12,7 +12,7 @@ final readonly class OrderTasksGetController {
 
     public function start(): void 
     {
-        $response = $this->service->search();
+        $response = $this->service->searchProjections();
         echo json_encode($this->filterResponses($response), true);
     }
 
@@ -29,6 +29,7 @@ final readonly class OrderTasksGetController {
                 //"assignedTo" => $response->assignedTo(),
                 "idSector" => $response->idSector(),
                 "idTask" => $response->idTask(),
+                "note" => $response->note(),
             ];
         }
 
