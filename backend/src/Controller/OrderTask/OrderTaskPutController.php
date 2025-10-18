@@ -19,6 +19,7 @@ final readonly class OrderTaskPutController {
         // $assignedTo = ControllerUtils::getPost("assignedTo");
         $idSector = ControllerUtils::getPost("idSector");
         $idTask = ControllerUtils::getPost("idTask");
+        $note = ControllerUtils::getPost("note");
 
         $this->service->update(
             $idOrder,
@@ -28,6 +29,7 @@ final readonly class OrderTaskPutController {
             //$assignedTo,
             $idSector,
             $idTask,
+            $note,
             $id
         );
     }

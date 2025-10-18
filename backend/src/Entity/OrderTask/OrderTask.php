@@ -15,6 +15,7 @@ final class OrderTask{
         // private string $assignedTo,
         private ?int $idSector,
         private ?int $idTask,
+        private ?string $note,
         private bool $deleted
         ){
         }
@@ -25,7 +26,8 @@ final class OrderTask{
             // int $createdBy,
             // string $assignedTo,
             int $idSector,
-            int $idTask
+            int $idTask,
+            string $note,
         ):self {
             return new self(
                 null,
@@ -36,12 +38,13 @@ final class OrderTask{
                 //$assignedTo,
                 $idSector,
                 $idTask,
+                $note,
                 false
             );
         }
 
 
-        public function modify(int $idOrder,/* DateTime $date,*/ string $state, /*int $createdBy, string $assignedTo,*/ int $idSector, int $idTask): void
+        public function modify(int $idOrder,/* DateTime $date,*/ string $state, /*int $createdBy, string $assignedTo,*/ int $idSector, int $idTask, string $note): void
         {
             $this->idOrder = $idOrder;
             //$this->date = $date;
@@ -50,6 +53,7 @@ final class OrderTask{
             //$this->assignedTo = $assignedTo;
             $this->idSector = $idSector;
             $this->idTask = $idTask;
+            $this->note = $note;
         
         }
         public function delete(): void
@@ -102,7 +106,10 @@ final class OrderTask{
             return $this->idTask;
         }
 
+        public function note(): ?string
+        {
+            return $this->note;
+        }
         
-
 
 }

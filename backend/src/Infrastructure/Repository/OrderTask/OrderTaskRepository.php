@@ -144,7 +144,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
     public function insert(OrderTask $orderTask): void
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO orderTask (idOrder, state, idSector, idTask, deleted) VALUES (:idOrder, :state, :idSector, :idTask, :deleted)
+                    INSERT INTO orderTask (idOrder, state, idSector, idTask, note, deleted) VALUES (:idOrder, :state, :idSector, :idTask, :note, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
@@ -155,6 +155,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             // "assignedTo" => $orderTask->assignedTo(),
             "idSector" => $orderTask->idSector(),
             "idTask" => $orderTask->idTask(),
+            "note" => $orderTask->note(),
             "deleted" => $orderTask->isDeleted()
         ];
 
@@ -171,6 +172,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
                             state = :state,
                             idSector = :idSector,
                             idTask = :idTask,
+                            note = :note,
                             deleted = :deleted
                         WHERE
                             id = :id
@@ -184,6 +186,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             // "assignedTo" => $orderTask->assignedTo(),
             "idSector" => $orderTask->idSector(),
             "idTask" => $orderTask->idTask(),
+            "note" => $orderTask->note(),
             "deleted" => $orderTask->isDeleted(),
             "id" => $orderTask->id()
         ];
@@ -206,6 +209,7 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
            // $primitive["assignedTo"],
             (int)$primitive["idSector"],
             (int)$primitive["idTask"],
+            (string)$primitive["note"],
             (bool)$primitive["deleted"]
         );
     }
@@ -219,7 +223,8 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             (int)$primitive["idOrder"],
             (string)$primitive["state"] ?? null,
             (string)$primitive["sectorName"] ?? null,
-            (string)$primitive["taskDescription"] ?? null
+            (string)$primitive["taskDescription"] ?? null,
+            (string)$primitive["note"] ?? null
         );
     }
 }

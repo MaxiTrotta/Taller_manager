@@ -21,11 +21,12 @@ final readonly class OrderTaskUpdaterService {
         //string $assignedTo,
         int $idSector,
         int $idTask,
+        string $note,
         int $id
     ): void {
         $orderTask = $this->finder->find($id);
 
-        $orderTask->modify($idOrder,$state, $idSector, $idTask);
+        $orderTask->modify($idOrder,$state, $idSector, $idTask, $note);
 
         $this->repository->update($orderTask);
     }
