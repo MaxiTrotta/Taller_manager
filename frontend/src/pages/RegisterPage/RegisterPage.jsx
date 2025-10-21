@@ -41,7 +41,7 @@ export function RegisterPage() {
 			setError(undefined);
 			const formDataJson = JSON.stringify(formData);
 			const response = await authService.register(formDataJson);
-			if (response.status === 200) navigate("/login");
+			if (response.status === 200) navigate("/cliente");
 			else throw new Error("Ocurrió un error inesperado");
 		} catch (error) {
 			setError(error.message);
