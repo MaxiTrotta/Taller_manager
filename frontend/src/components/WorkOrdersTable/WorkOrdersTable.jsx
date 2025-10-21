@@ -1,629 +1,306 @@
-// import { useState, useEffect } from 'react';
-// import {
-//   Table, Text, Group, Button, Modal, Select, TextInput, ScrollArea, ActionIcon
-// } from '@mantine/core';
-// import { IconPlus, IconTrash, IconSearch, IconEye } from '@tabler/icons-react';
-// import { useDisclosure } from '@mantine/hooks';
-// import Box from '@mui/material/Box';
-// import CircularProgress from '@mui/material/CircularProgress';
-// import TablePagination from '@mui/material/TablePagination';
-
-// // Servicios
-// import { WorkOrderCreatorService } from '../../services/WorkOrderCreatorService';
-// import { ClientCreatorService } from '../../services/ClientCreatorService';
-// import { VehicleCreatorService } from '../../services/VehicleCreatorService';
-// import { TaskService } from '../../services/TaskService';
-
-// export function WorkOrdersTable() {
-//   const [loading, setLoading] = useState(false);
-//   const [workOrders, setWorkOrders] = useState([]);
-//   const [clients, setClients] = useState([]);
-//   const [vehicles, setVehicles] = useState([]);
-//   const [tasks, setTasks] = useState([]);
-
-//   const [addModalOpened, { open: openAddModal, close: closeAddModal }] = useDisclosure(false);
-//   const [viewModalOpened, { open: openViewModal, close: closeViewModal }] = useDisclosure(false);
-//   const [selectedOrder, setSelectedOrder] = useState(null);
-
-//   const [newOrder, setNewOrder] = useState({
-//     clientId: '',
-//     vehicleId: '',
-//     tasks: [{ taskId: '', notes: '' }]
-//   });
-
-//   const [isSaving, setIsSaving] = useState(false);
-//   const [page, setPage] = useState(0);
-//   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-//   // =================== Helpers ===================
-//   const CircularIndeterminate = () => (
-//     <Box sx={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
-//       <CircularProgress color="inherit" />
-//     </Box>
-//   );
-
-//   // =================== Fetch ===================
-//   const fetchWorkOrders = async () => {
-//     setLoading(true);
-//     try {
-//       const response = await WorkOrderCreatorService.getAll();
-//       console.log("💡 Respuesta raw WorkOrders:", response.data);
-
-//       if (response.status === 200 && Array.isArray(response.data)) {
-//         setWorkOrders(response.data);
-//       } else {
-//         console.error("💥 Respuesta inesperada de WorkOrders:", response.data);
-//         setWorkOrders([]);
-//       }
-//     } catch (err) {
-//       console.error('Error al traer órdenes de trabajo:', err);
-//       setWorkOrders([]);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const fetchClients = async () => {
-//     try {
-//       const res = await ClientCreatorService.getAll();
-//       console.log("💡 Clientes raw:", res.data);
-//       if (res.status === 200 && Array.isArray(res.data)) setClients(res.data);
-//       else setClients([]);
-//     } catch (err) {
-//       console.error('Error al traer clientes:', err);
-//       setClients([]);
-//     }
-//   };
-
-//   const fetchVehiclesByClient = async (clientId) => {
-//     try {
-//       const res = await VehicleCreatorService.getAllByClient(clientId);
-//       console.log(`💡 Vehículos raw cliente ${clientId}:`, res.data);
-//       if (res.status === 200 && Array.isArray(res.data)) setVehicles(res.data);
-//       else setVehicles([]);
-//     } catch (err) {
-//       console.error('Error al traer vehículos:', err);
-//       setVehicles([]);
-//     }
-//   };
-
-//   const fetchTasks = async () => {
-//     try {
-//       const res = await TaskService.getAll();
-//       console.log("💡 Tareas raw:", res.data);
-//       if (res.status === 200 && Array.isArray(res.data)) setTasks(res.data);
-//       else setTasks([]);
-//     } catch (err) {
-//       console.error('Error al traer tareas:', err);
-//       setTasks([]);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchWorkOrders();
-//     fetchClients();
-//     fetchTasks();
-//   }, []);
-
-//   // =================== Manejo del modal ===================
-//   const handleClientChange = (value) => {
-//     setNewOrder(prev => ({ ...prev, clientId: value, vehicleId: '' }));
-//     fetchVehiclesByClient(value);
-//   };
-
-//   const handleVehicleChange = (value) => {
-//     setNewOrder(prev => ({ ...prev, vehicleId: value }));
-//   };
-
-//   const handleTaskChange = (index, field, value) => {
-//     const updatedTasks = [...newOrder.tasks];
-//     updatedTasks[index][field] = value;
-//     setNewOrder(prev => ({ ...prev, tasks: updatedTasks }));
-//   };
-
-//   const addTaskRow = () => {
-//     setNewOrder(prev => ({ ...prev, tasks: [...prev.tasks, { taskId: '', notes: '' }] }));
-//   };
-
-//   const removeTaskRow = (index) => {
-//     setNewOrder(prev => ({
-//       ...prev,
-//       tasks: prev.tasks.filter((_, i) => i !== index)
-//     }));
-//   };
-
-//   const handleAddOrder = async () => {
-//     setIsSaving(true);
-//     try {
-//       const response = await WorkOrderCreatorService.create(newOrder);
-//       if (response.status === 201 || response.status === 200) {
-//         await fetchWorkOrders();
-//         closeAddModal();
-//         setNewOrder({ clientId: '', vehicleId: '', tasks: [{ taskId: '', notes: '' }] });
-//       }
-//     } catch (err) {
-//       console.error('Error al crear orden de trabajo:', err);
-//     } finally {
-//       setIsSaving(false);
-//     }
-//   };
-
-//   const handleViewOrder = (order) => {
-//     setSelectedOrder(order);
-//     openViewModal();
-//   };
-
-//   // =================== Render filas ===================
-//   const paginatedData = Array.isArray(workOrders)
-//     ? workOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-//     : [];
-
-//   console.log("💡 paginatedData:", paginatedData);
-
-//   const rows = Array.isArray(paginatedData) && paginatedData.length > 0
-//     ? paginatedData.map((row) => (
-//         <Table.Tr key={row.id}>
-//           <Table.Td>{row.id}</Table.Td>
-//           <Table.Td>{row.client?.name}</Table.Td>
-//           <Table.Td>{row.vehicle?.licensePlate}</Table.Td>
-//           <Table.Td>{row.createdAt ? new Date(row.createdAt.date || row.createdAt).toLocaleDateString('es-AR') : ''}</Table.Td>
-//           <Table.Td>{row.status}</Table.Td>
-//           <Table.Td>
-//             <ActionIcon color="blue" onClick={() => handleViewOrder(row)}>
-//               <IconEye size={16} />
-//             </ActionIcon>
-//           </Table.Td>
-//         </Table.Tr>
-//       ))
-//     : [];
-
-//   // =================== Render principal ===================
-//   return (
-//     <ScrollArea>
-//       <Group justify="space-between" mb="sm">
-//         <Text fz="xl" fw={600}>Órdenes de Trabajo</Text>
-//         <Button onClick={openAddModal} color="green">Agregar Orden</Button>
-//       </Group>
-
-//       <Table horizontalSpacing="lg" verticalSpacing="xs" miw={700} layout="fixed">
-//         <Table.Thead>
-//           <Table.Tr>
-//             <Table.Th>ID</Table.Th>
-//             <Table.Th>Cliente</Table.Th>
-//             <Table.Th>Vehículo</Table.Th>
-//             <Table.Th>Fecha</Table.Th>
-//             <Table.Th>Estado</Table.Th>
-//             <Table.Th>Acciones</Table.Th>
-//           </Table.Tr>
-//         </Table.Thead>
-//         <Table.Tbody>
-//           {loading ? (
-//             <Table.Tr><Table.Td colSpan={6}><CircularIndeterminate /></Table.Td></Table.Tr>
-//           ) : rows.length > 0 ? rows : (
-//             <Table.Tr><Table.Td colSpan={6} style={{ textAlign: "center" }}>
-//               No hay órdenes registradas.
-//             </Table.Td></Table.Tr>
-//           )}
-//         </Table.Tbody>
-//       </Table>
-
-//       <TablePagination
-//         component="div"
-//         count={Array.isArray(workOrders) ? workOrders.length : 0}
-//         page={page}
-//         onPageChange={(e, newPage) => setPage(newPage)}
-//         rowsPerPage={rowsPerPage}
-//         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-//         sx={{
-//           color: 'white',
-//           '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { color: 'white' },
-//           '.MuiSvgIcon-root': { color: 'white' },
-//         }}
-//       />
-
-//       {/* Modal Agregar Orden */}
-//       <Modal opened={addModalOpened} onClose={closeAddModal} title="Agregar Orden de Trabajo" centered size="lg">
-//         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-//           <Select
-//             label="Cliente"
-//             placeholder="Seleccionar cliente"
-//             searchable
-//             data={clients.map(c => ({ value: c.id.toString(), label: c.name }))}
-//             value={newOrder.clientId}
-//             onChange={handleClientChange}
-//           />
-
-//           <Select
-//             label="Vehículo"
-//             placeholder="Seleccionar vehículo"
-//             searchable
-//             disabled={!newOrder.clientId}
-//             data={vehicles.map(v => ({ value: v.id.toString(), label: `${v.licensePlate} - ${v.brand} ${v.model}` }))}
-//             value={newOrder.vehicleId}
-//             onChange={handleVehicleChange}
-//           />
-
-//           <Text fw={600} mt="md">Tareas</Text>
-//           {newOrder.tasks.map((task, index) => (
-//             <Group key={index} grow>
-//               <Select
-//                 label={`Tarea ${index + 1}`}
-//                 placeholder="Seleccionar tarea"
-//                 data={tasks.map(t => ({ value: t.id.toString(), label: t.name }))}
-//                 value={task.taskId}
-//                 onChange={(value) => handleTaskChange(index, 'taskId', value)}
-//               />
-//               <TextInput
-//                 label="Notas"
-//                 value={task.notes}
-//                 onChange={(e) => handleTaskChange(index, 'notes', e.currentTarget.value)}
-//               />
-//               {index > 0 && (
-//                 <ActionIcon color="red" variant="light" onClick={() => removeTaskRow(index)}>
-//                   <IconTrash size={16} />
-//                 </ActionIcon>
-//               )}
-//             </Group>
-//           ))}
-//           <Button
-//             leftSection={<IconPlus size={16} />}
-//             variant="light"
-//             color="blue"
-//             onClick={addTaskRow}
-//           >
-//             Agregar tarea
-//           </Button>
-
-//           <Button color="green" onClick={handleAddOrder} loading={isSaving}>
-//             Guardar Orden
-//           </Button>
-//         </div>
-//       </Modal>
-
-//       {/* Modal Ver Orden */}
-//       <Modal opened={viewModalOpened} onClose={closeViewModal} title="Detalles de la Orden" centered size="xl">
-//         {selectedOrder ? (
-//           <>
-//             <Text><b>ID:</b> {selectedOrder.id}</Text>
-//             <Text><b>Cliente:</b> {selectedOrder.client?.name}</Text>
-//             <Text><b>Vehículo:</b> {selectedOrder.vehicle?.licensePlate}</Text>
-//             <Text><b>Fecha:</b> {selectedOrder.createdAt ? new Date(selectedOrder.createdAt.date || selectedOrder.createdAt).toLocaleDateString('es-AR') : ''}</Text>
-//             <Text><b>Estado:</b> {selectedOrder.status}</Text>
-
-//             <Text mt="md" fw={600}>Tareas:</Text>
-//             <Table>
-//               <Table.Thead>
-//                 <Table.Tr>
-//                   <Table.Th>Tarea</Table.Th>
-//                   <Table.Th>Notas</Table.Th>
-//                 </Table.Tr>
-//               </Table.Thead>
-//               <Table.Tbody>
-//                 {Array.isArray(selectedOrder.tasks) && selectedOrder.tasks.length > 0 ? selectedOrder.tasks.map((t, i) => (
-//                   <Table.Tr key={i}>
-//                     <Table.Td>{t.task?.name}</Table.Td>
-//                     <Table.Td>{t.notes}</Table.Td>
-//                   </Table.Tr>
-//                 )) : (
-//                   <Table.Tr><Table.Td colSpan={2} style={{ textAlign: "center" }}>No hay tareas asignadas.</Table.Td></Table.Tr>
-//                 )}
-//               </Table.Tbody>
-//             </Table>
-//           </>
-//         ) : (
-//           <Text>No hay orden seleccionada.</Text>
-//         )}
-//       </Modal>
-//     </ScrollArea>
-//   );
-// }
-
-// export default WorkOrdersTable;
 import { useState, useEffect } from 'react';
 import {
-  Table, Text, Group, Button, Modal, Select, TextInput, ScrollArea, ActionIcon
+  Table, Text, Group, Button, Modal, Select, TextInput, ScrollArea,
+  ActionIcon, Loader, Center, Overlay
 } from '@mantine/core';
 import { IconPlus, IconTrash, IconEye } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import TablePagination from '@mui/material/TablePagination';
 
 import { WorkOrderCreatorService } from '../../services/WorkOrderCreatorService';
 import { ClientCreatorService } from '../../services/ClientCreatorService';
 import { VehicleCreatorService } from '../../services/VehicleCreatorService';
 import { TaskService } from '../../services/TaskService';
-import { OrderTaskService } from '../../services/OrderTaskService';
 
-export function WorkOrdersTable() {
+export default function WorkOrdersTable() {
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [workOrders, setWorkOrders] = useState([]);
   const [clients, setClients] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [orderTasks, setOrderTasks] = useState([]);
-
-  const [addModalOpened, { open: openAddModal, close: closeAddModal }] = useDisclosure(false);
-  const [viewModalOpened, { open: openViewModal, close: closeViewModal }] = useDisclosure(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  const [addModalOpened, { open: openAdd, close: closeAdd }] = useDisclosure(false);
+  const [viewModalOpened, { open: openView, close: closeView }] = useDisclosure(false);
+
   const [newOrder, setNewOrder] = useState({
-    clientId: '',
-    vehicleId: '',
-    tasks: [{ taskId: '', notes: '' }]
+    idClient: '',
+    idVehicle: '',
+    tasks: [{ idTask: '', note: '' }]
   });
 
-  const [isSaving, setIsSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const CircularIndeterminate = () => (
-    <Box sx={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
-      <CircularProgress color="inherit" />
-    </Box>
-  );
-
-  // =================== Fetch ===================
-  const fetchClients = async () => {
-    try {
-      const res = await ClientCreatorService.getAll();
-      setClients(res.data || []);
-    } catch { setClients([]); }
-  };
-
-  const fetchVehiclesByClient = async (clientId) => {
-    try {
-      const res = await VehicleCreatorService.getAllByClient(clientId);
-      setVehicles(res.data || []);
-    } catch { setVehicles([]); }
-  };
-
-  const fetchTasks = async () => {
-    try {
-      const res = await TaskService.getAll();
-      setTasks(res.data || []);
-    } catch { setTasks([]); }
-  };
-
-  const fetchOrderTasks = async () => {
-    try {
-      const res = await OrderTaskService.getAll();
-      setOrderTasks(res.data || []);
-    } catch { setOrderTasks([]); }
-  };
-
-  const fetchWorkOrders = async () => {
+  // =================== FETCH ===================
+  const fetchOrders = async () => {
     setLoading(true);
     try {
       const res = await WorkOrderCreatorService.getAll();
-      const ordersRaw = res.data || [];
-
-      const ordersMapped = ordersRaw.map(order => {
-        const client = clients.find(c => c.id === order.idClient) || { name: 'Desconocido' };
-        const vehicle = vehicles.find(v => v.id === order.idVehicle) || { licensePlate: 'Desconocido' };
-
-        const orderTaskItems = orderTasks
-          .filter(ot => ot.idOrder === order.id)
-          .map(ot => {
-            const task = tasks.find(t => t.id === ot.idTask) || { description: 'Desconocida' };
-            return { ...ot, taskName: task.description };
-          });
-
-        return {
-          ...order,
-          client,
-          vehicle,
-          tasks: orderTaskItems
-        };
-      });
-
-      setWorkOrders(ordersMapped);
+      setWorkOrders(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error('Error al traer órdenes de trabajo:', err);
+      console.error('Error al cargar órdenes:', err);
       setWorkOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      await fetchClients();
-      await fetchTasks();
-      await fetchOrderTasks();
-      await fetchWorkOrders();
-    };
-    loadData();
-  }, []);
-
-  // =================== Modal Ver Orden ===================
-  const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    openViewModal();
-  };
-
-  // =================== Modal Agregar Orden ===================
-  const handleTaskChange = (index, field, value) => {
-    const updatedTasks = [...newOrder.tasks];
-    updatedTasks[index][field] = value;
-    setNewOrder(prev => ({ ...prev, tasks: updatedTasks }));
-  };
-
-  const addTaskRow = () => {
-    setNewOrder(prev => ({ ...prev, tasks: [...prev.tasks, { taskId: '', notes: '' }] }));
-  };
-
-  const removeTaskRow = (index) => {
-    setNewOrder(prev => ({ ...prev, tasks: prev.tasks.filter((_, i) => i !== index) }));
-  };
-
-  const handleAddOrder = async () => {
-    setIsSaving(true);
+  const fetchClients = async () => {
     try {
-      const payload = {
-        idClient: newOrder.clientId,
-        idVehicle: newOrder.vehicleId,
-        tasks: newOrder.tasks.map(t => ({ idTask: t.taskId, notes: t.notes }))
-      };
-      await WorkOrderCreatorService.create(payload);
-      await fetchWorkOrders();
-      closeAddModal();
-      setNewOrder({ clientId: '', vehicleId: '', tasks: [{ taskId: '', notes: '' }] });
-    } catch (err) {
-      console.error('Error al crear orden de trabajo:', err);
-    } finally {
-      setIsSaving(false);
+      const res = await ClientCreatorService.getAll();
+      setClients(res.data || []);
+    } catch {
+      setClients([]);
     }
   };
 
-  // =================== Render filas ===================
-  const paginatedData = workOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const fetchVehiclesByClient = async (idClient) => {
+    try {
+      const res = await VehicleCreatorService.getAllByClient(idClient);
+      setVehicles(res.data || []);
+    } catch {
+      setVehicles([]);
+    }
+  };
 
-  const rows = paginatedData.length > 0
-    ? paginatedData.map(row => (
-        <Table.Tr key={row.id}>
-          <Table.Td>{row.id}</Table.Td>
-          <Table.Td>{row.client.name}</Table.Td>
-          <Table.Td>{row.vehicle.licensePlate}</Table.Td>
-          <Table.Td>{row.tasks.map(t => t.taskName).join(', ')}</Table.Td>
-          <Table.Td>
-            <ActionIcon color="blue" onClick={() => handleViewOrder(row)}>
-              <IconEye size={16} />
-            </ActionIcon>
-          </Table.Td>
-        </Table.Tr>
-      ))
-    : [];
+  const fetchTasks = async () => {
+    try {
+      const res = await TaskService.getAll();
+      setTasks(res.data || []);
+    } catch {
+      setTasks([]);
+    }
+  };
 
-  // =================== Render principal ===================
+  useEffect(() => {
+    fetchOrders();
+    fetchClients();
+    fetchTasks();
+  }, []);
+
+  // =================== CREAR ORDEN ===================
+ const handleAddOrder = async () => {
+  setSaving(true);
+  try {
+    const payload = {
+      idClient: parseInt(newOrder.idClient),
+      idVehicle: parseInt(newOrder.idVehicle),
+      idOrderTask: 1, // 👈 agregado para satisfacer el backend
+      tasks: newOrder.tasks.map(t => ({
+        idTask: parseInt(t.idTask),
+        note: t.note
+      }))
+    };
+
+    await WorkOrderCreatorService.create(payload);
+    await fetchOrders();
+    closeAdd();
+    setNewOrder({ idClient: '', idVehicle: '', tasks: [{ idTask: '', note: '' }] });
+  } catch (err) {
+    console.error('Error al crear orden:', err);
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  // =================== VER ORDEN DETALLADA ===================
+  const handleViewOrder = async (id) => {
+    setLoading(true);
+    try {
+      const res = await WorkOrderCreatorService.getById(id);
+      setSelectedOrder(res.data);
+      openView();
+    } catch (err) {
+      console.error('Error al traer orden:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =================== RENDER FILAS ===================
+  const paginated = workOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const rows = paginated.map(order => (
+    <Table.Tr key={order.id}>
+      <Table.Td>{order.id}</Table.Td>
+      <Table.Td>{order.client}</Table.Td>
+      <Table.Td>{order.vehicle}</Table.Td>
+      <Table.Td>
+        {order.state === 1 ? 'Pendiente' :
+         order.state === 2 ? 'En proceso' :
+         order.state === 3 ? 'Finalizado' : 'Sin tareas'}
+      </Table.Td>
+      <Table.Td>
+        <ActionIcon color="blue" onClick={() => handleViewOrder(order.id)}>
+          <IconEye size={16} />
+        </ActionIcon>
+      </Table.Td>
+    </Table.Tr>
+  ));
+
+  // =================== RENDER PRINCIPAL ===================
   return (
-    <ScrollArea>
-      <Group justify="space-between" mb="sm">
-        <Text fz="xl" fw={600}>Órdenes de Trabajo</Text>
-        <Button onClick={openAddModal} color="green">Agregar Orden</Button>
-      </Group>
+    <div style={{ position: 'relative' }}>
+      {/* === Overlay Global === */}
+      {(loading || saving) && (
+        <>
+          <Overlay opacity={0.6} color="#000" blur={2} zIndex={9998} />
+          <Center style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+            <Loader size="xl" color="green" />
+          </Center>
+        </>
+      )}
 
-      <Table horizontalSpacing="lg" verticalSpacing="xs" miw={700} layout="fixed">
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>ID</Table.Th>
-            <Table.Th>Cliente</Table.Th>
-            <Table.Th>Vehículo</Table.Th>
-            <Table.Th>Tareas</Table.Th>
-            <Table.Th>Acciones</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {loading ? (
-            <Table.Tr><Table.Td colSpan={5}><CircularIndeterminate /></Table.Td></Table.Tr>
-          ) : rows.length > 0 ? rows : (
-            <Table.Tr><Table.Td colSpan={5} style={{ textAlign: 'center' }}>No hay órdenes registradas.</Table.Td></Table.Tr>
-          )}
-        </Table.Tbody>
-      </Table>
+      <ScrollArea>
+        <Group justify="space-between" mb="sm">
+          <Text fz="xl" fw={600}>Órdenes de Trabajo</Text>
+          <Button color="green" onClick={openAdd}>Nueva Orden</Button>
+        </Group>
 
-      <TablePagination
-        component="div"
-        count={workOrders.length}
-        page={page}
-        onPageChange={(e, newPage) => setPage(newPage)}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        sx={{ color: 'white', '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { color: 'white' }, '.MuiSvgIcon-root': { color: 'white' } }}
-      />
+        <Table highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>ID</Table.Th>
+              <Table.Th>Cliente</Table.Th>
+              <Table.Th>Vehículo</Table.Th>
+              <Table.Th>Estado</Table.Th>
+              <Table.Th>Acciones</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {loading ? (
+              <Table.Tr><Table.Td colSpan={5} align="center"><Loader /></Table.Td></Table.Tr>
+            ) : rows.length > 0 ? rows : (
+              <Table.Tr><Table.Td colSpan={5} align="center">No hay órdenes registradas</Table.Td></Table.Tr>
+            )}
+          </Table.Tbody>
+        </Table>
 
-      {/* =================== Modal Agregar Orden =================== */}
-      <Modal opened={addModalOpened} onClose={closeAddModal} title="Agregar Orden de Trabajo" centered size="lg">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <TablePagination
+          component="div"
+          count={workOrders.length}
+          page={page}
+          onPageChange={(e, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          sx={{
+            color: 'white',
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { color: 'white' },
+            '.MuiSvgIcon-root': { color: 'white' },
+          }}
+        />
+
+        {/* MODAL CREAR ORDEN */}
+        <Modal opened={addModalOpened} onClose={closeAdd} title="Crear nueva orden" centered size="lg">
           <Select
             label="Cliente"
-            placeholder="Seleccionar cliente"
-            searchable
+            placeholder="Seleccione cliente"
             data={clients.map(c => ({ value: c.id.toString(), label: c.name }))}
-            value={newOrder.clientId}
-            onChange={(value) => {
-              setNewOrder(prev => ({ ...prev, clientId: value, vehicleId: '' }));
-              if (value) fetchVehiclesByClient(value);
+            value={newOrder.idClient}
+            onChange={(val) => {
+              setNewOrder(prev => ({ ...prev, idClient: val, idVehicle: '' }));
+              if (val) fetchVehiclesByClient(val);
             }}
           />
-
           <Select
             label="Vehículo"
-            placeholder="Seleccionar vehículo"
-            searchable
-            disabled={!newOrder.clientId}
+            placeholder="Seleccione vehículo"
             data={vehicles.map(v => ({ value: v.id.toString(), label: `${v.licensePlate} - ${v.brand} ${v.model}` }))}
-            value={newOrder.vehicleId}
-            onChange={(value) => setNewOrder(prev => ({ ...prev, vehicleId: value }))}
+            value={newOrder.idVehicle}
+            onChange={(val) => setNewOrder(prev => ({ ...prev, idVehicle: val }))}
+            disabled={!newOrder.idClient}
           />
-
           <Text fw={600} mt="md">Tareas</Text>
-          {newOrder.tasks.map((task, index) => (
-            <Group key={index} grow>
+          {newOrder.tasks.map((t, i) => (
+            <Group key={i} grow>
               <Select
-                label={`Tarea ${index + 1}`}
-                placeholder="Seleccionar tarea"
-                data={tasks.map(t => ({ value: t.id.toString(), label: t.description }))}
-                value={task.taskId}
-                onChange={(value) => handleTaskChange(index, 'taskId', value)}
+                label={`Tarea ${i + 1}`}
+                data={tasks.map(task => ({ value: task.id.toString(), label: task.description }))}
+                value={t.idTask}
+                onChange={(val) => {
+                  const updated = [...newOrder.tasks];
+                  updated[i].idTask = val;
+                  setNewOrder(prev => ({ ...prev, tasks: updated }));
+                }}
               />
               <TextInput
-                label="Notas"
-                value={task.notes}
-                onChange={(e) => handleTaskChange(index, 'notes', e.currentTarget.value)}
+                label="Nota"
+                value={t.note}
+                onChange={(e) => {
+                  const updated = [...newOrder.tasks];
+                  updated[i].note = e.currentTarget.value;
+                  setNewOrder(prev => ({ ...prev, tasks: updated }));
+                }}
               />
-              {index > 0 && (
-                <ActionIcon color="red" variant="light" onClick={() => removeTaskRow(index)}>
+              {i > 0 && (
+                <ActionIcon color="red" onClick={() => {
+                  setNewOrder(prev => ({
+                    ...prev,
+                    tasks: prev.tasks.filter((_, idx) => idx !== i)
+                  }));
+                }}>
                   <IconTrash size={16} />
                 </ActionIcon>
               )}
             </Group>
           ))}
-
-          <Button leftSection={<IconPlus size={16} />} variant="light" color="blue" onClick={addTaskRow}>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            mt="sm"
+            variant="light"
+            onClick={() => setNewOrder(prev => ({ ...prev, tasks: [...prev.tasks, { idTask: '', note: '' }] }))}
+          >
             Agregar tarea
           </Button>
 
-          <Button color="green" onClick={handleAddOrder} loading={isSaving}>
+          <Button fullWidth mt="md" color="green" onClick={handleAddOrder}>
             Guardar Orden
           </Button>
-        </div>
-      </Modal>
+        </Modal>
 
-      {/* =================== Modal Ver Orden =================== */}
-      <Modal opened={viewModalOpened} onClose={closeViewModal} title="Detalles de la Orden" centered size="xl">
-        {selectedOrder ? (
-          <>
-            <Text><b>ID:</b> {selectedOrder.id}</Text>
-            <Text><b>Cliente:</b> {selectedOrder.client.name}</Text>
-            <Text><b>Vehículo:</b> {selectedOrder.vehicle.licensePlate}</Text>
+        {/* MODAL VER ORDEN */}
+        <Modal opened={viewModalOpened} onClose={closeView} title="Detalle de Orden" centered size="xl">
+          {selectedOrder ? (
+            <>
+              <Text><b>Cliente:</b> {selectedOrder.client}</Text>
+              <Text><b>Vehículo:</b> {selectedOrder.vehicle}</Text>
+              <Text><b>Estado:</b> {selectedOrder.state}</Text>
 
-            <Text mt="md" fw={600}>Tareas:</Text>
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Tarea</Table.Th>
-                  <Table.Th>Notas</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {selectedOrder.tasks.length > 0 ? selectedOrder.tasks.map((t, i) => (
-                  <Table.Tr key={i}>
-                    <Table.Td>{t.taskName}</Table.Td>
-                    <Table.Td>{t.notes}</Table.Td>
+              <Text mt="md" fw={600}>Tareas</Text>
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Sector</Table.Th>
+                    <Table.Th>Tarea</Table.Th>
+                    <Table.Th>Estado</Table.Th>
+                    <Table.Th>Nota</Table.Th>
                   </Table.Tr>
-                )) : (
-                  <Table.Tr><Table.Td colSpan={2} style={{ textAlign: 'center' }}>No hay tareas asignadas.</Table.Td></Table.Tr>
-                )}
-              </Table.Tbody>
-            </Table>
-          </>
-        ) : (
-          <Text>No hay orden seleccionada.</Text>
-        )}
-      </Modal>
-    </ScrollArea>
+                </Table.Thead>
+                <Table.Tbody>
+                  {selectedOrder.tasks?.length > 0 ? selectedOrder.tasks.map((t, i) => (
+                    <Table.Tr key={i}>
+                      <Table.Td>{t.sectorName}</Table.Td>
+                      <Table.Td>{t.taskDescription}</Table.Td>
+                      <Table.Td>{t.state}</Table.Td>
+                      <Table.Td>{t.note}</Table.Td>
+                    </Table.Tr>
+                  )) : (
+                    <Table.Tr><Table.Td colSpan={4} align="center">Sin tareas</Table.Td></Table.Tr>
+                  )}
+                </Table.Tbody>
+              </Table>
+            </>
+          ) : (
+            <Text>Cargando orden...</Text>
+          )}
+        </Modal>
+      </ScrollArea>
+    </div>
   );
 }
-
-export default WorkOrdersTable;
