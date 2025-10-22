@@ -30,6 +30,7 @@ final readonly class OrderGetController extends AuthMiddleware {
                 "state" => $task->state(),
                 "sectorName" => $task->sectorName(),
                 "taskDescription" => $task->taskDescription(),
+                "note" => $task->note(),
             ];
         }
 
