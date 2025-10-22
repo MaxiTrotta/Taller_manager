@@ -38,6 +38,7 @@ final readonly class OrderGetController extends AuthMiddleware {
             "id" => $order->id(),
             "client" => $order->client(),
             "vehicle" => $order->vehicle(),
+            "creationDate" => $order->creationDate(),
             "state" => $order->getOrderTaskState(),
             "tasks" => $tasks,
         ], JSON_PRETTY_PRINT);

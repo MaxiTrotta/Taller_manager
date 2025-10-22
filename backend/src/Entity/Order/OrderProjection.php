@@ -10,6 +10,7 @@ final class OrderProjection {
         private readonly int $id,
         private readonly string $client,
         private readonly string $vehicle,
+        private readonly string $creationDate,
         private array $orderTaskProjection = [],
     ) {
     }
@@ -27,6 +28,11 @@ final class OrderProjection {
     public function vehicle(): string
     {
         return $this->vehicle;
+    }
+
+    public function creationDate(): string
+    {
+        return $this->creationDate;
     }
 
     public function orderTaskProjection(): array
