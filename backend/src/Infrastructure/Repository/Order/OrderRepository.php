@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Infrastructure\Repository\Order;
 
+use DateTime;
 use Src\Infrastructure\PDO\PDOManager;
 use Src\Entity\Order\Order;
 use Src\Entity\Order\OrderProjection;
@@ -28,13 +29,14 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
 
         return $this->primitiveToOrder($result[0] ?? null);
     }
-public function findProjection(int $id): ?OrderProjection
-{
-    $query = <<<HEREDOC
+    public function findProjection(int $id): ?OrderProjection
+    {
+        $query = <<<HEREDOC
         SELECT 
             o.id AS idOrder,
             c.name AS clientName,
-            v.licensePlate AS vehiclePlate
+            v.licensePlate AS vehiclePlate,
+            o.creationDate AS creationDate
         FROM order_base o
         INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
         INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
@@ -43,11 +45,11 @@ public function findProjection(int $id): ?OrderProjection
             AND o.id = :id
     HEREDOC;
 
-    $parameters = ["id" => $id];
-    $result = $this->execute($query, $parameters);
+        $parameters = ["id" => $id];
+        $result = $this->execute($query, $parameters);
 
-    return $this->primitiveToOrderProjection($result[0] ?? null);
-}
+        return $this->primitiveToOrderProjection($result[0] ?? null);
+    }
 
 
 
@@ -93,12 +95,13 @@ public function findProjection(int $id): ?OrderProjection
         return $orderResults;
     }
     public function searchProjections(): array
-{
-    $query = <<<HEREDOC
+    {
+        $query = <<<HEREDOC
         SELECT 
             o.id AS idOrder,
             c.name AS clientName,
-            v.licensePlate AS vehiclePlate
+            v.licensePlate AS vehiclePlate,
+            o.creationDate AS creationDate
         FROM order_base o
         INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
         INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
@@ -106,15 +109,15 @@ public function findProjection(int $id): ?OrderProjection
             o.deleted = 0 
     HEREDOC;
 
-    $results = $this->execute($query);
+        $results = $this->execute($query);
 
-    $orderProjectionResults = [];
-    foreach ($results as $result) {
-        $orderProjectionResults[] = $this->primitiveToOrderProjection($result);
+        $orderProjectionResults = [];
+        foreach ($results as $result) {
+            $orderProjectionResults[] = $this->primitiveToOrderProjection($result);
+        }
+
+        return $orderProjectionResults;
     }
-
-    return $orderProjectionResults;
-}
 
 
     public function insert(Order $order): void
@@ -158,10 +161,36 @@ public function findProjection(int $id): ?OrderProjection
         $this->execute($query, $parameters);
     }
 
+    // private function primitiveToOrder(?array $primitive): ?Order
+    // {
+    //     if ($primitive === null) {
+    //         return null;
+    //     }
+
+    //     return new Order(
+    //         (int) $primitive["id"],
+    //         (int) $primitive["idClient"],
+    //         (int) $primitive["idVehicle"],
+    //         (int) $primitive["idOrderTask"],
+    //         isset($primitive["creationDate"]) ? new DateTime($primitive["creationDate"]) : null,
+    //         (bool) $primitive["deleted"]
+    //     );
+    // }
+
     private function primitiveToOrder(?array $primitive): ?Order
     {
         if ($primitive === null) {
             return null;
+        }
+
+        // Crear un objeto DateTime solo si la fecha existe y no es nula
+        $creationDate = null;
+        if (!empty($primitive["creationDate"])) {
+            // Le indicamos explícitamente la zona horaria de Argentina
+            $creationDate = new DateTime(
+                $primitive["creationDate"],
+                new \DateTimeZone('America/Argentina/Buenos_Aires')
+            );
         }
 
         return new Order(
@@ -169,9 +198,11 @@ public function findProjection(int $id): ?OrderProjection
             (int) $primitive["idClient"],
             (int) $primitive["idVehicle"],
             (int) $primitive["idOrderTask"],
+            $creationDate,
             (bool) $primitive["deleted"]
         );
     }
+
     // private function primitiveToOrderProjection(?array $primitive): ?OrderProjection
     // {
     //     if ($primitive === null) {
@@ -179,10 +210,10 @@ public function findProjection(int $id): ?OrderProjection
     //     }
 
     //     return new OrderProjection(
-    //         (int) $primitive["id"],
-    //         (string) $primitive["client"],
-    //         (string) $primitive["vehicle"],
-    //         (int) $primitive["idOrderTask"]
+    //         (int) $primitive["idOrder"],
+    //         (string) $primitive["clientName"],
+    //         (string) $primitive["vehiclePlate"],
+    //         (string) $primitive["creationDate"],
     //     );
     // }
 
@@ -192,11 +223,23 @@ public function findProjection(int $id): ?OrderProjection
             return null;
         }
 
+        // obtener la fecha raw (ajustá el índice al que usás en tu SELECT)
+        $rawDate = $primitive['creationDate'] ?? $primitive['creationDate'] ?? null;
+
+        $formattedDate = null;
+        if (!empty($rawDate)) {
+            $dt = new \DateTime($rawDate, new \DateTimeZone('America/Argentina/Buenos_Aires'));
+            $formattedDate = $dt->format('c'); // ej: 2025-10-22T16:25:00-03:00
+        }
+
         return new OrderProjection(
             (int) $primitive["idOrder"],
             (string) $primitive["clientName"],
             (string) $primitive["vehiclePlate"],
+            $formattedDate // string ISO 8601 o null
         );
     }
+
+
 
 }

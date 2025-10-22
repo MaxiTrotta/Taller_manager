@@ -28,6 +28,7 @@ final readonly class OrdersGetController {
             "id" => $response->id(),
             "client" => $response->client(),
             "vehicle" => $response->vehicle(),
+            "creationDate" => $response->creationDate(),
             "state" => $response->getOrderTaskState(),
         ];
     }
