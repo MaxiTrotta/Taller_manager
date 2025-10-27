@@ -26,6 +26,7 @@ final readonly class OrderGetController extends AuthMiddleware {
 
         foreach ($order->orderTaskProjection() as $task) {
             $tasks[] = [
+                "id" => $task->id(),
                 "idOrder" => $task->idOrder(),
                 "state" => $task->state(),
                 "sectorName" => $task->sectorName(),

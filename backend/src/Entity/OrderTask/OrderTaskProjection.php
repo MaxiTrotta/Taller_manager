@@ -5,11 +5,12 @@ final readonly class OrderTaskProjection
 {
 
     function __construct(
-        private int $idOrder,
-        private string $state,
-        private string $sectorName,
-        private string $taskDescription,
-        private string $note,
+            private int $id,
+            private int $idOrder,
+            private string $state,
+            private string $sectorName,
+            private string $taskDescription,
+            private string $note,
     ){
     }
     
@@ -37,4 +38,9 @@ final readonly class OrderTaskProjection
     {
         return $this->note;
     }
+    
+        public function id(): int
+        {
+            return $this->id;
+        }
 }

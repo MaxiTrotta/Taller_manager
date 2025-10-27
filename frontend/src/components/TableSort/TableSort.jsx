@@ -99,6 +99,8 @@ export function TableSort() {
   const [newVehicle, setNewVehicle] = useState({
     licensePlate: '', brand: '', model: '', year: ''
   });
+  // color para los números/íconos de la paginación (cambiar aquí si querés otro color)
+  const paginationNumberColor = '#1976d2';
 
   // =================== Fetch clientes ===================
   const fetchClients = async () => {
@@ -345,9 +347,10 @@ export function TableSort() {
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
         rowsPerPageOptions={[5, 10, 25, 50]}
         sx={{
-          color: 'white',
-          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { color: 'white' },
-          '.MuiSvgIcon-root': { color: 'white' },
+          // aplica color a diversos elementos internos de MUI usados en la paginación
+          color: paginationNumberColor,
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows, .MuiSelect-select, .MuiInputBase-input, .MuiMenuItem-root': { color: paginationNumberColor },
+          '.MuiSvgIcon-root, .MuiIconButton-root, .MuiButtonBase-root': { color: paginationNumberColor },
         }}
       />
 

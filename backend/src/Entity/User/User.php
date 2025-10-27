@@ -54,6 +54,6 @@ final class User {
     public function generateToken(): void
     {
         $this->token = md5($this->email.$this->id.rand(1000, 9999).date("YmdHis"));
-        $this->tokenAuthDate = new DateTime("+1 hours");
+        $this->tokenAuthDate = new DateTime("+5 hours");
     }
 }
