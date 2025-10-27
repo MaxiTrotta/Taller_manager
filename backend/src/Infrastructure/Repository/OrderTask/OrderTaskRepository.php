@@ -200,11 +200,21 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             return null;
         }
 
+        // Normalizar el estado: si viene como número (1,2,3) convertir a texto consistente
+        $rawState = $primitive["state"] ?? '';
+        $state = (string)$rawState;
+        if (is_numeric($rawState)) {
+            $s = intval($rawState);
+            if ($s === 1) $state = 'Pendiente';
+            elseif ($s === 2) $state = 'En proceso';
+            elseif ($s === 3) $state = 'Finalizado';
+        }
+
         return new OrderTask(
             (int)$primitive["id"],
             (int)$primitive["idOrder"],
             //new DateTime($primitive["date"]),
-            (string)$primitive["state"] ?? null,
+            $state,
            // $primitive["createdBy"],
            // $primitive["assignedTo"],
             (int)$primitive["idSector"],
@@ -219,9 +229,20 @@ final readonly class OrderTaskRepository extends PDOManager implements OrderTask
             return null;
         }
 
+        // Normalizar el estado para la proyección (evitar que el frontend reciba '1'/'2'/'3')
+        $rawState = $primitive["state"] ?? '';
+        $state = (string)$rawState;
+        if (is_numeric($rawState)) {
+            $s = intval($rawState);
+            if ($s === 1) $state = 'Pendiente';
+            elseif ($s === 2) $state = 'En proceso';
+            elseif ($s === 3) $state = 'Finalizado';
+        }
+
         return new OrderTaskProjection(
+            (int)$primitive["id"],
             (int)$primitive["idOrder"],
-            (string)$primitive["state"] ?? null,
+            $state,
             (string)$primitive["sectorName"] ?? null,
             (string)$primitive["taskDescription"] ?? null,
             (string)$primitive["note"] ?? null

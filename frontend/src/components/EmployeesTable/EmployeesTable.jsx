@@ -226,7 +226,6 @@ export function EmployeesTable() {
           value={newEmployee.idSector.toString()}
           onChange={(val) => setNewEmployee({ ...newEmployee, idSector: parseInt(val) })}
         />
-        <TextInput label="Avatar (URL)" value={newEmployee.avatar} onChange={(e) => setNewEmployee({ ...newEmployee, avatar: e.currentTarget.value })} />
         <Button mt="md" color="green" onClick={handleAddEmployee}>Guardar</Button>
       </Modal>
 

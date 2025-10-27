@@ -21,6 +21,15 @@ final readonly class OrderTaskPutController {
         $idTask = ControllerUtils::getPost("idTask");
         $note = ControllerUtils::getPost("note");
 
+        // Si el cliente envía el estado como número (1,2,3), lo convertimos a texto para mantener consistencia
+        if (is_numeric($state)) {
+            $s = intval($state);
+            if ($s === 1) $state = "PENDIENTE";
+            elseif ($s === 2) $state = "EN PROCESO";
+            elseif ($s === 3) $state = "FINALIZADO";
+            else $state = (string)$state;
+        }
+
         $this->service->update(
             $idOrder,
             //$date,

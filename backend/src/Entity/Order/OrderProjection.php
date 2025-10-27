@@ -54,19 +54,22 @@ final class OrderProjection {
         # 1 = PENDIENTE
         # 2 = EN PROCESO
         # 3 = FINALIZADO
-        $state = 1;
+        $state = 1; // por defecto Pendiente
         $cantidadFinalizados = 0;
         foreach ($this->orderTaskProjection as $task) {
-            if ($task->state() == 'EN PROCESO') {
-                $state = 2;
-                return $state;
-            }elseif ($task->state() == 'FINALIZADO') {
+            $taskState = strtoupper(trim((string)$task->state()));
+            if ($taskState === 'EN PROCESO' || $taskState === 'EN PROCESO') {
+                // si alguna tarea está en proceso, la orden está en proceso
+                return 2;
+            } elseif ($taskState === 'FINALIZADO') {
                 $cantidadFinalizados++;
             }
         }
-        if ($cantidadFinalizados === sizeof($this->orderTaskProjection)) {
-            $state = 3;
+
+        if ($cantidadFinalizados === count($this->orderTaskProjection)) {
+            $state = 3; // todas finalizadas
         }
+
         return $state;
     }
 }
