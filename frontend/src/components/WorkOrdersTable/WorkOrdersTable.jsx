@@ -50,6 +50,8 @@ export default function WorkOrdersTable() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [vehicleFilter, setVehicleFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(""); // format YYYY-MM-DD
 
   // =================== HELPERS ===================
   const stateTextToNumber = (s) => {
@@ -312,9 +314,14 @@ export default function WorkOrdersTable() {
       // 5️⃣ Refrescar
       const resUpdated = await WorkOrderCreatorService.getById(selectedOrderForEdit.id);
       const updatedOrder = resUpdated.data;
-      setWorkOrders((prev) =>
-        prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
-      );
+      // Como no queremos tocar el backend para modificar la fecha, actualizamos la fecha localmente a ahora
+      updatedOrder.creationDate = new Date().toISOString();
+      // Colocar la orden actualizada al principio para que quede arriba (más reciente)
+      setWorkOrders((prev) => {
+        const others = prev.filter((o) => o.id !== updatedOrder.id);
+        return [updatedOrder, ...others];
+      });
+  setPage(0); // mostrar la página con las órdenes más recientes
 
       closeEdit();
     } catch (err) {
@@ -342,13 +349,41 @@ export default function WorkOrdersTable() {
   };
 
   // =================== FILAS ===================
-  const paginated = workOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Filtrar por vehículo y fecha, y ordenar por creationDate descendente
+  const filteredAndSorted = (workOrders || [])
+    .filter((o) => {
+      const byVehicle = vehicleFilter
+        ? (o.vehicle || "").toString().toLowerCase().includes(vehicleFilter.toLowerCase())
+        : true;
+      const byDate = dateFilter
+        ? (() => {
+            if (!o.creationDate) return false;
+            try {
+              const od = new Date(o.creationDate);
+              // comparar YYYY-MM-DD
+              const odDate = od.toISOString().slice(0, 10);
+              return odDate === dateFilter;
+            } catch (e) {
+              return false;
+            }
+          })()
+        : true;
+      return byVehicle && byDate;
+    })
+    .sort((a, b) => {
+      const da = a.creationDate ? new Date(a.creationDate).getTime() : 0;
+      const db = b.creationDate ? new Date(b.creationDate).getTime() : 0;
+      return db - da; // más reciente primero
+    });
+
+  const paginated = filteredAndSorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const rows = paginated.map((order) => (
     <Table.Tr key={order.id}>
       <Table.Td>{order.id}</Table.Td>
       <Table.Td>{order.client}</Table.Td>
       <Table.Td>{order.vehicle}</Table.Td>
+      <Table.Td>{order.creationDate ? new Date(order.creationDate).toLocaleString() : '-'}</Table.Td>
       <Table.Td>
         <Badge
           color={order.state === 1 ? "red" : order.state === 2 ? "yellow" : order.state === 3 ? "green" : "gray"}
@@ -401,6 +436,25 @@ export default function WorkOrdersTable() {
             Nueva Orden
           </Button>
         </Group>
+        {/* Filtros: vehículo y fecha */}
+        <Group mb="sm">
+          <TextInput
+            placeholder="Buscar por vehículo (patente, marca, etc.)"
+            value={vehicleFilter}
+            onChange={(e) => { setVehicleFilter(e.currentTarget.value); setPage(0); }}
+            style={{ width: 300 }}
+          />
+          <TextInput
+            type="date"
+            label="Fecha creación"
+            value={dateFilter}
+            onChange={(e) => { setDateFilter(e.currentTarget.value); setPage(0); }}
+            style={{ width: 200 }}
+          />
+          <Button variant="outline" color="gray" onClick={() => { setVehicleFilter(""); setDateFilter(""); setPage(0); }}>
+            Limpiar filtros
+          </Button>
+        </Group>
 
         <Table highlightOnHover>
           <Table.Thead>
@@ -408,6 +462,7 @@ export default function WorkOrdersTable() {
               <Table.Th>ID</Table.Th>
               <Table.Th>Cliente</Table.Th>
               <Table.Th>Vehículo</Table.Th>
+              <Table.Th>Fecha</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th>Acciones</Table.Th>
             </Table.Tr>
@@ -417,7 +472,7 @@ export default function WorkOrdersTable() {
 
         <TablePagination
           component="div"
-          count={workOrders.length}
+          count={filteredAndSorted.length}
           page={page}
           onPageChange={(e, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
