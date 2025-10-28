@@ -14,7 +14,7 @@ import {
   Overlay,
   Badge,
 } from "@mantine/core";
-import { IconPlus, IconTrash, IconEye, IconPencil } from "@tabler/icons-react";
+import { IconPlus, IconEye, IconPencil, IconTrash, IconKey, IconXboxX, IconWreckingBall, IconNut } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import TablePagination from "@mui/material/TablePagination";
 
@@ -25,7 +25,7 @@ import { TaskService } from "../../services/TaskService";
 import { OrderTaskService } from "../../services/OrderTaskService";
 import { sectorsService } from "../../services/sectorsService";
 
-export default function WorkOrdersTable() {
+export default function MecanicPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [workOrders, setWorkOrders] = useState([]);
@@ -50,8 +50,6 @@ export default function WorkOrdersTable() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [vehicleFilter, setVehicleFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState(""); // format YYYY-MM-DD
 
   // =================== HELPERS ===================
   const stateTextToNumber = (s) => {
@@ -62,6 +60,18 @@ export default function WorkOrdersTable() {
     return 1;
   };
   const stateNumberToText = (n) => (n === 1 ? "Pendiente" : n === 2 ? "En proceso" : "Finalizado");
+
+  // formatea fecha/horario o devuelve "-" si no existe
+  const formatDate = (value) => {
+    if (!value) return "";
+    try {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleString();
+    } catch {
+      return String(value);
+    }
+  };
 
   // =================== FETCH ===================
   const fetchOrders = async () => {
@@ -130,9 +140,14 @@ export default function WorkOrdersTable() {
         idOrderTask: 0,
         deleted: 0,
       };
-      const response = await WorkOrderCreatorService.create(payloadOrder);
+      await WorkOrderCreatorService.create(payloadOrder);
 
-      const newOrderId = response.data?.id;
+      const allOrders = await WorkOrderCreatorService.getAll();
+      const lastOrder =
+        Array.isArray(allOrders.data) && allOrders.data.length > 0
+          ? allOrders.data[allOrders.data.length - 1]
+          : null;
+      const newOrderId = lastOrder?.id;
 
       if (newOrderId) {
         for (const task of newOrder.tasks) {
@@ -252,78 +267,55 @@ export default function WorkOrdersTable() {
     }
   };
 
+
   // =================== GUARDAR TAREAS ===================
   const handleSaveEditedTasks = async () => {
     if (!selectedOrderForEdit || !selectedOrderForEdit.tasks) return;
     setSaving(true);
     try {
-      // 1️⃣ Traer tareas originales para detectar borradas
-      const resOriginal = await WorkOrderCreatorService.getById(selectedOrderForEdit.id);
-      const originalTasks = resOriginal.data.tasks || [];
-
-      // 2️⃣ Detectar eliminadas (estaban antes y ya no están)
-      const deletedTasks = originalTasks.filter(
-        (orig) => !selectedOrderForEdit.tasks.some((curr) => curr.id === orig.id)
-      );
-
-      // 3️⃣ Actualizar y crear
       for (const t of selectedOrderForEdit.tasks) {
-        const stateNumber =
-          typeof t.state === "number"
-            ? t.state
-            : (t.state || "").toLowerCase() === "pendiente"
-              ? 1
-              : (t.state || "").toLowerCase().includes("proceso")
-                ? 2
-                : 3;
+        if (!t.id) {
+          console.warn("⚠️ Tarea sin id, se omite:", t);
+          continue;
+        }
 
-        // Actualizar
-        if (t.id) {
-          await OrderTaskService.update(t.id, {
-            idOrder: selectedOrderForEdit.id,
-            idTask: t.idTask,
-            idSector: t.idSector,
-            state: stateNumber,
-            note: t.note || "",
-          });
-        }
-        // Crear nueva tarea
-        else if (t.idTask && t.idSector) {
-          await OrderTaskService.create({
-            idOrder: selectedOrderForEdit.id,
-            idTask: parseInt(t.idTask),
-            idSector: parseInt(t.idSector),
-            state: 1, // siempre arranca Pendiente
-            note: t.note || "",
-            deleted: 0,
-          });
-        }
+        await OrderTaskService.update(t.id, {
+          idOrder: selectedOrderForEdit.id,
+          idTask: t.idTask,
+          idSector: t.idSector,
+          state:
+            typeof t.state === "number"
+              ? t.state
+              : (t.state || "").toLowerCase() === "pendiente"
+                ? 1
+                : (t.state || "").toLowerCase().includes("proceso")
+                  ? 2
+                  : 3,
+          note: t.note || "",
+        });
       }
 
-      // 4️⃣ Eliminar las que se quitaron
-      for (const t of deletedTasks) {
-        if (t.id) await OrderTaskService.delete(t.id);
+      // Refrescar
+      try {
+        const resUpdated = await WorkOrderCreatorService.getById(selectedOrderForEdit.id);
+        const updatedOrder = resUpdated.data;
+        setWorkOrders((prev) =>
+          prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
+        );
+      } catch (err) {
+        console.error("Error al obtener orden actualizada, recargando todas:", err);
+        await fetchOrders();
       }
-
-      // 5️⃣ Refrescar
-      const resUpdated = await WorkOrderCreatorService.getById(selectedOrderForEdit.id);
-      const updatedOrder = resUpdated.data;
-      // Como no queremos tocar el backend para modificar la fecha, actualizamos la fecha localmente a ahora
-      updatedOrder.creationDate = new Date().toISOString();
-      // Colocar la orden actualizada al principio para que quede arriba (más reciente)
-      setWorkOrders((prev) => {
-        const others = prev.filter((o) => o.id !== updatedOrder.id);
-        return [updatedOrder, ...others];
-      });
-  setPage(0); // mostrar la página con las órdenes más recientes
 
       closeEdit();
     } catch (err) {
-      console.error("Error al guardar tareas:", err);
+      console.error("Error al actualizar tareas:", err);
     } finally {
       setSaving(false);
     }
   };
+
+
 
   // =================== ELIMINAR ORDEN ===================
   const handleDeleteOrder = async () => {
@@ -341,73 +333,40 @@ export default function WorkOrdersTable() {
   };
 
   // =================== FILAS ===================
-  // Filtrar por vehículo y fecha, y ordenar por creationDate descendente
-  const filteredAndSorted = (workOrders || [])
-    .filter((o) => {
-      const byVehicle = vehicleFilter
-        ? (o.vehicle || "").toString().toLowerCase().includes(vehicleFilter.toLowerCase())
-        : true;
-      const byDate = dateFilter
-        ? (() => {
-            if (!o.creationDate) return false;
-            try {
-              const od = new Date(o.creationDate);
-              // comparar YYYY-MM-DD
-              const odDate = od.toISOString().slice(0, 10);
-              return odDate === dateFilter;
-            } catch (e) {
-              return false;
-            }
-          })()
-        : true;
-      return byVehicle && byDate;
-    })
-    .sort((a, b) => {
-      const da = a.creationDate ? new Date(a.creationDate).getTime() : 0;
-      const db = b.creationDate ? new Date(b.creationDate).getTime() : 0;
-      return db - da; // más reciente primero
-    });
+  const paginated = workOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const paginated = filteredAndSorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const rows = paginated.map((order) => (
-    <Table.Tr key={order.id}>
-      <Table.Td>{order.id}</Table.Td>
-      <Table.Td>{order.client}</Table.Td>
-      <Table.Td>{order.vehicle}</Table.Td>
-      <Table.Td>{order.creationDate ? new Date(order.creationDate).toLocaleString('es-ES', {
-        hour12: false,
-      }) : '-'}</Table.Td>
-      <Table.Td>
-        <Badge
-          color={order.state === 1 ? "red" : order.state === 2 ? "yellow" : order.state === 3 ? "green" : "gray"}
-          variant="filled"
-        >
-          {order.state === 1 ? "Pendiente" : order.state === 2 ? "En proceso" : order.state === 3 ? "Finalizado" : "Sin tareas"}
-        </Badge>
-      </Table.Td>
-      <Table.Td>
-        <Group gap={0} justify="flex-end">
-          <ActionIcon color="gray" variant="subtle" onClick={() => handleViewOrder(order.id)}>
-            <IconEye size={16} />
-          </ActionIcon>
-          <ActionIcon color="gray" variant="subtle" onClick={() => handleEditClick(order.id)}>
-            <IconPencil size={16} />
-          </ActionIcon>
-          <ActionIcon
-            color="red"
-            variant="subtle"
-            onClick={() => {
-              setSelectedOrderForDelete(order);
-              openDelete();
-            }}
+  const rows = paginated.map((order) => {
+    return (
+      <Table.Tr key={order.id}>
+        <Table.Td>{order.client}</Table.Td>
+        <Table.Td>{order.vehicle}</Table.Td>
+        <Table.Td>{formatDate(order.createdAt ?? order.created_at ?? order.dateCreated ?? order.creationDate)}</Table.Td>
+        <Table.Td>{formatDate(order.updatedAt ?? order.updated_at ?? order.dateUpdated ?? order.modifiedAt)}</Table.Td>
+        <Table.Td>
+          <Badge
+            color={order.state === 1 ? "red" : order.state === 2 ? "yellow" : order.state === 3 ? "green" : "gray"}
+            variant="filled"
           >
-            <IconTrash size={16} />
-          </ActionIcon>
-        </Group>
-      </Table.Td>
-    </Table.Tr>
-  ));
+            {order.state === 1 ? "Pendiente" : order.state === 2 ? "En proceso" : order.state === 3 ? "Finalizado" : "Sin tareas"}
+          </Badge>
+        </Table.Td>
+        <Table.Td>
+          <Group gap={6} justify="flex-end">
+
+
+            <Button
+              color="green"
+              size="xs"
+              leftSection={<IconNut size={14} />}
+              onClick={() => handleEditClick(order.id)}
+            >
+              VER / MODIFICAR ORDEN
+            </Button>
+          </Group>
+        </Table.Td>
+      </Table.Tr>
+    );
+  });
 
   // =================== UI ===================
   return (
@@ -426,37 +385,14 @@ export default function WorkOrdersTable() {
           <Text fz="xl" fw={600}>
             Órdenes de Trabajo
           </Text>
-          <Button color="green" onClick={openAdd}>
-            Nueva Orden
-          </Button>
-        </Group>
-        {/* Filtros: vehículo y fecha */}
-        <Group mb="sm">
-          <TextInput
-            placeholder="Buscar por vehículo (patente, marca, etc.)"
-            value={vehicleFilter}
-            onChange={(e) => { setVehicleFilter(e.currentTarget.value); setPage(0); }}
-            style={{ width: 300 }}
-          />
-          <TextInput
-            type="date"
-            label="Fecha creación"
-            value={dateFilter}
-            onChange={(e) => { setDateFilter(e.currentTarget.value); setPage(0); }}
-            style={{ width: 200 }}
-          />
-          <Button variant="outline" color="gray" onClick={() => { setVehicleFilter(""); setDateFilter(""); setPage(0); }}>
-            Limpiar filtros
-          </Button>
         </Group>
 
         <Table highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>ID</Table.Th>
               <Table.Th>Cliente</Table.Th>
               <Table.Th>Vehículo</Table.Th>
-              <Table.Th>Fecha</Table.Th>
+              <Table.Th>Fecha creación</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th>Acciones</Table.Th>
             </Table.Tr>
@@ -466,7 +402,7 @@ export default function WorkOrdersTable() {
 
         <TablePagination
           component="div"
-          count={filteredAndSorted.length}
+          count={workOrders.length}
           page={page}
           onPageChange={(e, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
@@ -566,7 +502,7 @@ export default function WorkOrdersTable() {
           </Button>
         </Modal>
 
-        {/* VER */}
+        {/* VER
         <Modal opened={viewModalOpened} onClose={closeView} title="Detalle de Orden" centered size="xl">
           {selectedOrder ? (
             <>
@@ -584,20 +520,20 @@ export default function WorkOrdersTable() {
                     selectedOrder.state === 1
                       ? "red"
                       : selectedOrder.state === 2
-                        ? "yellow"
-                        : selectedOrder.state === 3
-                          ? "green"
-                          : "gray"
+                      ? "yellow"
+                      : selectedOrder.state === 3
+                      ? "green"
+                      : "gray"
                   }
                   variant="filled"
                 >
                   {selectedOrder.state === 1
                     ? "Pendiente"
                     : selectedOrder.state === 2
-                      ? "En proceso"
-                      : selectedOrder.state === 3
-                        ? "Finalizado"
-                        : "Sin tareas"}
+                    ? "En proceso"
+                    : selectedOrder.state === 3
+                    ? "Finalizado"
+                    : "Sin tareas"}
                 </Badge>
               </Group>
 
@@ -625,10 +561,10 @@ export default function WorkOrdersTable() {
                               (t.state || "").toLowerCase() === "pendiente"
                                 ? "red"
                                 : (t.state || "").toLowerCase() === "en proceso"
-                                  ? "yellow"
-                                  : (t.state || "").toLowerCase() === "finalizado"
-                                    ? "green"
-                                    : "gray"
+                                ? "yellow"
+                                : (t.state || "").toLowerCase() === "finalizado"
+                                ? "green"
+                                : "gray"
                             }
                             variant="filled"
                           >
@@ -651,17 +587,16 @@ export default function WorkOrdersTable() {
           ) : (
             <Text>Cargando orden...</Text>
           )}
-        </Modal>
+        </Modal> */}
 
         {/* EDITAR */}
-        {/* =================== MODAL EDITAR =================== */}
-        <Modal opened={editModalOpened} onClose={closeEdit} title="Editar Orden" centered size="xl">
+        <Modal opened={editModalOpened} onClose={closeEdit} title="DETALLE DE ORDEN" centered size="xl">
           {selectedOrderForEdit ? (
             <>
               <Text fw={600} mb="sm">
-                Editar tareas de la orden #{selectedOrderForEdit.id}
+                Cliente: {selectedOrderForEdit.client} <br />
+                Vehículo: {selectedOrderForEdit.vehicle}
               </Text>
-
               <Table highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
@@ -669,38 +604,14 @@ export default function WorkOrdersTable() {
                     <Table.Th>Tarea</Table.Th>
                     <Table.Th>Estado</Table.Th>
                     <Table.Th>Nota</Table.Th>
-                    <Table.Th>Acciones</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
-
                 <Table.Tbody>
                   {selectedOrderForEdit.tasks?.length > 0 ? (
                     selectedOrderForEdit.tasks.map((t, i) => (
                       <Table.Tr key={i}>
-                        <Table.Td>
-                          <Select
-                            data={sectors.map((s) => ({ value: s.id.toString(), label: s.name }))}
-                            value={t.idSector?.toString() || ""}
-                            onChange={(val) => {
-                              const updated = [...selectedOrderForEdit.tasks];
-                              updated[i].idSector = val;
-                              setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
-                            }}
-                          />
-                        </Table.Td>
-
-                        <Table.Td>
-                          <Select
-                            data={tasks.map((task) => ({ value: task.id.toString(), label: task.description }))}
-                            value={t.idTask?.toString() || ""}
-                            onChange={(val) => {
-                              const updated = [...selectedOrderForEdit.tasks];
-                              updated[i].idTask = val;
-                              setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
-                            }}
-                          />
-                        </Table.Td>
-
+                        <Table.Td>{t.sectorName}</Table.Td>
+                        <Table.Td>{t.taskDescription}</Table.Td>
                         <Table.Td>
                           <Select
                             data={[
@@ -709,22 +620,21 @@ export default function WorkOrdersTable() {
                               { value: "3", label: "Finalizado" },
                             ]}
                             value={
-                              typeof t.state === "number"
-                                ? t.state.toString()
-                                : (t.state || "").toLowerCase() === "pendiente"
-                                  ? "1"
-                                  : (t.state || "").toLowerCase().includes("proceso")
-                                    ? "2"
-                                    : "3"
+                              (t.state || "").toLowerCase() === "pendiente"
+                                ? "1"
+                                : (t.state || "").toLowerCase() === "en proceso"
+                                  ? "2"
+                                  : (t.state || "").toLowerCase() === "finalizado"
+                                    ? "3"
+                                    : ""
                             }
                             onChange={(val) => {
                               const updated = [...selectedOrderForEdit.tasks];
-                              updated[i].state = parseInt(val);
+                              updated[i].state = stateNumberToText(Number(val));
                               setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
                             }}
                           />
                         </Table.Td>
-
                         <Table.Td>
                           <TextInput
                             value={t.note || ""}
@@ -735,63 +645,27 @@ export default function WorkOrdersTable() {
                             }}
                           />
                         </Table.Td>
-
-                        <Table.Td>
-                          <ActionIcon
-                            color="red"
-                            variant="subtle"
-                            onClick={() => {
-                              setSelectedOrderForEdit((prev) => ({
-                                ...prev,
-                                tasks: prev.tasks.filter((_, idx) => idx !== i),
-                              }));
-                            }}
-                          >
-                            <IconTrash size={16} />
-                          </ActionIcon>
-                        </Table.Td>
                       </Table.Tr>
                     ))
                   ) : (
                     <Table.Tr>
-                      <Table.Td colSpan={5} align="center">
+                      <Table.Td colSpan={4} align="center">
                         Sin tareas
                       </Table.Td>
                     </Table.Tr>
                   )}
                 </Table.Tbody>
               </Table>
-
-              {/* ✅ Botón fuera de la tabla */}
-              <Group justify="space-between" mt="md">
-                <Button
-                  variant="light"
-                  leftSection={<IconPlus size={16} />}
-                  onClick={() =>
-                    setSelectedOrderForEdit((prev) => ({
-                      ...prev,
-                      tasks: [
-                        ...(prev.tasks || []),
-                        { idSector: "", idTask: "", state: 1, note: "" },
-                      ],
-                    }))
-                  }
-                >
-                  Agregar tarea
+              {selectedOrderForEdit.tasks?.length > 0 && (
+                <Button fullWidth mt="md" color="blue" onClick={handleSaveEditedTasks}>
+                  Guardar todos los cambios
                 </Button>
-
-                {selectedOrderForEdit.tasks?.length > 0 && (
-                  <Button fullWidth mt="md" color="blue" onClick={handleSaveEditedTasks}>
-                    Guardar todos los cambios
-                  </Button>
-                )}
-              </Group>
+              )}
             </>
           ) : (
             <Text>Cargando orden...</Text>
           )}
         </Modal>
-
 
         {/* ELIMINAR */}
         <Modal opened={deleteModalOpened} onClose={closeDelete} title="Eliminar Orden" centered size="sm">

@@ -22,4 +22,9 @@ readonly class PDOManager {
 		$stmt->execute($parameters);
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}	
+
+	public function getLastInsertId(): int
+	{
+		return (int) $this->client->lastInsertId();
+	}
 }

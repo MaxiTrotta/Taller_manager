@@ -32,18 +32,20 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     public function findProjection(int $id): ?OrderProjection
     {
         $query = <<<HEREDOC
-        SELECT 
-            o.id AS idOrder,
-            c.name AS clientName,
-            v.licensePlate AS vehiclePlate,
-            o.creationDate AS creationDate
-        FROM order_base o
-        INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
-        INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
-        WHERE
-            o.deleted = 0 
-            AND o.id = :id
-    HEREDOC;
+            SELECT 
+                o.id AS idOrder,
+                c.name AS clientName,
+                v.licensePlate AS vehiclePlate,
+                o.creationDate AS creationDate
+            FROM order_base o
+            INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
+            INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
+            WHERE
+                o.deleted = 0 
+                AND o.id = :id
+            ORDER BY 
+                o.creationDate DESC
+        HEREDOC;
 
         $parameters = ["id" => $id];
         $result = $this->execute($query, $parameters);
@@ -97,17 +99,20 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     public function searchProjections(): array
     {
         $query = <<<HEREDOC
-        SELECT 
-            o.id AS idOrder,
-            c.name AS clientName,
-            v.licensePlate AS vehiclePlate,
-            o.creationDate AS creationDate
-        FROM order_base o
-        INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
-        INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
-        WHERE 
-            o.deleted = 0 
-    HEREDOC;
+            SELECT 
+                o.id AS idOrder,
+                c.name AS clientName,
+                v.licensePlate AS vehiclePlate,
+                o.creationDate AS creationDate
+            FROM order_base o
+            INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
+            INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
+            WHERE 
+                o.deleted = 0 
+            ORDER BY 
+                o.creationDate DESC
+
+        HEREDOC;
 
         $results = $this->execute($query);
 
@@ -120,20 +125,23 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     }
 
 
-    public function insert(Order $order): void
+    public function insert(Order $order): int
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO order_base (idClient, idVehicle, idOrderTask, deleted) VALUES (:idClient, :idVehicle, :idOrderTask, :deleted)
+                    INSERT INTO order_base (idClient, idVehicle, idOrderTask, creationDate, deleted) VALUES (:idClient, :idVehicle, :idOrderTask, :creationDate, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
             "idClient" => $order->idClient(),
             "idVehicle" => $order->idVehicle(),
             "idOrderTask" => $order->idOrderTask(),
+            "creationDate" => $order->creationDate(),
             "deleted" => $order->isDeleted()
         ];
 
         $this->execute($query, $parameters);
+
+        return $this->getLastInsertId();
     }
 
     public function update(Order $order): void
@@ -229,7 +237,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
         $formattedDate = null;
         if (!empty($rawDate)) {
             $dt = new \DateTime($rawDate, new \DateTimeZone('America/Argentina/Buenos_Aires'));
-            $formattedDate = $dt->format('c'); // ej: 2025-10-22T16:25:00-03:00
+            $formattedDate = $dt->format('Y-m-d H:i:s'); // ej: 2025-10-22T16:25:00-03:00
         }
 
         return new OrderProjection(

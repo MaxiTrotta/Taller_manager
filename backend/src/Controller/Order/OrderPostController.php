@@ -16,6 +16,10 @@ final readonly class OrderPostController {
         $idVehicle = ControllerUtils::getPost("idVehicle");
         $idOrderTask = ControllerUtils::getPost("idOrderTask");
 
-        $this->service->create($idClient, $idVehicle, $idOrderTask);
+        $lastInsertedId = $this->service->create($idClient, $idVehicle, $idOrderTask);
+
+        echo json_encode([
+            "id" => $lastInsertedId
+        ]);
     }
 }
