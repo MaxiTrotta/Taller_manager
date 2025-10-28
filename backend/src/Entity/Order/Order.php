@@ -27,8 +27,9 @@ final class Order {
             $idClient,
             $idVehicle,
             $idOrderTask,
-            null, //Uso null por el momento ya que la base de datos es la que le da la fecha actual con el CURRENT_TIMESTAMP
-            false);
+            new Datetime(),
+            false
+        );
     }
 
     public function modify(int $idClient, int $idVehicle, int $idOrderTask): void
@@ -65,8 +66,7 @@ final class Order {
 
     public function creationDate(): ?string
     {
-        // formato compatible con JSON y JavaScript (ISO 8601)
-        return $this->creationDate?->format('Y-m-d\TH:i:s');
+        return $this->creationDate?->format('Y-m-d H:i:s');
     }
 
     public function isDeleted(): int

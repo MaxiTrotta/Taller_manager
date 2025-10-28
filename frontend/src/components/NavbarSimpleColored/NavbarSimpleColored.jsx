@@ -22,6 +22,7 @@ const data = [
   { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
   { link: '/register', label: 'Registrar Nuevo Sector', icon: IconKey },
+  { link: '/mecanico', label: 'Vista de mecanico', icon: IconSettings },
   
 ];
 export function NavbarSimpleColored() {

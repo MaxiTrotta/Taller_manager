@@ -12,9 +12,11 @@ final readonly class OrderCreatorService {
         $this->repository = new OrderRepository();
     }
 
-    public function create(int $idClient, int $idVehicle, int $idOrderTask): void
+    public function create(int $idClient, int $idVehicle, int $idOrderTask): int
     {
         $order = Order::create($idClient, $idVehicle, $idOrderTask);
-        $this->repository->insert($order);
+        $lastInsertedId = $this->repository->insert($order);
+
+        return $lastInsertedId;
     }
 }

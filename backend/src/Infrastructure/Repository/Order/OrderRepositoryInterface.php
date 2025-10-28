@@ -12,7 +12,7 @@ interface OrderRepositoryInterface {
     /** @return Order[] */
     public function search(): array;
 
-    public function insert(Order $order): void;
+    public function insert(Order $order): int;
 
     public function update(Order $order): void;
 }

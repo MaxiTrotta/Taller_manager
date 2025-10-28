@@ -11,7 +11,8 @@ import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
 import { TableSort } from './components/TableSort/TableSort'
 import EmployeesTable from './components/EmployeesTable/EmployeesTable';
 import WorkOrdersTable from './components/WorkOrdersTable/WorkOrdersTable';
-
+import MecanicPage from './pages/MacanicPage/MecanicPage';
+	
 
 
 function App() {
@@ -32,6 +33,8 @@ function App() {
 						<Route path="/cliente" element={<TableSort />} />
 						<Route path="/ordenes" element={<WorkOrdersTable />} />
 						<Route path="/empleado" element={<EmployeesTable />} />
+						<Route path="/mecanico" element={<MecanicPage />} />
+
 					</Route>
 				</Routes>
 			</BrowserRouter>
