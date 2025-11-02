@@ -35,3 +35,19 @@ h1 {
   line-height: 1.1;
 }
 
+/* Global override for MUI TablePagination to force white text/icons when needed */
+.MuiTablePagination-root, .MuiTablePagination-toolbar,
+.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows,
+.MuiTablePagination-select, .MuiSelect-select, .MuiInputBase-input,
+.MuiMenuItem-root, .MuiSvgIcon-root, .MuiIconButton-root, .MuiSelect-icon,
+.MuiButtonBase-root, .MuiTypography-root {
+  color: rgb(129, 129, 129) !important;
+}
+
+/* If background is light, add subtle dark background to pagination for contrast */
+/* .table-pagination-contrast {
+  background: rgba(240, 13, 13, 0.25);
+  padding: 4px 8px;
+  border-radius: 6px;
+} */
+

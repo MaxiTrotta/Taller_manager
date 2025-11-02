@@ -24,6 +24,10 @@ import { VehicleCreatorService } from "../../services/VehicleCreatorService";
 import { TaskService } from "../../services/TaskService";
 import { OrderTaskService } from "../../services/OrderTaskService";
 import { sectorsService } from "../../services/sectorsService";
+import {
+  validateNewOrderPayload,
+  validateEditedTasksPayload,
+} from "../../utils/validators";
 
 export default function WorkOrdersTable() {
   const [loading, setLoading] = useState(false);
@@ -47,11 +51,34 @@ export default function WorkOrdersTable() {
     idVehicle: "",
     tasks: [{ idSector: "", idTask: "", note: "" }],
   });
+  const [newOrderErrors, setNewOrderErrors] = useState({ idClient: null, idVehicle: null, tasks: [] });
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [vehicleFilter, setVehicleFilter] = useState("");
   const [dateFilter, setDateFilter] = useState(""); // format YYYY-MM-DD
+  const [editOrderErrors, setEditOrderErrors] = useState({ tasks: [] });
+
+  // Helper para detectar si el objeto de errores contiene algún mensaje
+  const hasErrors = (obj) => {
+    if (obj === null || obj === undefined) return false;
+    if (typeof obj === "string") return obj.trim() !== "";
+    if (Array.isArray(obj)) return obj.some((v) => hasErrors(v));
+    if (typeof obj === "object") return Object.values(obj).some((v) => hasErrors(v));
+    return false;
+  };
+
+  const validateNewOrder = () => {
+    const errors = validateNewOrderPayload(newOrder);
+    setNewOrderErrors(errors);
+    return !hasErrors(errors);
+  };
+
+  const validateEditedOrder = () => {
+    const errors = validateEditedTasksPayload(selectedOrderForEdit || { tasks: [] });
+    setEditOrderErrors(errors);
+    return !hasErrors(errors);
+  };
 
   // =================== HELPERS ===================
   const stateTextToNumber = (s) => {
@@ -122,6 +149,8 @@ export default function WorkOrdersTable() {
 
   // =================== CREAR ORDEN ===================
   const handleAddOrder = async () => {
+    // validar antes de enviar
+    if (!validateNewOrder()) return;
     setSaving(true);
     try {
       const payloadOrder = {
@@ -153,6 +182,7 @@ export default function WorkOrdersTable() {
       await fetchOrders();
       closeAdd();
       setNewOrder({ idClient: "", idVehicle: "", tasks: [{ idSector: "", idTask: "", note: "" }] });
+      setNewOrderErrors({ idClient: null, idVehicle: null, tasks: [] });
     } catch (err) {
       console.error("Error al crear orden:", err);
     } finally {
@@ -244,7 +274,9 @@ export default function WorkOrdersTable() {
       });
 
       setSelectedOrderForEdit({ ...order, tasks: mergedTasks });
-      openEdit();
+  // inicializar errores de edición vacíos
+  setEditOrderErrors({ tasks: (mergedTasks || []).map(() => ({ idSector: null, idTask: null, state: null, note: null })) });
+  openEdit();
     } catch (err) {
       console.error("Error al traer orden para editar:", err);
     } finally {
@@ -255,6 +287,8 @@ export default function WorkOrdersTable() {
   // =================== GUARDAR TAREAS ===================
   const handleSaveEditedTasks = async () => {
     if (!selectedOrderForEdit || !selectedOrderForEdit.tasks) return;
+    // validar antes de guardar
+    if (!validateEditedOrder()) return;
     setSaving(true);
     try {
       // 1️⃣ Traer tareas originales para detectar borradas
@@ -466,6 +500,7 @@ export default function WorkOrdersTable() {
 
         <TablePagination
           component="div"
+          className="table-pagination-contrast"
           count={filteredAndSorted.length}
           page={page}
           onPageChange={(e, newPage) => setPage(newPage)}
@@ -473,6 +508,14 @@ export default function WorkOrdersTable() {
           onRowsPerPageChange={(e) => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          sx={{
+            color: 'white !important',
+            '& .MuiTablePagination-toolbar, & .MuiTablePagination-root': { color: 'white !important' },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows, & .MuiTablePagination-select': { color: 'white !important' },
+            '& .MuiSvgIcon-root, & .MuiIconButton-root, & .MuiButtonBase-root, & .MuiSelect-icon': { color: 'white !important' },
+            '& .MuiSelect-select, & .MuiInputBase-input, & .MuiMenuItem-root, & .MuiTypography-root': { color: 'white !important' },
           }}
         />
 
@@ -486,8 +529,10 @@ export default function WorkOrdersTable() {
             value={newOrder.idClient}
             onChange={(val) => {
               setNewOrder((prev) => ({ ...prev, idClient: val, idVehicle: "" }));
+              setNewOrderErrors((prev) => ({ ...prev, idClient: null, idVehicle: prev.idVehicle }));
               if (val) fetchVehiclesByClient(val);
             }}
+            error={newOrderErrors.idClient}
           />
           <Select
             label="Vehículo"
@@ -496,14 +541,26 @@ export default function WorkOrdersTable() {
               label: `${v.licensePlate} - ${v.brand} ${v.model}`,
             }))}
             value={newOrder.idVehicle}
-            onChange={(val) => setNewOrder((prev) => ({ ...prev, idVehicle: val }))}
+            onChange={(val) => {
+              setNewOrder((prev) => ({ ...prev, idVehicle: val }));
+              setNewOrderErrors((prev) => ({ ...prev, idVehicle: null }));
+            }}
+            error={newOrderErrors.idVehicle}
             disabled={!newOrder.idClient}
           />
           <Text fw={600} mt="md">
             Tareas
           </Text>
+          {newOrderErrors.tasks && newOrderErrors.tasks[0] && newOrderErrors.tasks[0].general ? (
+            <Text color="red">{newOrderErrors.tasks[0].general}</Text>
+          ) : null}
           {newOrder.tasks.map((t, i) => (
             <Group key={i} grow>
+              {/** obtener errores de tarea si existen */}
+              {(() => {
+                const te = (newOrderErrors.tasks && newOrderErrors.tasks[i]) || {};
+                return null;
+              })()}
               <Select
                 label="Sector"
                 data={sectors.map((s) => ({ value: s.id.toString(), label: s.name }))}
@@ -512,7 +569,13 @@ export default function WorkOrdersTable() {
                   const updated = [...newOrder.tasks];
                   updated[i].idSector = val;
                   setNewOrder((prev) => ({ ...prev, tasks: updated }));
+                  setNewOrderErrors((prev) => {
+                    const t = (prev.tasks || []).slice();
+                    t[i] = { ...(t[i] || {}), idSector: null };
+                    return { ...prev, tasks: t };
+                  });
                 }}
+                error={(newOrderErrors.tasks && newOrderErrors.tasks[i] && newOrderErrors.tasks[i].idSector) || null}
               />
               <Select
                 label={`Tarea ${i + 1}`}
@@ -522,7 +585,13 @@ export default function WorkOrdersTable() {
                   const updated = [...newOrder.tasks];
                   updated[i].idTask = val;
                   setNewOrder((prev) => ({ ...prev, tasks: updated }));
+                  setNewOrderErrors((prev) => {
+                    const t = (prev.tasks || []).slice();
+                    t[i] = { ...(t[i] || {}), idTask: null };
+                    return { ...prev, tasks: t };
+                  });
                 }}
+                error={(newOrderErrors.tasks && newOrderErrors.tasks[i] && newOrderErrors.tasks[i].idTask) || null}
               />
               <TextInput
                 label="Nota"
@@ -531,17 +600,27 @@ export default function WorkOrdersTable() {
                   const updated = [...newOrder.tasks];
                   updated[i].note = e.currentTarget.value;
                   setNewOrder((prev) => ({ ...prev, tasks: updated }));
+                  setNewOrderErrors((prev) => {
+                    const t = (prev.tasks || []).slice();
+                    t[i] = { ...(t[i] || {}), note: null };
+                    return { ...prev, tasks: t };
+                  });
                 }}
+                error={(newOrderErrors.tasks && newOrderErrors.tasks[i] && newOrderErrors.tasks[i].note) || null}
               />
               {i > 0 && (
                 <ActionIcon
                   color="red"
-                  onClick={() =>
+                  onClick={() => {
                     setNewOrder((prev) => ({
                       ...prev,
                       tasks: prev.tasks.filter((_, idx) => idx !== i),
-                    }))
-                  }
+                    }));
+                    setNewOrderErrors((prev) => ({
+                      ...prev,
+                      tasks: (prev.tasks || []).filter((_, idx) => idx !== i),
+                    }));
+                  }}
                 >
                   <IconTrash size={16} />
                 </ActionIcon>
@@ -552,12 +631,16 @@ export default function WorkOrdersTable() {
             leftSection={<IconPlus size={16} />}
             mt="sm"
             variant="light"
-            onClick={() =>
+            onClick={() => {
               setNewOrder((prev) => ({
                 ...prev,
                 tasks: [...prev.tasks, { idSector: "", idTask: "", note: "" }],
-              }))
-            }
+              }));
+              setNewOrderErrors((prev) => ({
+                ...prev,
+                tasks: [...(prev.tasks || []), { idSector: null, idTask: null, note: null }],
+              }));
+            }}
           >
             Agregar tarea
           </Button>
@@ -685,7 +768,13 @@ export default function WorkOrdersTable() {
                               const updated = [...selectedOrderForEdit.tasks];
                               updated[i].idSector = val;
                               setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
+                              setEditOrderErrors((prev) => {
+                                const tarr = (prev.tasks || []).slice();
+                                tarr[i] = { ...(tarr[i] || {}), idSector: null };
+                                return { ...prev, tasks: tarr };
+                              });
                             }}
+                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].idSector) || null}
                           />
                         </Table.Td>
 
@@ -697,7 +786,13 @@ export default function WorkOrdersTable() {
                               const updated = [...selectedOrderForEdit.tasks];
                               updated[i].idTask = val;
                               setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
+                              setEditOrderErrors((prev) => {
+                                const tarr = (prev.tasks || []).slice();
+                                tarr[i] = { ...(tarr[i] || {}), idTask: null };
+                                return { ...prev, tasks: tarr };
+                              });
                             }}
+                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].idTask) || null}
                           />
                         </Table.Td>
 
@@ -721,7 +816,13 @@ export default function WorkOrdersTable() {
                               const updated = [...selectedOrderForEdit.tasks];
                               updated[i].state = parseInt(val);
                               setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
+                              setEditOrderErrors((prev) => {
+                                const tarr = (prev.tasks || []).slice();
+                                tarr[i] = { ...(tarr[i] || {}), state: null };
+                                return { ...prev, tasks: tarr };
+                              });
                             }}
+                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].state) || null}
                           />
                         </Table.Td>
 
@@ -732,7 +833,13 @@ export default function WorkOrdersTable() {
                               const updated = [...selectedOrderForEdit.tasks];
                               updated[i].note = e.currentTarget.value;
                               setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
+                              setEditOrderErrors((prev) => {
+                                const tarr = (prev.tasks || []).slice();
+                                tarr[i] = { ...(tarr[i] || {}), note: null };
+                                return { ...prev, tasks: tarr };
+                              });
                             }}
+                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].note) || null}
                           />
                         </Table.Td>
 
@@ -745,7 +852,12 @@ export default function WorkOrdersTable() {
                                 ...prev,
                                 tasks: prev.tasks.filter((_, idx) => idx !== i),
                               }));
+                              setEditOrderErrors((prev) => ({
+                                ...prev,
+                                tasks: (prev.tasks || []).filter((_, idx) => idx !== i),
+                              }));
                             }}
+                            title={"Eliminar tarea"}
                           >
                             <IconTrash size={16} />
                           </ActionIcon>
@@ -767,15 +879,19 @@ export default function WorkOrdersTable() {
                 <Button
                   variant="light"
                   leftSection={<IconPlus size={16} />}
-                  onClick={() =>
+                  onClick={() => {
                     setSelectedOrderForEdit((prev) => ({
                       ...prev,
                       tasks: [
                         ...(prev.tasks || []),
                         { idSector: "", idTask: "", state: 1, note: "" },
                       ],
-                    }))
-                  }
+                    }));
+                    setEditOrderErrors((prev) => ({
+                      ...prev,
+                      tasks: [...(prev.tasks || []), { idSector: null, idTask: null, state: null, note: null }],
+                    }));
+                  }}
                 >
                   Agregar tarea
                 </Button>

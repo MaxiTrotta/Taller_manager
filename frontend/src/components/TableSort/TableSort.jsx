@@ -15,6 +15,7 @@ import classes from './TableSort.module.css';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import TablePagination from '@mui/material/TablePagination';
+import { validateClientPayload, validateVehiclePayload, hasAnyError } from '../../utils/validators';
 
 // =================== Helpers ===================
 function Th({ children, reversed, sorted, onSort }) {
@@ -65,6 +66,7 @@ export function CircularIndeterminate() {
 
 // =================== Componente principal ===================
 export function TableSort() {
+  const safe = (a) => (Array.isArray(a) ? a : []);
   // =================== Estados ===================
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -92,6 +94,8 @@ export function TableSort() {
   const [newClient, setNewClient] = useState({
     name: '', email: '', cuitCuil: '', phone: '', address: '', city: '', province: ''
   });
+  const [newClientErrors, setNewClientErrors] = useState({});
+  const [editClientErrors, setEditClientErrors] = useState({});
 
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -99,6 +103,7 @@ export function TableSort() {
   const [newVehicle, setNewVehicle] = useState({
     licensePlate: '', brand: '', model: '', year: ''
   });
+  const [newVehicleErrors, setNewVehicleErrors] = useState({});
   // color para los números/íconos de la paginación (cambiar aquí si querés otro color)
   const paginationNumberColor = '#1976d2';
 
@@ -108,8 +113,13 @@ export function TableSort() {
     try {
       const response = await ClientCreatorService.getAll();
       if (response.status === 200) {
-        setClients(response.data);
-        setSortedData(sortData(response.data, { sortBy, reversed: reverseSortDirection, search }));
+        const data = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+        setClients(data);
+        setSortedData(sortData(data, { sortBy, reversed: reverseSortDirection, search }));
       } else {
         setClients([]);
         setSortedData([]);
@@ -130,7 +140,7 @@ export function TableSort() {
     const reversed = field === sortBy ? !reverseSortDirection : false;
     setReverseSortDirection(reversed);
     setSortBy(field);
-    setSortedData(sortData(clients, { sortBy: field, reversed, search }));
+    setSortedData(sortData(safe(clients), { sortBy: field, reversed, search }));
     setPage(0);
   };
 
@@ -138,7 +148,7 @@ export function TableSort() {
   const handleSearchChange = (event) => {
     const { value } = event.currentTarget;
     setSearch(value);
-    setSortedData(sortData(clients, { sortBy, reversed: reverseSortDirection, search: value }));
+    setSortedData(sortData(safe(clients), { sortBy, reversed: reverseSortDirection, search: value }));
     setPage(0);
   };
 
@@ -146,22 +156,28 @@ export function TableSort() {
   const handleNewClientChange = (event) => {
     const { name, value } = event.currentTarget;
     setNewClient((prev) => ({ ...prev, [name]: value }));
+    setNewClientErrors((p) => ({ ...p, [name]: null }));
   };
 
   // =================== Formulario agregar vehículo ===================
   const handleNewVehicleChange = (event) => {
     const { name, value } = event.currentTarget;
     setNewVehicle(prev => ({ ...prev, [name]: value }));
+    setNewVehicleErrors((p) => ({ ...p, [name]: null }));
   };
 
   const handleAddVehicle = async () => {
     if (!selectedClient) return;
+    const errors = validateVehiclePayload(newVehicle);
+    setNewVehicleErrors(errors);
+    if (hasAnyError(errors)) return;
     try {
       const payload = { ...newVehicle, clientId: selectedClient.id };
       const response = await VehicleCreatorService.create(payload);
       if (response.status === 201 || response.status === 200) {
         await fetchVehiclesByClient(selectedClient.id);
         setNewVehicle({ licensePlate: '', brand: '', model: '', year: '' });
+        setNewVehicleErrors({});
         closeAddVehicleModal();
       }
     } catch (err) {
@@ -213,6 +229,10 @@ export function TableSort() {
 
   // =================== Funciones de acciones ===================
   const handleAddClient = async () => {
+    // validar
+    const errors = validateClientPayload(newClient);
+    setNewClientErrors(errors);
+    if (hasAnyError(errors)) return;
     setIsSaving(true);
     try {
       const payload = { ...newClient };
@@ -220,6 +240,7 @@ export function TableSort() {
       if (response.status === 201 || response.status === 200) {
         await fetchClients();
         setNewClient({ name: '', email: '', cuitCuil: '', phone: '', address: '', city: '', province: '' });
+        setNewClientErrors({});
         closeAddModal();
       }
     } catch (err) {
@@ -231,6 +252,10 @@ export function TableSort() {
 
   const handleEditClient = async () => {
     if (!clientToEdit) return;
+    // validar
+    const errors = validateClientPayload(clientToEdit);
+    setEditClientErrors(errors);
+    if (hasAnyError(errors)) return;
     setIsEditing(true);
     try {
       const payload = {
@@ -246,6 +271,7 @@ export function TableSort() {
       if (response.status === 200) {
         await fetchClients();
         closeEditModal();
+        setEditClientErrors({});
       }
     } catch (err) {
       console.error('Error al actualizar cliente:', err);
@@ -276,7 +302,12 @@ export function TableSort() {
     try {
       const response = await VehicleCreatorService.getAllByClient(clientId);
       if (response.status === 200) {
-        setVehicles(response.data);
+        const data = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+        setVehicles(data);
       } else {
         setVehicles([]);
       }
@@ -411,15 +442,15 @@ export function TableSort() {
               const client = clients.find(c => c.id.toString() === value);
               setSelectedClient(client || null);
             }}
-            data={clients.map(c => ({
+            data={safe(clients).map(c => ({
               value: c.id.toString(),
               label: `${c.name} - ${c.email}`,
             }))}
           />
-          <TextInput label="Patente" name="licensePlate" value={newVehicle.licensePlate} onChange={handleNewVehicleChange} />
-          <TextInput label="Marca" name="brand" value={newVehicle.brand} onChange={handleNewVehicleChange} />
-          <TextInput label="Modelo" name="model" value={newVehicle.model} onChange={handleNewVehicleChange} />
-          <TextInput label="Año" name="year" type="number" value={newVehicle.year} onChange={handleNewVehicleChange} />
+          <TextInput label="Patente" name="licensePlate" value={newVehicle.licensePlate} onChange={handleNewVehicleChange} error={newVehicleErrors.licensePlate} />
+          <TextInput label="Marca" name="brand" value={newVehicle.brand} onChange={handleNewVehicleChange} error={newVehicleErrors.brand} />
+          <TextInput label="Modelo" name="model" value={newVehicle.model} onChange={handleNewVehicleChange} error={newVehicleErrors.model} />
+          <TextInput label="Año" name="year" type="number" value={newVehicle.year} onChange={(e)=>{ handleNewVehicleChange(e); setNewVehicleErrors((p)=>({...p, year: null})); }} error={newVehicleErrors.year} />
           <Button color="blue" onClick={handleAddVehicle} disabled={!selectedClient}>
             Guardar Vehículo
           </Button>
@@ -429,13 +460,13 @@ export function TableSort() {
       {/* Modales Agregar, Editar y Eliminar Cliente */}
       <Modal opened={addModalOpened} onClose={closeAddModal} title="Agregar Cliente" centered size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <TextInput label="Nombre" name="name" value={newClient.name} onChange={handleNewClientChange} />
-          <TextInput label="Email" name="email" value={newClient.email} onChange={handleNewClientChange} />
-          <TextInput label="CUIT/CUIL" name="cuitCuil" value={newClient.cuitCuil} onChange={handleNewClientChange} />
-          <TextInput label="Teléfono" name="phone" value={newClient.phone} onChange={handleNewClientChange} />
-          <TextInput label="Dirección" name="address" value={newClient.address} onChange={handleNewClientChange} />
-          <TextInput label="Ciudad" name="city" value={newClient.city} onChange={handleNewClientChange} />
-          <TextInput label="Provincia" name="province" value={newClient.province} onChange={handleNewClientChange} />
+          <TextInput label="Nombre" name="name" value={newClient.name} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, name: null})); }} error={newClientErrors.name} />
+          <TextInput label="Email" name="email" value={newClient.email} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, email: null})); }} error={newClientErrors.email} />
+          <TextInput label="CUIT/CUIL" name="cuitCuil" value={newClient.cuitCuil} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, cuitCuil: null})); }} error={newClientErrors.cuitCuil} />
+          <TextInput label="Teléfono" name="phone" value={newClient.phone} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, phone: null})); }} error={newClientErrors.phone} />
+          <TextInput label="Dirección" name="address" value={newClient.address} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, address: null})); }} error={newClientErrors.address} />
+          <TextInput label="Ciudad" name="city" value={newClient.city} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, city: null})); }} error={newClientErrors.city} />
+          <TextInput label="Provincia" name="province" value={newClient.province} onChange={(e)=>{ handleNewClientChange(e); setNewClientErrors((p)=>({...p, province: null})); }} error={newClientErrors.province} />
           <Button color="green" onClick={handleAddClient} loading={isSaving}>Guardar Cliente</Button>
         </div>
       </Modal>
@@ -443,13 +474,13 @@ export function TableSort() {
       <Modal opened={editModalOpened} onClose={closeEditModal} title="Editar Cliente" centered size="md">
         {clientToEdit && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <TextInput label="Nombre" value={clientToEdit.name} onChange={(e) => setClientToEdit({ ...clientToEdit, name: e.currentTarget.value })} />
-            <TextInput label="Email" value={clientToEdit.email} onChange={(e) => setClientToEdit({ ...clientToEdit, email: e.currentTarget.value })} />
-            <TextInput label="CUIT/CUIL" value={clientToEdit.cuitCuil} onChange={(e) => setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value })} />
-            <TextInput label="Teléfono" value={clientToEdit.phone} onChange={(e) => setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value })} />
-            <TextInput label="Dirección" value={clientToEdit.address} onChange={(e) => setClientToEdit({ ...clientToEdit, address: e.currentTarget.value })} />
-            <TextInput label="Ciudad" value={clientToEdit.city} onChange={(e) => setClientToEdit({ ...clientToEdit, city: e.currentTarget.value })} />
-            <TextInput label="Provincia" value={clientToEdit.province} onChange={(e) => setClientToEdit({ ...clientToEdit, province: e.currentTarget.value })} />
+            <TextInput label="Nombre" value={clientToEdit.name} onChange={(e) => { setClientToEdit({ ...clientToEdit, name: e.currentTarget.value }); setEditClientErrors((p)=>({...p, name: null})); }} error={editClientErrors.name} />
+            <TextInput label="Email" value={clientToEdit.email} onChange={(e) => { setClientToEdit({ ...clientToEdit, email: e.currentTarget.value }); setEditClientErrors((p)=>({...p, email: null})); }} error={editClientErrors.email} />
+            <TextInput label="CUIT/CUIL" value={clientToEdit.cuitCuil} onChange={(e) => { setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value }); setEditClientErrors((p)=>({...p, cuitCuil: null})); }} error={editClientErrors.cuitCuil} />
+            <TextInput label="Teléfono" value={clientToEdit.phone} onChange={(e) => { setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value }); setEditClientErrors((p)=>({...p, phone: null})); }} error={editClientErrors.phone} />
+            <TextInput label="Dirección" value={clientToEdit.address} onChange={(e) => { setClientToEdit({ ...clientToEdit, address: e.currentTarget.value }); setEditClientErrors((p)=>({...p, address: null})); }} error={editClientErrors.address} />
+            <TextInput label="Ciudad" value={clientToEdit.city} onChange={(e) => { setClientToEdit({ ...clientToEdit, city: e.currentTarget.value }); setEditClientErrors((p)=>({...p, city: null})); }} error={editClientErrors.city} />
+            <TextInput label="Provincia" value={clientToEdit.province} onChange={(e) => { setClientToEdit({ ...clientToEdit, province: e.currentTarget.value }); setEditClientErrors((p)=>({...p, province: null})); }} error={editClientErrors.province} />
             <Button color="blue" onClick={handleEditClient} loading={isEditing}>Actualizar Cliente</Button>
           </div>
         )}
