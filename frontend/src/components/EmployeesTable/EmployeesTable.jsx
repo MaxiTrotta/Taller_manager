@@ -19,6 +19,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconPencil, IconTrash, IconEye, IconSearch } from "@tabler/icons-react";
 import { CircularIndeterminate } from "../TableSort/TableSort"; // Loader reutilizado
 import TablePagination from '@mui/material/TablePagination';
+import { validateEmployeePayload, hasAnyError } from '../../utils/validators';
 
 const jobColors = {
   reparacion: "blue",
@@ -51,6 +52,8 @@ export function EmployeesTable() {
     address: "",
     avatar: "",
   });
+  const [newEmployeeErrors, setNewEmployeeErrors] = useState({});
+  const [editEmployeeErrors, setEditEmployeeErrors] = useState({});
 
   // =================== FETCH ===================
   const fetchEmployees = async () => {
@@ -93,6 +96,10 @@ export function EmployeesTable() {
 
   // =================== HANDLERS ===================
   const handleAddEmployee = async () => {
+    // validar
+    const errors = validateEmployeePayload(newEmployee);
+    setNewEmployeeErrors(errors);
+    if (hasAnyError(errors)) return;
     try {
       const response = await employeesService.createEmployed(newEmployee);
       if (response.status === 201 || response.status === 200) {
@@ -100,6 +107,7 @@ export function EmployeesTable() {
         setEmployees([...employees, created]);
         closeAdd();
         setNewEmployee({ idSector: "", name: "", cuilCuit: "", phone: "", email: "", address: "", avatar: "" });
+        setNewEmployeeErrors({});
       }
     } catch (err) {
       console.error("Error al crear empleado:", err);
@@ -107,12 +115,17 @@ export function EmployeesTable() {
   };
 
   const handleUpdateEmployee = async () => {
+    // validar
+    const errors = validateEmployeePayload(selectedEmployee || {});
+    setEditEmployeeErrors(errors);
+    if (hasAnyError(errors)) return;
     try {
       const response = await employeesService.updateEmployed(selectedEmployee.id, selectedEmployee);
       if (response.status === 200) {
         // Actualiza tabla sin recargar
         setEmployees(employees.map(emp => (emp.id === selectedEmployee.id ? selectedEmployee : emp)));
         closeEdit();
+        setEditEmployeeErrors({});
       }
     } catch (err) {
       console.error("Error al actualizar empleado:", err);
@@ -205,6 +218,7 @@ export function EmployeesTable() {
 
       <TablePagination
         component="div"
+        className="table-pagination-contrast"
         count={filtered.length}
         page={page}
         onPageChange={(e, newPage) => setPage(newPage)}
@@ -237,17 +251,18 @@ export function EmployeesTable() {
 
       {/* Agregar */}
       <Modal opened={addModalOpened} onClose={closeAdd} title="Agregar empleado" centered>
-        <TextInput label="Nombre" value={newEmployee.name} onChange={(e) => setNewEmployee({ ...newEmployee, name: e.currentTarget.value })} />
-        <TextInput label="CUIL/CUIT" value={newEmployee.cuilCuit} onChange={(e) => setNewEmployee({ ...newEmployee, cuilCuit: e.currentTarget.value })} />
-        <TextInput label="Teléfono" value={newEmployee.phone} onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.currentTarget.value })} />
-        <TextInput label="Email" value={newEmployee.email} onChange={(e) => setNewEmployee({ ...newEmployee, email: e.currentTarget.value })} />
-        <TextInput label="Dirección" value={newEmployee.address} onChange={(e) => setNewEmployee({ ...newEmployee, address: e.currentTarget.value })} />
+        <TextInput label="Nombre" value={newEmployee.name} onChange={(e) => { setNewEmployee({ ...newEmployee, name: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, name: null})); }} error={newEmployeeErrors.name} />
+        <TextInput label="CUIL/CUIT" value={newEmployee.cuilCuit} onChange={(e) => { setNewEmployee({ ...newEmployee, cuilCuit: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, cuilCuit: null})); }} error={newEmployeeErrors.cuilCuit} />
+        <TextInput label="Teléfono" value={newEmployee.phone} onChange={(e) => { setNewEmployee({ ...newEmployee, phone: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, phone: null})); }} error={newEmployeeErrors.phone} />
+        <TextInput label="Email" value={newEmployee.email} onChange={(e) => { setNewEmployee({ ...newEmployee, email: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, email: null})); }} error={newEmployeeErrors.email} />
+        <TextInput label="Dirección" value={newEmployee.address} onChange={(e) => { setNewEmployee({ ...newEmployee, address: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, address: null})); }} error={newEmployeeErrors.address} />
         <Select
           label="Sector"
           placeholder="Seleccionar sector"
-          data={sectors.map((s) => ({ value: s.id.toString(), label: s.name }))}
+          data={(Array.isArray(sectors) ? sectors : []).map((s) => ({ value: s.id.toString(), label: s.name }))}
           value={newEmployee.idSector.toString()}
-          onChange={(val) => setNewEmployee({ ...newEmployee, idSector: parseInt(val) })}
+          onChange={(val) => { setNewEmployee({ ...newEmployee, idSector: parseInt(val) }); setNewEmployeeErrors((p)=>({...p, idSector: null})); }}
+          error={newEmployeeErrors.idSector}
         />
         <Button mt="md" color="green" onClick={handleAddEmployee}>Guardar</Button>
       </Modal>
@@ -256,17 +271,18 @@ export function EmployeesTable() {
       <Modal opened={editModalOpened} onClose={closeEdit} title="Editar empleado" centered>
         {selectedEmployee && (
           <>
-            <TextInput label="Nombre" value={selectedEmployee.name} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, name: e.currentTarget.value })} />
-            <TextInput label="CUIL/CUIT" value={selectedEmployee.cuilCuit} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, cuilCuit: e.currentTarget.value })} />
-            <TextInput label="Teléfono" value={selectedEmployee.phone} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, phone: e.currentTarget.value })} />
-            <TextInput label="Email" value={selectedEmployee.email} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, email: e.currentTarget.value })} />
-            <TextInput label="Dirección" value={selectedEmployee.address} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, address: e.currentTarget.value })} />
+            <TextInput label="Nombre" value={selectedEmployee.name} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, name: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, name: null})); }} error={editEmployeeErrors.name} />
+            <TextInput label="CUIL/CUIT" value={selectedEmployee.cuilCuit} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, cuilCuit: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, cuilCuit: null})); }} error={editEmployeeErrors.cuilCuit} />
+            <TextInput label="Teléfono" value={selectedEmployee.phone} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, phone: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, phone: null})); }} error={editEmployeeErrors.phone} />
+            <TextInput label="Email" value={selectedEmployee.email} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, email: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, email: null})); }} error={editEmployeeErrors.email} />
+            <TextInput label="Dirección" value={selectedEmployee.address} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, address: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, address: null})); }} error={editEmployeeErrors.address} />
             <Select
               label="Sector"
               placeholder="Seleccionar sector"
-              data={sectors.map((s) => ({ value: s.id.toString(), label: s.name }))}
+              data={(Array.isArray(sectors) ? sectors : []).map((s) => ({ value: s.id.toString(), label: s.name }))}
               value={selectedEmployee.idSector.toString()}
-              onChange={(val) => setSelectedEmployee({ ...selectedEmployee, idSector: parseInt(val) })}
+              onChange={(val) => { setSelectedEmployee({ ...selectedEmployee, idSector: parseInt(val) }); setEditEmployeeErrors((p)=>({...p, idSector: null})); }}
+              error={editEmployeeErrors.idSector}
             />
             <TextInput label="Avatar (URL)" value={selectedEmployee.avatar} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, avatar: e.currentTarget.value })} />
             <Button mt="md" color="blue" onClick={handleUpdateEmployee}>Guardar cambios</Button>
