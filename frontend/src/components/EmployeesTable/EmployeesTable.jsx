@@ -18,6 +18,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconPencil, IconTrash, IconEye, IconSearch } from "@tabler/icons-react";
 import { CircularIndeterminate } from "../TableSort/TableSort"; // Loader reutilizado
+import TablePagination from '@mui/material/TablePagination';
 
 const jobColors = {
   reparacion: "blue",
@@ -32,6 +33,8 @@ export function EmployeesTable() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sectors, setSectors] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [addModalOpened, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [editModalOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
@@ -85,6 +88,9 @@ export function EmployeesTable() {
     )
   );
 
+  // paginación sobre la lista filtrada
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   // =================== HANDLERS ===================
   const handleAddEmployee = async () => {
     try {
@@ -92,7 +98,7 @@ export function EmployeesTable() {
       if (response.status === 201 || response.status === 200) {
         const created = response.data ?? { id: Math.random(), ...newEmployee };
         setEmployees([...employees, created]);
-        closeAdd();np
+        closeAdd();
         setNewEmployee({ idSector: "", name: "", cuilCuit: "", phone: "", email: "", address: "", avatar: "" });
       }
     } catch (err) {
@@ -126,7 +132,7 @@ export function EmployeesTable() {
   };
 
   // =================== RENDER ROWS ===================
-  const rows = filtered.map((emp) => {
+  const rows = paginated.map((emp) => {
     const sector = sectors.find((s) => s.id === emp.idSector)?.name ?? "Desconocido";
     return (
       <Table.Tr key={emp.id}>
@@ -168,7 +174,7 @@ export function EmployeesTable() {
           placeholder="Buscar empleado"
           leftSection={<IconSearch size={16} />}
           value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
+          onChange={(e) => { setSearch(e.currentTarget.value); setPage(0); }}
           style={{ width: "300px" }}
         />
         <Button color="green" onClick={openAdd}>Agregar Empleado</Button>
@@ -196,6 +202,23 @@ export function EmployeesTable() {
           )}
         </Table.Tbody>
       </Table>
+
+      <TablePagination
+        component="div"
+        count={filtered.length}
+        page={page}
+        onPageChange={(e, newPage) => setPage(newPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+        rowsPerPageOptions={[5, 10, 25]}
+        sx={{
+          color: 'white !important',
+          '& .MuiTablePagination-toolbar, & .MuiTablePagination-root': { color: 'white !important' },
+          '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows, & .MuiTablePagination-select': { color: 'white !important' },
+          '& .MuiSvgIcon-root, & .MuiIconButton-root, & .MuiButtonBase-root, & .MuiSelect-icon': { color: 'white !important' },
+          '& .MuiSelect-select, & .MuiInputBase-input, & .MuiMenuItem-root, & .MuiTypography-root': { color: 'white !important' },
+        }}
+      />
 
       {/* =================== MODALES =================== */}
       {/* Ver */}
