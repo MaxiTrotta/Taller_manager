@@ -52,7 +52,7 @@ export function RegisterPage() {
 		<main className="wrapper">
 			<Paper className="form" radius="lg" >
 				<Title order={2} className="title">
-					Completa los campos para agregar un nuevo sector
+					Registrar nuevo Usuario!
 					</Title>
 			
 					<form>
@@ -90,7 +90,7 @@ export function RegisterPage() {
 							onClick={form.handleSubmit(onSubmit)}
 							loading={form.formState.isSubmitting}
 						>
-							Crear nuevo sector
+							Registrar nuevo Usuario!
 						</Button>
 				
 					</form>

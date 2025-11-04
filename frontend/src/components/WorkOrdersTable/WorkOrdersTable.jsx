@@ -112,15 +112,21 @@ export default function WorkOrdersTable() {
       setClients([]);
     }
   };
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState("");
 
   const fetchVehiclesByClient = async (idClient) => {
+    setLoadingVehicles(true);
     try {
       const res = await VehicleCreatorService.getAllByClient(idClient);
       setVehicles(res.data || []);
     } catch {
       setVehicles([]);
+    } finally {
+      setLoadingVehicles(false);
     }
   };
+
 
   const fetchTasks = async () => {
     try {
@@ -274,9 +280,9 @@ export default function WorkOrdersTable() {
       });
 
       setSelectedOrderForEdit({ ...order, tasks: mergedTasks });
-  // inicializar errores de edición vacíos
-  setEditOrderErrors({ tasks: (mergedTasks || []).map(() => ({ idSector: null, idTask: null, state: null, note: null })) });
-  openEdit();
+      // inicializar errores de edición vacíos
+      setEditOrderErrors({ tasks: (mergedTasks || []).map(() => ({ idSector: null, idTask: null, state: null, note: null })) });
+      openEdit();
     } catch (err) {
       console.error("Error al traer orden para editar:", err);
     } finally {
@@ -349,7 +355,7 @@ export default function WorkOrdersTable() {
         const others = prev.filter((o) => o.id !== updatedOrder.id);
         return [updatedOrder, ...others];
       });
-  setPage(0); // mostrar la página con las órdenes más recientes
+      setPage(0); // mostrar la página con las órdenes más recientes
 
       closeEdit();
     } catch (err) {
@@ -383,16 +389,16 @@ export default function WorkOrdersTable() {
         : true;
       const byDate = dateFilter
         ? (() => {
-            if (!o.creationDate) return false;
-            try {
-              const od = new Date(o.creationDate);
-              // comparar YYYY-MM-DD
-              const odDate = od.toISOString().slice(0, 10);
-              return odDate === dateFilter;
-            } catch (e) {
-              return false;
-            }
-          })()
+          if (!o.creationDate) return false;
+          try {
+            const od = new Date(o.creationDate);
+            // comparar YYYY-MM-DD
+            const odDate = od.toISOString().slice(0, 10);
+            return odDate === dateFilter;
+          } catch (e) {
+            return false;
+          }
+        })()
         : true;
       return byVehicle && byDate;
     })
@@ -528,26 +534,56 @@ export default function WorkOrdersTable() {
             data={clients.map((c) => ({ value: c.id.toString(), label: c.name }))}
             value={newOrder.idClient}
             onChange={(val) => {
-              setNewOrder((prev) => ({ ...prev, idClient: val, idVehicle: "" }));
-              setNewOrderErrors((prev) => ({ ...prev, idClient: null, idVehicle: prev.idVehicle }));
-              if (val) fetchVehiclesByClient(val);
+              // 🔹 Limpiar de inmediato antes del fetch
+              setVehicles([]);
+              setSelectedVehicle(""); // 🔹 borra la selección visible
+              setNewOrder({
+                idClient: val,
+                idVehicle: "",
+                tasks: [{ idSector: "", idTask: "", note: "" }],
+              });
+              setNewOrderErrors({ idClient: null, idVehicle: null, tasks: [] });
+              setLoadingVehicles(true);
+
+              // 🔹 Traer los vehículos del nuevo cliente
+              if (val) {
+                fetchVehiclesByClient(val).finally(() => setLoadingVehicles(false));
+              } else {
+                setLoadingVehicles(false);
+              }
             }}
             error={newOrderErrors.idClient}
           />
+
+
           <Select
+            key={newOrder.idClient} // 🔹 fuerza el remount al cambiar de cliente
             label="Vehículo"
             data={vehicles.map((v) => ({
               value: v.id.toString(),
               label: `${v.licensePlate} - ${v.brand} ${v.model}`,
             }))}
             value={newOrder.idVehicle}
+            placeholder={
+              loadingVehicles
+                ? "Cargando vehículos..."
+                : !newOrder.idClient
+                  ? "Selecciona un cliente primero"
+                  : vehicles.length === 0
+                    ? "Sin vehículos registrados"
+                    : "Selecciona un vehículo"
+            }
+            rightSection={loadingVehicles ? <Loader size={16} color="green" /> : null}
             onChange={(val) => {
               setNewOrder((prev) => ({ ...prev, idVehicle: val }));
               setNewOrderErrors((prev) => ({ ...prev, idVehicle: null }));
             }}
+            disabled={!newOrder.idClient || loadingVehicles}
             error={newOrderErrors.idVehicle}
-            disabled={!newOrder.idClient}
           />
+
+
+
           <Text fw={600} mt="md">
             Tareas
           </Text>
