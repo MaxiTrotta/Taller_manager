@@ -14,12 +14,14 @@ import {
   Text,
   TextInput,
   Select,
+  Overlay,
+  Center,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPencil, IconTrash, IconEye, IconSearch } from "@tabler/icons-react";
-import { CircularIndeterminate } from "../TableSort/TableSort"; // Loader reutilizado
-import TablePagination from '@mui/material/TablePagination';
-import { validateEmployeePayload, hasAnyError } from '../../utils/validators';
+import CircularProgress from "@mui/material/CircularProgress";
+import TablePagination from "@mui/material/TablePagination";
+import { validateEmployeePayload, hasAnyError } from "../../utils/validators";
 
 const jobColors = {
   reparacion: "blue",
@@ -50,10 +52,13 @@ export function EmployeesTable() {
     phone: "",
     email: "",
     address: "",
-    avatar: "",
   });
   const [newEmployeeErrors, setNewEmployeeErrors] = useState({});
   const [editEmployeeErrors, setEditEmployeeErrors] = useState({});
+
+  // Estados para bloqueo global
+  const [blocking, setBlocking] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Procesando...");
 
   // =================== FETCH ===================
   const fetchEmployees = async () => {
@@ -91,56 +96,76 @@ export function EmployeesTable() {
     )
   );
 
-  // paginación sobre la lista filtrada
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // =================== HANDLERS ===================
   const handleAddEmployee = async () => {
-    // validar
     const errors = validateEmployeePayload(newEmployee);
     setNewEmployeeErrors(errors);
     if (hasAnyError(errors)) return;
+
+    setLoadingMessage("Guardando empleado...");
+    setBlocking(true);
+
     try {
       const response = await employeesService.createEmployed(newEmployee);
       if (response.status === 201 || response.status === 200) {
-        const created = response.data ?? { id: Math.random(), ...newEmployee };
-        setEmployees([...employees, created]);
         closeAdd();
-        setNewEmployee({ idSector: "", name: "", cuilCuit: "", phone: "", email: "", address: "", avatar: "" });
+        setNewEmployee({
+          idSector: "",
+          name: "",
+          cuilCuit: "",
+          phone: "",
+          email: "",
+          address: "",
+          avatar: "",
+        });
         setNewEmployeeErrors({});
+        await fetchEmployees();
       }
     } catch (err) {
       console.error("Error al crear empleado:", err);
+    } finally {
+      setBlocking(false);
     }
   };
 
   const handleUpdateEmployee = async () => {
-    // validar
     const errors = validateEmployeePayload(selectedEmployee || {});
     setEditEmployeeErrors(errors);
     if (hasAnyError(errors)) return;
+
+    setLoadingMessage("Actualizando empleado...");
+    setBlocking(true);
+
     try {
       const response = await employeesService.updateEmployed(selectedEmployee.id, selectedEmployee);
       if (response.status === 200) {
-        // Actualiza tabla sin recargar
-        setEmployees(employees.map(emp => (emp.id === selectedEmployee.id ? selectedEmployee : emp)));
         closeEdit();
         setEditEmployeeErrors({});
+        await fetchEmployees();
       }
     } catch (err) {
       console.error("Error al actualizar empleado:", err);
+    } finally {
+      setBlocking(false);
     }
   };
 
   const handleDeleteEmployee = async () => {
+    setLoadingMessage("Eliminando empleado...");
+    setBlocking(true);
+
     try {
       const response = await employeesService.deleteEmployed(selectedEmployee.id);
       if (response.status === 200 || response.status === 204) {
-        setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
         closeDelete();
+        await fetchEmployees();
       }
     } catch (err) {
       console.error("Error al eliminar empleado:", err);
+    } finally {
+      setBlocking(false);
     }
   };
 
@@ -152,7 +177,9 @@ export function EmployeesTable() {
         <Table.Td>
           <Group gap="sm">
             <Avatar size={30} src={emp.avatar} radius={30} />
-            <Text fz="sm" fw={500}>{emp.name}</Text>
+            <Text fz="sm" fw={500}>
+              {emp.name}
+            </Text>
           </Group>
         </Table.Td>
         <Table.Td>
@@ -164,13 +191,34 @@ export function EmployeesTable() {
         <Table.Td>{emp.phone}</Table.Td>
         <Table.Td>
           <Group gap={0} justify="flex-end">
-            <ActionIcon variant="subtle" color="gray" onClick={() => { setSelectedEmployee(emp); openView(); }}>
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              onClick={() => {
+                setSelectedEmployee(emp);
+                openView();
+              }}
+            >
               <IconEye size={16} />
             </ActionIcon>
-            <ActionIcon variant="subtle" color="gray" onClick={() => { setSelectedEmployee(emp); openEdit(); }}>
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              onClick={() => {
+                setSelectedEmployee(emp);
+                openEdit();
+              }}
+            >
               <IconPencil size={16} />
             </ActionIcon>
-            <ActionIcon variant="subtle" color="red" onClick={() => { setSelectedEmployee(emp); openDelete(); }}>
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              onClick={() => {
+                setSelectedEmployee(emp);
+                openDelete();
+              }}
+            >
               <IconTrash size={16} />
             </ActionIcon>
           </Group>
@@ -187,10 +235,15 @@ export function EmployeesTable() {
           placeholder="Buscar empleado"
           leftSection={<IconSearch size={16} />}
           value={search}
-          onChange={(e) => { setSearch(e.currentTarget.value); setPage(0); }}
+          onChange={(e) => {
+            setSearch(e.currentTarget.value);
+            setPage(0);
+          }}
           style={{ width: "300px" }}
         />
-        <Button color="green" onClick={openAdd}>Agregar Empleado</Button>
+        <Button color="green" onClick={openAdd}>
+          Agregar Empleado
+        </Button>
       </Group>
 
       <Table highlightOnHover>
@@ -206,11 +259,17 @@ export function EmployeesTable() {
         <Table.Tbody>
           {loading ? (
             <Table.Tr>
-              <Table.Td colSpan={5}><CircularIndeterminate /></Table.Td>
+              <Table.Td colSpan={5} style={{ textAlign: "center" }}>
+                <CircularProgress color="success" />
+              </Table.Td>
             </Table.Tr>
-          ) : rows.length > 0 ? rows : (
+          ) : rows.length > 0 ? (
+            rows
+          ) : (
             <Table.Tr>
-              <Table.Td colSpan={5} style={{ textAlign: "center" }}>No se encontraron empleados</Table.Td>
+              <Table.Td colSpan={5} style={{ textAlign: "center" }}>
+                No se encontraron empleados
+              </Table.Td>
             </Table.Tr>
           )}
         </Table.Tbody>
@@ -218,20 +277,15 @@ export function EmployeesTable() {
 
       <TablePagination
         component="div"
-        className="table-pagination-contrast"
         count={filtered.length}
         page={page}
         onPageChange={(e, newPage) => setPage(newPage)}
         rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        rowsPerPageOptions={[5, 10, 25]}
-        sx={{
-          color: 'white !important',
-          '& .MuiTablePagination-toolbar, & .MuiTablePagination-root': { color: 'white !important' },
-          '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows, & .MuiTablePagination-select': { color: 'white !important' },
-          '& .MuiSvgIcon-root, & .MuiIconButton-root, & .MuiButtonBase-root, & .MuiSelect-icon': { color: 'white !important' },
-          '& .MuiSelect-select, & .MuiInputBase-input, & .MuiMenuItem-root, & .MuiTypography-root': { color: 'white !important' },
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
         }}
+        rowsPerPageOptions={[5, 10, 25]}
       />
 
       {/* =================== MODALES =================== */}
@@ -239,53 +293,160 @@ export function EmployeesTable() {
       <Modal opened={viewModalOpened} onClose={closeView} title="Detalles del empleado" centered>
         {selectedEmployee && (
           <>
-            <Text><b>Nombre:</b> {selectedEmployee.name}</Text>
-            <Text><b>CUIL/CUIT:</b> {selectedEmployee.cuilCuit}</Text>
-            <Text><b>Email:</b> {selectedEmployee.email}</Text>
-            <Text><b>Teléfono:</b> {selectedEmployee.phone}</Text>
-            <Text><b>Dirección:</b> {selectedEmployee.address}</Text>
-            <Text><b>Sector:</b> {sectors.find((s) => s.id === selectedEmployee.idSector)?.name}</Text>
+            <Text>
+              <b>Nombre:</b> {selectedEmployee.name}
+            </Text>
+            <Text>
+              <b>CUIL/CUIT:</b> {selectedEmployee.cuilCuit}
+            </Text>
+            <Text>
+              <b>Email:</b> {selectedEmployee.email}
+            </Text>
+            <Text>
+              <b>Teléfono:</b> {selectedEmployee.phone}
+            </Text>
+            <Text>
+              <b>Dirección:</b> {selectedEmployee.address}
+            </Text>
+            <Text>
+              <b>Sector:</b> {sectors.find((s) => s.id === selectedEmployee.idSector)?.name}
+            </Text>
           </>
         )}
       </Modal>
 
       {/* Agregar */}
       <Modal opened={addModalOpened} onClose={closeAdd} title="Agregar empleado" centered>
-        <TextInput label="Nombre" value={newEmployee.name} onChange={(e) => { setNewEmployee({ ...newEmployee, name: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, name: null})); }} error={newEmployeeErrors.name} />
-        <TextInput label="CUIL/CUIT" value={newEmployee.cuilCuit} onChange={(e) => { setNewEmployee({ ...newEmployee, cuilCuit: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, cuilCuit: null})); }} error={newEmployeeErrors.cuilCuit} />
-        <TextInput label="Teléfono" value={newEmployee.phone} onChange={(e) => { setNewEmployee({ ...newEmployee, phone: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, phone: null})); }} error={newEmployeeErrors.phone} />
-        <TextInput label="Email" value={newEmployee.email} onChange={(e) => { setNewEmployee({ ...newEmployee, email: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, email: null})); }} error={newEmployeeErrors.email} />
-        <TextInput label="Dirección" value={newEmployee.address} onChange={(e) => { setNewEmployee({ ...newEmployee, address: e.currentTarget.value }); setNewEmployeeErrors((p)=>({...p, address: null})); }} error={newEmployeeErrors.address} />
+        <TextInput
+          label="Nombre"
+          value={newEmployee.name}
+          onChange={(e) => {
+            setNewEmployee({ ...newEmployee, name: e.currentTarget.value });
+            setNewEmployeeErrors((p) => ({ ...p, name: null }));
+          }}
+          error={newEmployeeErrors.name}
+        />
+        <TextInput
+          label="CUIL/CUIT"
+          value={newEmployee.cuilCuit}
+          onChange={(e) => {
+            setNewEmployee({ ...newEmployee, cuilCuit: e.currentTarget.value });
+            setNewEmployeeErrors((p) => ({ ...p, cuilCuit: null }));
+          }}
+          error={newEmployeeErrors.cuilCuit}
+        />
+        <TextInput
+          label="Teléfono"
+          value={newEmployee.phone}
+          onChange={(e) => {
+            setNewEmployee({ ...newEmployee, phone: e.currentTarget.value });
+            setNewEmployeeErrors((p) => ({ ...p, phone: null }));
+          }}
+          error={newEmployeeErrors.phone}
+        />
+        <TextInput
+          label="Email"
+          value={newEmployee.email}
+          onChange={(e) => {
+            setNewEmployee({ ...newEmployee, email: e.currentTarget.value });
+            setNewEmployeeErrors((p) => ({ ...p, email: null }));
+          }}
+          error={newEmployeeErrors.email}
+        />
+        <TextInput
+          label="Dirección"
+          value={newEmployee.address}
+          onChange={(e) => {
+            setNewEmployee({ ...newEmployee, address: e.currentTarget.value });
+            setNewEmployeeErrors((p) => ({ ...p, address: null }));
+          }}
+          error={newEmployeeErrors.address}
+        />
         <Select
           label="Sector"
           placeholder="Seleccionar sector"
-          data={(Array.isArray(sectors) ? sectors : []).map((s) => ({ value: s.id.toString(), label: s.name }))}
+          data={(Array.isArray(sectors) ? sectors : []).map((s) => ({
+            value: s.id.toString(),
+            label: s.name,
+          }))}
           value={newEmployee.idSector.toString()}
-          onChange={(val) => { setNewEmployee({ ...newEmployee, idSector: parseInt(val) }); setNewEmployeeErrors((p)=>({...p, idSector: null})); }}
+          onChange={(val) => {
+            setNewEmployee({ ...newEmployee, idSector: parseInt(val) });
+            setNewEmployeeErrors((p) => ({ ...p, idSector: null }));
+          }}
           error={newEmployeeErrors.idSector}
         />
-        <Button mt="md" color="green" onClick={handleAddEmployee}>Guardar</Button>
+        <Button mt="md" color="green" onClick={handleAddEmployee}>
+          Guardar
+        </Button>
       </Modal>
 
       {/* Editar */}
       <Modal opened={editModalOpened} onClose={closeEdit} title="Editar empleado" centered>
         {selectedEmployee && (
           <>
-            <TextInput label="Nombre" value={selectedEmployee.name} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, name: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, name: null})); }} error={editEmployeeErrors.name} />
-            <TextInput label="CUIL/CUIT" value={selectedEmployee.cuilCuit} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, cuilCuit: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, cuilCuit: null})); }} error={editEmployeeErrors.cuilCuit} />
-            <TextInput label="Teléfono" value={selectedEmployee.phone} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, phone: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, phone: null})); }} error={editEmployeeErrors.phone} />
-            <TextInput label="Email" value={selectedEmployee.email} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, email: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, email: null})); }} error={editEmployeeErrors.email} />
-            <TextInput label="Dirección" value={selectedEmployee.address} onChange={(e) => { setSelectedEmployee({ ...selectedEmployee, address: e.currentTarget.value }); setEditEmployeeErrors((p)=>({...p, address: null})); }} error={editEmployeeErrors.address} />
+            <TextInput
+              label="Nombre"
+              value={selectedEmployee.name}
+              onChange={(e) => {
+                setSelectedEmployee({ ...selectedEmployee, name: e.currentTarget.value });
+                setEditEmployeeErrors((p) => ({ ...p, name: null }));
+              }}
+              error={editEmployeeErrors.name}
+            />
+            <TextInput
+              label="CUIL/CUIT"
+              value={selectedEmployee.cuilCuit}
+              onChange={(e) => {
+                setSelectedEmployee({ ...selectedEmployee, cuilCuit: e.currentTarget.value });
+                setEditEmployeeErrors((p) => ({ ...p, cuilCuit: null }));
+              }}
+              error={editEmployeeErrors.cuilCuit}
+            />
+            <TextInput
+              label="Teléfono"
+              value={selectedEmployee.phone}
+              onChange={(e) => {
+                setSelectedEmployee({ ...selectedEmployee, phone: e.currentTarget.value });
+                setEditEmployeeErrors((p) => ({ ...p, phone: null }));
+              }}
+              error={editEmployeeErrors.phone}
+            />
+            <TextInput
+              label="Email"
+              value={selectedEmployee.email}
+              onChange={(e) => {
+                setSelectedEmployee({ ...selectedEmployee, email: e.currentTarget.value });
+                setEditEmployeeErrors((p) => ({ ...p, email: null }));
+              }}
+              error={editEmployeeErrors.email}
+            />
+            <TextInput
+              label="Dirección"
+              value={selectedEmployee.address}
+              onChange={(e) => {
+                setSelectedEmployee({ ...selectedEmployee, address: e.currentTarget.value });
+                setEditEmployeeErrors((p) => ({ ...p, address: null }));
+              }}
+              error={editEmployeeErrors.address}
+            />
             <Select
               label="Sector"
               placeholder="Seleccionar sector"
-              data={(Array.isArray(sectors) ? sectors : []).map((s) => ({ value: s.id.toString(), label: s.name }))}
+              data={(Array.isArray(sectors) ? sectors : []).map((s) => ({
+                value: s.id.toString(),
+                label: s.name,
+              }))}
               value={selectedEmployee.idSector.toString()}
-              onChange={(val) => { setSelectedEmployee({ ...selectedEmployee, idSector: parseInt(val) }); setEditEmployeeErrors((p)=>({...p, idSector: null})); }}
+              onChange={(val) => {
+                setSelectedEmployee({ ...selectedEmployee, idSector: parseInt(val) });
+                setEditEmployeeErrors((p) => ({ ...p, idSector: null }));
+              }}
               error={editEmployeeErrors.idSector}
             />
-            <TextInput label="Avatar (URL)" value={selectedEmployee.avatar} onChange={(e) => setSelectedEmployee({ ...selectedEmployee, avatar: e.currentTarget.value })} />
-            <Button mt="md" color="blue" onClick={handleUpdateEmployee}>Guardar cambios</Button>
+            <Button mt="md" color="blue" onClick={handleUpdateEmployee}>
+              Guardar cambios
+            </Button>
           </>
         )}
       </Modal>
@@ -294,14 +455,32 @@ export function EmployeesTable() {
       <Modal opened={deleteModalOpened} onClose={closeDelete} title="Eliminar empleado" centered>
         {selectedEmployee && (
           <>
-            <Text>¿Seguro que quieres eliminar a <b>{selectedEmployee.name}</b>?</Text>
+            <Text>
+              ¿Seguro que quieres eliminar a <b>{selectedEmployee.name}</b>?
+            </Text>
             <Group justify="flex-end" mt="md">
-              <Button variant="default" onClick={closeDelete}>Cancelar</Button>
-              <Button color="red" onClick={handleDeleteEmployee}>Eliminar</Button>
+              <Button variant="default" onClick={closeDelete}>
+                Cancelar
+              </Button>
+              <Button color="red" onClick={handleDeleteEmployee}>
+                Eliminar
+              </Button>
             </Group>
           </>
         )}
       </Modal>
+
+      {/* 🔒 Overlay global con spinner verde y mensaje dinámico */}
+      {blocking && (
+        <Overlay opacity={0.5} color="#000" zIndex={5000} fixed blur={5}>
+          <Center style={{ flexDirection: "column", height: "100vh" }}>
+            <CircularProgress color="success" size={80} />
+            {/* <Text c="green" mt="md" fw={600} fz="lg">
+              {loadingMessage}
+            </Text> */}
+          </Center>
+        </Overlay>
+      )}
     </ScrollArea>
   );
 }

@@ -39,7 +39,7 @@ function App() {
 				</Routes>
 			</BrowserRouter>
 		</MantineProvider >
-	);
+	)
 }
 
 export default App;
