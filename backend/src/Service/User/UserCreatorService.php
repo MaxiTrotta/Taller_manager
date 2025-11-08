@@ -15,7 +15,7 @@ final readonly class UserCreatorService {
         $this->userFinderByEmailService = new UserFinderByEmailService();
     }
 
-    public function create(string $name, string $email, string $password): void
+    public function create(string $name, string $email, string $password, bool $admin): void
     {
         $user = $this->userFinderByEmailService->find($email);
 
@@ -23,7 +23,7 @@ final readonly class UserCreatorService {
             throw new UserAlreadyExistsException();
         }
 
-        $user = User::create($name, $email, $password);
+        $user = User::create($name, $email, $password, $admin);
         $this->repository->insert($user);
     }
 }

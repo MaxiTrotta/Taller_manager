@@ -12,13 +12,15 @@ final class User {
         private string $email,
         private string $password,
         private ?string $token,
-        private ?DateTime $tokenAuthDate
+        private ?DateTime $tokenAuthDate,
+        private bool $admin,
+        private bool $deleted
     ) {
     }
 
-    public static function create(string $name, string $email, string $password): self
+    public static function create(string $name, string $email, string $password, bool $admin): self
     {
-        return new self(null, $name, $email, password_hash($password, PASSWORD_BCRYPT), null, null);
+        return new self(null, $name, $email, password_hash($password, PASSWORD_BCRYPT), null, null, $admin, false);
     }
 
     public function id(): ?int
@@ -55,5 +57,32 @@ final class User {
     {
         $this->token = md5($this->email.$this->id.rand(1000, 9999).date("YmdHis"));
         $this->tokenAuthDate = new DateTime("+5 hours");
+    }
+    public function admin(): bool
+    {
+        return $this->admin;
+    }
+
+    public function isAdmin(): int
+    {
+        return $this->admin ? 1 : 0;
+    }
+
+     public function delete(): void
+    {
+        $this->deleted = true;
+    }
+
+    public function isDeleted(): int
+    {
+        return $this->deleted ? 1 : 0;
+    }
+
+    public function modify(string $name, string $email, string $password, bool $admin): void
+    {
+        $this->name = $name;
+        $this->email = $email;
+        $this->password = password_hash($password, PASSWORD_BCRYPT);
+        $this->admin = $admin;
     }
 }
