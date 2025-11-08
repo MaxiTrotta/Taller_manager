@@ -22,6 +22,7 @@ final readonly class UserGetController extends AuthMiddleware {
             "password" => $user->password(),
             "token" => $user->token(),
             "tokenAuthDate" => $user->tokenAuthDate(),
+            "admin" => $user->admin()
         ], true);
     }
 }

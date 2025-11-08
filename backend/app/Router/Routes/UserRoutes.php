@@ -35,6 +35,30 @@ final readonly class UserRoutes
         "controller" => "User/UsersGetController.php",
         "method" => "GET"
       ],
+      [
+        "name" => "users_put",
+        "url" => "/users",
+        "controller" => "User/UserPutController.php",
+        "method" => "PUT",
+        "parameters" => [
+          [
+            "name" => "email",
+            "type" => "string"
+          ]
+        ]
+      ],
+      [
+        "name" => "users_delete",
+        "url" => "/users",
+        "controller" => "User/UserDeleteController.php",
+        "method" => "DELETE",
+        "parameters" => [
+          [
+            "name" => "email",
+            "type" => "string"
+          ]
+        ]
+      ]
     ];
   }
 }

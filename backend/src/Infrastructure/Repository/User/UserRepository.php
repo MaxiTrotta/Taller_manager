@@ -12,7 +12,14 @@ final readonly class UserRepository extends PDOManager implements UserRepository
 
     public function findByEmail(string $email): ?User 
     {
-        $query = "SELECT * FROM users WHERE email = :email";
+        $query = <<<HEREDOC
+                        SELECT
+                            *
+                        FROM
+                            users
+                        WHERE
+                            email = :email AND deleted = 0
+                    HEREDOC;
 
         $parameters = [
             "email" => $email,
@@ -46,7 +53,14 @@ final readonly class UserRepository extends PDOManager implements UserRepository
 
     public function findByToken(string $token): ?User 
     {
-        $query = "SELECT * FROM users WHERE token = :token AND :date <= token_auth_date";
+        $query = <<<HEREDOC
+                    SELECT
+                        *
+                    FROM
+                        users
+                    WHERE
+                        (token = :token AND :date <= token_auth_date) AND deleted = 0
+                HEREDOC;
 
         $parameters = [
             "token" => $token,
@@ -60,7 +74,14 @@ final readonly class UserRepository extends PDOManager implements UserRepository
 
     public function search(): array
     {
-        $query = "SELECT * FROM users WHERE deleted = 0";
+        $query = <<<HEREDOC
+                        SELECT
+                            *
+                        FROM
+                            users
+                        WHERE
+                            deleted = 0
+                    HEREDOC;
         $results = $this->execute($query);
 
         $userResults = [];
@@ -77,9 +98,9 @@ final readonly class UserRepository extends PDOManager implements UserRepository
         $query = <<<INSERT_QUERY
                     INSERT INTO
                         users
-                    (name, email, password, token)
+                    (name, email, password, token, admin, deleted)
                         VALUES
-                    (:name, :email, :password, :token)
+                    (:name, :email, :password, :token, :admin, :deleted)
                 INSERT_QUERY;
             
         $parameters = [
@@ -87,6 +108,8 @@ final readonly class UserRepository extends PDOManager implements UserRepository
             "email" => $user->email(),
             "password" => $user->password(),
             "token" => "",
+            "admin" => $user->isAdmin(),
+            "deleted" => $user->isDeleted(),
         ];
 
         $this->execute($query, $parameters);
@@ -101,7 +124,9 @@ final readonly class UserRepository extends PDOManager implements UserRepository
                             email = :email,
                             password = :password,
                             token = :token,
-                            token_auth_date = :tokenAuthDate
+                            token_auth_date = :tokenAuthDate,
+                            admin = :admin,
+                            deleted = :deleted
                         WHERE
                             id = :id
                     UPDATE_QUERY;
@@ -111,6 +136,8 @@ final readonly class UserRepository extends PDOManager implements UserRepository
             "password" => $user->password(),
             "token" => $user->token(),
             "tokenAuthDate" => $user->tokenAuthDate()->format("Y-m-d H:i:s"),
+            "admin" => $user->isAdmin(),
+            "deleted" => $user->isDeleted(),
             "id" => $user->id()
         ];
 
@@ -130,6 +157,8 @@ final readonly class UserRepository extends PDOManager implements UserRepository
             $primitive["password"],
             $primitive["token"],
             new DateTime($primitive["token_auth_date"]),
+            (bool)$primitive["admin"],
+            (bool)$primitive["deleted"],
         );
     }
 }
