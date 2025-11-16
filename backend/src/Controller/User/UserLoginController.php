@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 use Src\Utils\ControllerUtils;
 use Src\Service\User\UserLoginService;
@@ -18,8 +18,13 @@ final readonly class UserLoginController {
         $user = $this->service->login($email, $password);
 
         echo json_encode([
+            "id" => $user->id(),
+            "name" => $user->name(),
+            "email" => $user->email(),
             "token" => $user->token(),
             "expiration_date" => $user->tokenAuthDate()->format("Y-m-d H:i:s"),
+            "admin" => $user->isAdmin(),        // <-- FIX CLAVE
+            "deleted" => $user->isDeleted(),    // opcional, pero útil
         ]);
     }
 }

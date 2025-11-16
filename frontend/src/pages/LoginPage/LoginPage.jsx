@@ -36,18 +36,28 @@ export function LoginPage() {
 
     const navigate = useNavigate();
     const [error, setError] = useState(undefined);
-
+    
+    
     async function onSubmit(formData) {
         try {
-            setError(undefined); // Eliminar cualquier error previo
+            setError(undefined);
 
-            const formDataJson = JSON.stringify(formData);
-            const response = await authService.login(formDataJson);
+            // Enviar formData como objeto normal
+            const response = await authService.login(formData);
 
             const token = response.data.token;
+            const admin = response.data.admin;
+
             if (token) {
                 localStorage.setItem("token", token);
-                navigate("/cliente");
+                localStorage.setItem("admin", admin);
+
+                // Redirección por rol
+                if (admin === 1) {
+                    navigate("/home");       // admin
+                } else {
+                    navigate("/mecanico");   // mecánico
+                }
             } else {
                 throw new Error("Ocurrió un error inesperado");
             }
@@ -55,6 +65,7 @@ export function LoginPage() {
             setError(error.message);
         }
     }
+
     return (
         <>
 

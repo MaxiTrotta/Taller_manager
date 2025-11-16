@@ -1,39 +1,55 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { NavbarSimpleColored } from "./components/NavbarSimpleColored/NavbarSimpleColored";
 
-// El usuario no debe tener un token
 export function PublicRoute() {
-	const token = localStorage.getItem("token");
-	if (token) return <Navigate to="/home" replace />;
-	return <Outlet />; // Muestra el contenido de la ruta
+    const token = localStorage.getItem("token");
+    const admin = localStorage.getItem("admin");
+
+    if (token) {
+        if (admin === "1") return <Navigate to="/home" replace />;
+        if (admin === "0") return <Navigate to="/mecanico" replace />;
+    }
+
+    return <Outlet />;
 }
 
-// El usuario debe tener un token
+
+// PRIVATE ROUTE (solo usuarios logueados)
 export function PrivateRoute() {
-	const location = useLocation()
-	const hideNavbarOnPaths = ['/mecanico'];
-	const showNavbar = !hideNavbarOnPaths.includes(location.pathname);
+    const token = localStorage.getItem("token");
+    const admin = localStorage.getItem("admin");
 
-	const token = localStorage.getItem("token");
-	if (!token) return <Navigate to="/login" replace />;
-	return <div className="contenedor_backend">
-		{
-			showNavbar ? <NavbarSimpleColored /> : null
-		}
+    if (!token) return <Navigate to="/login" replace />;
 
-		<div className='contenido'>
-			<Outlet />
-		</div> ;
-	</div>
+    // 🔥 MECÁNICO INTENTA ENTRAR A UNA RUTA DE ADMIN → LO SACAMOS
+    if (admin === "0") return <Navigate to="/mecanico" replace />;
+
+    return (
+        <div className="contenedor_backend">
+            <NavbarSimpleColored />
+            <div className="contenido">
+                <Outlet />
+            </div>
+        </div>
+    );
 }
+
 
 export function MecanicRoute() {
-	const token = localStorage.getItem("token");
-	if (!token) return <Navigate to="/login" replace />;
-	return <div className="contenedor_backend">
-	
-		<div className='contenido'>
-			<Outlet />
-		</div> ;
-	</div>
+    const token = localStorage.getItem("token");
+    const admin = localStorage.getItem("admin");
+
+    if (!token) return <Navigate to="/login" replace />;
+
+    // 🔥 ADMIN NO PUEDE ENTRAR A /mecanico
+    if (admin === "1") return <Navigate to="/home" replace />;
+
+    return (
+        <div className="contenedor_backend">
+            <div className="contenido">
+                <Outlet />
+            </div>
+        </div>
+    );
 }
+

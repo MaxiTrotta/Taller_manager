@@ -1,6 +1,13 @@
 import { api } from "./api";
 
 export const authService = {
-	login: (data) => api.post("/users/login", data),
-	register: (data) => api.post("/users", data)
+  login: (payload) =>
+    api.post("/users/login", payload, {
+      headers: { "Content-Type": "application/json" },
+    }),
+
+  register: (payload) =>
+    api.post("/users", payload, {
+      headers: { "Content-Type": "application/json" },
+    }),
 };
