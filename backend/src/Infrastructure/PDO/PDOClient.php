@@ -12,27 +12,44 @@ final class PDOClient {
 
     public function connect(): PDO
     {
-        // Railway env vars
-        $host = $_ENV['MYSQLHOST'];
-        $port = $_ENV['MYSQLPORT'];
-        $db   = $_ENV['MYSQLDATABASE'];
-        $user = $_ENV['MYSQLUSER'];
-        $pass = $_ENV['MYSQLPASSWORD'];
+        $client = $this->client();
 
-        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+        if ($client === null) {
+            $client = $this->connectClient();
+        }
 
+        return $client;
+    }
+
+    private function client(): ?PDO
+    {
+        return self::$activeClients[$_ENV['MYSQLUSER']] ?? null;
+    }
+
+
+    private function connectClient(): PDO
+    {
         try {
-            $conn = new PDO(
-                $dsn,
-                $user,
-                $pass,
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-                ]
+
+            $dsn = sprintf(
+                'mysql:host=%s;port=%s;dbname=%s',
+                $_ENV['MYSQLHOST'],
+                $_ENV['MYSQLPORT'],
+                $_ENV['MYSQLDATABASE']
             );
 
+            $conn = new PDO(
+                $dsn,
+                $_ENV['MYSQLUSER'],
+                $_ENV['MYSQLPASSWORD']
+            );
+            
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            self::$activeClients[$_ENV['MYSQLUSER']] = $conn;
+
             return $conn;
+
         } catch (PDOException $e) {
             echo "Hubo un error en la base de datos: " . $e->getMessage();
             exit();
