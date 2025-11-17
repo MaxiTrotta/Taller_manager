@@ -29,8 +29,9 @@ require_once __DIR__.'/app/Autoloader/Autoloader.php';
 
 
 // Utilizamos la libreria 'Dotenv' para cargar nuestros datos
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load(); 
+$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
+$dotenv->safeLoad();  // NO pisa las variables de Railway
+
 
 // Cargamos el autoloader
 spl_autoload_register(
