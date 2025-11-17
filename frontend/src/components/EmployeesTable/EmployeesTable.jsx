@@ -23,6 +23,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import TablePagination from "@mui/material/TablePagination";
 import { validateEmployeePayload, hasAnyError } from "../../utils/validators";
 
+import { ToastOverlay } from "../Toast/ToastOverlay"; // <<--- 🔥 NUEVO
+
 const jobColors = {
   reparacion: "blue",
   alineacion: "red",
@@ -56,9 +58,25 @@ export function EmployeesTable() {
   const [newEmployeeErrors, setNewEmployeeErrors] = useState({});
   const [editEmployeeErrors, setEditEmployeeErrors] = useState({});
 
-  // Estados para bloqueo global
+  // Estado de bloqueo
   const [blocking, setBlocking] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Procesando...");
+
+  // =================== 🔥 TOAST ===================
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    color: "green",
+  });
+
+  const showToast = (message, color = "green") => {
+    setToast({ open: true, message, color });
+
+    setTimeout(() => {
+      setToast({ open: false, message: "", color });
+    }, 4000);
+  };
+  // =================================================
 
   // =================== FETCH ===================
   const fetchEmployees = async () => {
@@ -122,9 +140,12 @@ export function EmployeesTable() {
         });
         setNewEmployeeErrors({});
         await fetchEmployees();
+
+        showToast("Empleado creado correctamente ✔️"); // 🔥
       }
     } catch (err) {
       console.error("Error al crear empleado:", err);
+      showToast("Error al crear empleado ❌", "red"); // 🔥
     } finally {
       setBlocking(false);
     }
@@ -139,14 +160,20 @@ export function EmployeesTable() {
     setBlocking(true);
 
     try {
-      const response = await employeesService.updateEmployed(selectedEmployee.id, selectedEmployee);
+      const response = await employeesService.updateEmployed(
+        selectedEmployee.id,
+        selectedEmployee
+      );
       if (response.status === 200) {
         closeEdit();
         setEditEmployeeErrors({});
         await fetchEmployees();
+
+        showToast("Empleado actualizado ✔️", "green"); // 🔥
       }
     } catch (err) {
       console.error("Error al actualizar empleado:", err);
+      showToast("Error al actualizar empleado ❌", "red"); // 🔥
     } finally {
       setBlocking(false);
     }
@@ -161,9 +188,12 @@ export function EmployeesTable() {
       if (response.status === 200 || response.status === 204) {
         closeDelete();
         await fetchEmployees();
+
+        showToast("Empleado eliminado ❌", "red"); // 🔥
       }
     } catch (err) {
       console.error("Error al eliminar empleado:", err);
+      showToast("Error al eliminar empleado ❌", "red"); // 🔥
     } finally {
       setBlocking(false);
     }
@@ -230,6 +260,10 @@ export function EmployeesTable() {
   // =================== RENDER ===================
   return (
     <ScrollArea>
+
+      {/* 🔥 TOAST */}
+      <ToastOverlay toast={toast} />
+
       <Group justify="space-between" mb="sm">
         <TextInput
           placeholder="Buscar empleado"
@@ -246,6 +280,7 @@ export function EmployeesTable() {
         </Button>
       </Group>
 
+      {/* Tabla */}
       <Table highlightOnHover>
         <Table.Thead>
           <Table.Tr>
@@ -275,47 +310,37 @@ export function EmployeesTable() {
         </Table.Tbody>
       </Table>
 
+      {/* Paginación */}
       <TablePagination
         component="div"
         count={filtered.length}
         page={page}
         onPageChange={(e, newPage) => setPage(newPage)}
         rowsPerPage={rowsPerPage}
+        rowsPerPageOptions={[5, 10, 25]}
         onRowsPerPageChange={(e) => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
-        rowsPerPageOptions={[5, 10, 25]}
       />
 
       {/* =================== MODALES =================== */}
-      {/* Ver */}
+
+      {/* Ver Empleado */}
       <Modal opened={viewModalOpened} onClose={closeView} title="Detalles del empleado" centered>
         {selectedEmployee && (
           <>
-            <Text>
-              <b>Nombre:</b> {selectedEmployee.name}
-            </Text>
-            <Text>
-              <b>CUIL/CUIT:</b> {selectedEmployee.cuilCuit}
-            </Text>
-            <Text>
-              <b>Email:</b> {selectedEmployee.email}
-            </Text>
-            <Text>
-              <b>Teléfono:</b> {selectedEmployee.phone}
-            </Text>
-            <Text>
-              <b>Dirección:</b> {selectedEmployee.address}
-            </Text>
-            <Text>
-              <b>Sector:</b> {sectors.find((s) => s.id === selectedEmployee.idSector)?.name}
-            </Text>
+            <Text><b>Nombre:</b> {selectedEmployee.name}</Text>
+            <Text><b>CUIL/CUIT:</b> {selectedEmployee.cuilCuit}</Text>
+            <Text><b>Email:</b> {selectedEmployee.email}</Text>
+            <Text><b>Teléfono:</b> {selectedEmployee.phone}</Text>
+            <Text><b>Dirección:</b> {selectedEmployee.address}</Text>
+            <Text><b>Sector:</b> {sectors.find((s) => s.id === selectedEmployee.idSector)?.name}</Text>
           </>
         )}
       </Modal>
 
-      {/* Agregar */}
+      {/* Agregar Empleado */}
       <Modal opened={addModalOpened} onClose={closeAdd} title="Agregar empleado" centered>
         <TextInput
           label="Nombre"
@@ -376,12 +401,13 @@ export function EmployeesTable() {
           }}
           error={newEmployeeErrors.idSector}
         />
+
         <Button mt="md" color="green" onClick={handleAddEmployee}>
           Guardar
         </Button>
       </Modal>
 
-      {/* Editar */}
+      {/* Editar Empleado */}
       <Modal opened={editModalOpened} onClose={closeEdit} title="Editar empleado" centered>
         {selectedEmployee && (
           <>
@@ -444,6 +470,7 @@ export function EmployeesTable() {
               }}
               error={editEmployeeErrors.idSector}
             />
+
             <Button mt="md" color="blue" onClick={handleUpdateEmployee}>
               Guardar cambios
             </Button>
@@ -451,8 +478,8 @@ export function EmployeesTable() {
         )}
       </Modal>
 
-      {/* Eliminar */}
-      <Modal opened={deleteModalOpened} onClose={closeDelete} title="Eliminar empleado" centered>
+      {/* Eliminar Empleado */}
+      <Modal opened={deleteModalOpened} onClose={closeDelete} title="Eliminar empleado" centered size="sm">
         {selectedEmployee && (
           <>
             <Text>
@@ -470,14 +497,11 @@ export function EmployeesTable() {
         )}
       </Modal>
 
-      {/* 🔒 Overlay global con spinner verde y mensaje dinámico */}
+      {/* 🔒 Overlay global con spinner */}
       {blocking && (
         <Overlay opacity={0.5} color="#000" zIndex={5000} fixed blur={5}>
           <Center style={{ flexDirection: "column", height: "100vh" }}>
             <CircularProgress color="success" size={80} />
-            {/* <Text c="green" mt="md" fw={600} fz="lg">
-              {loadingMessage}
-            </Text> */}
           </Center>
         </Overlay>
       )}

@@ -8,7 +8,7 @@ import {
 } from '@tabler/icons-react';
 import {
   Center, Group, ScrollArea, Table, Text, TextInput, UnstyledButton,
-  Modal, Button, ActionIcon, Select, Transition, Overlay 
+  Modal, Button, ActionIcon, Select, Overlay
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import classes from './TableSort.module.css';
@@ -16,6 +16,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import TablePagination from '@mui/material/TablePagination';
 import { validateClientPayload, validateVehiclePayload, hasAnyError } from '../../utils/validators';
+
+import { ToastOverlay } from "../Toast/ToastOverlay"; // 🔥 NUEVO
 
 // =================== Helpers ===================
 function Th({ children, reversed, sorted, onSort }) {
@@ -67,12 +69,12 @@ export function CircularIndeterminate() {
 // =================== Componente principal ===================
 export function TableSort() {
   const safe = (a) => (Array.isArray(a) ? a : []);
+
   // =================== Estados ===================
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [blocking, setBlocking] = useState(false);
-
 
   const [editModalOpened, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
   const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure(false);
@@ -106,8 +108,24 @@ export function TableSort() {
     licensePlate: '', brand: '', model: '', year: ''
   });
   const [newVehicleErrors, setNewVehicleErrors] = useState({});
-  // color para los números/íconos de la paginación (cambiar aquí si querés otro color)
-  const paginationNumberColor = '#1976d2';
+
+  const paginationNumberColor = "#1976d2";
+
+  // =================== 🔥 TOAST GLOBAL ===================
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    color: "green",
+  });
+
+  const showToast = (message, color = "green") => {
+    setToast({ open: true, message, color });
+
+    setTimeout(() => {
+      setToast({ open: false, message: "", color });
+    }, 4000);
+  };
+  // ======================================================
 
   // =================== Fetch clientes ===================
   const fetchClients = async () => {
@@ -130,6 +148,7 @@ export function TableSort() {
       console.error('Error al traer clientes:', err);
       setClients([]);
       setSortedData([]);
+      showToast("Error al cargar clientes ❌", "red"); // 🔥
     } finally {
       setLoading(false);
     }
@@ -167,31 +186,40 @@ export function TableSort() {
     setNewVehicle(prev => ({ ...prev, [name]: value }));
     setNewVehicleErrors((p) => ({ ...p, [name]: null }));
   };
-
   const handleAddVehicle = async () => {
     if (!selectedClient) return;
+
     const errors = validateVehiclePayload(newVehicle);
     setNewVehicleErrors(errors);
     if (hasAnyError(errors)) return;
-    setBlocking(true); // <--- BLOQUEA LA PANTALLA
+
+    setBlocking(true);
+
     try {
       const payload = { ...newVehicle, clientId: selectedClient.id };
       const response = await VehicleCreatorService.create(payload);
+
       if (response.status === 201 || response.status === 200) {
         await fetchVehiclesByClient(selectedClient.id);
         setNewVehicle({ licensePlate: '', brand: '', model: '', year: '' });
         setNewVehicleErrors({});
         closeAddVehicleModal();
+
+        showToast("Vehículo agregado correctamente ✔️");
       }
     } catch (err) {
       console.error('Error al agregar vehículo:', err);
+      showToast("Error al agregar vehículo ❌", "red");
     } finally {
-      setBlocking(false); // <--- DESBLOQUEA
+      setBlocking(false);
     }
   };
 
   // =================== Paginación ===================
-  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedData = sortedData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   // =================== Filas ===================
   const rows = paginatedData.map((row) => (
@@ -202,7 +230,11 @@ export function TableSort() {
       <Table.Td>{row.phone}</Table.Td>
       <Table.Td>
         <Group gap={0} justify="flex-end">
-          <ActionIcon variant="subtle" color="gray" onClick={() => handleOpenViewClientModal(row)}>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={() => handleOpenViewClientModal(row)}
+          >
             <IconEye size={16} stroke={1.5} />
           </ActionIcon>
 
@@ -232,37 +264,55 @@ export function TableSort() {
     </Table.Tr>
   ));
 
-  // =================== Funciones de acciones ===================
+  // =================== Acciones ===================
   const handleAddClient = async () => {
     const errors = validateClientPayload(newClient);
     setNewClientErrors(errors);
+
     if (hasAnyError(errors)) return;
+
     setIsSaving(true);
-    setBlocking(true); // <--- BLOQUEA LA PANTALLA
+    setBlocking(true);
+
     try {
       const payload = { ...newClient };
       const response = await clientService.createClient(payload);
+
       if (response.status === 201 || response.status === 200) {
         await fetchClients();
-        setNewClient({ name: '', email: '', cuitCuil: '', phone: '', address: '', city: '', province: '' });
+        setNewClient({
+          name: '',
+          email: '',
+          cuitCuil: '',
+          phone: '',
+          address: '',
+          city: '',
+          province: ''
+        });
         setNewClientErrors({});
         closeAddModal();
+
+        showToast("Cliente creado correctamente ✔️");
       }
     } catch (err) {
-      console.error('Error al agregar cliente:', err);
+      console.error("Error al crear cliente:", err);
+      showToast("Error al crear cliente ❌", "red");
     } finally {
       setIsSaving(false);
-      setBlocking(false); // <--- DESBLOQUEA
+      setBlocking(false);
     }
   };
 
   const handleEditClient = async () => {
     if (!clientToEdit) return;
-    // validar
+
     const errors = validateClientPayload(clientToEdit);
     setEditClientErrors(errors);
+
     if (hasAnyError(errors)) return;
+
     setIsEditing(true);
+
     try {
       const payload = {
         name: clientToEdit.name,
@@ -273,14 +323,19 @@ export function TableSort() {
         email: clientToEdit.email,
         phone: clientToEdit.phone
       };
+
       const response = await clientService.updateClient(clientToEdit.id, payload);
+
       if (response.status === 200) {
         await fetchClients();
         closeEditModal();
         setEditClientErrors({});
+
+        showToast("Cliente actualizado ✔️");
       }
     } catch (err) {
-      console.error('Error al actualizar cliente:', err);
+      console.error("Error al actualizar cliente:", err);
+      showToast("Error al actualizar cliente ❌", "red");
     } finally {
       setIsEditing(false);
     }
@@ -288,15 +343,21 @@ export function TableSort() {
 
   const handleDeleteClient = async () => {
     if (!clientToDelete) return;
+
     setIsDeleting(true);
+
     try {
       const response = await clientService.deleteClient(clientToDelete.id);
+
       if (response.status === 200 || response.status === 204) {
         await fetchClients();
         closeDeleteModal();
+
+        showToast("Cliente eliminado ❌", "red");
       }
     } catch (err) {
-      console.error('Error al eliminar cliente:', err);
+      console.error("Error al eliminar cliente:", err);
+      showToast("Error al eliminar cliente ❌", "red");
     } finally {
       setIsDeleting(false);
     }
@@ -305,8 +366,10 @@ export function TableSort() {
   // =================== VEHÍCULOS ===================
   const fetchVehiclesByClient = async (clientId) => {
     setLoadingVehicles(true);
+
     try {
       const response = await VehicleCreatorService.getAllByClient(clientId);
+
       if (response.status === 200) {
         const data = Array.isArray(response.data)
           ? response.data
@@ -320,6 +383,7 @@ export function TableSort() {
     } catch (err) {
       console.error("Error al cargar vehículos:", err);
       setVehicles([]);
+      showToast("Error al cargar vehículos ❌", "red");
     } finally {
       setLoadingVehicles(false);
     }
@@ -331,9 +395,13 @@ export function TableSort() {
     openViewModal();
   };
 
-  // =================== Render ===================
+  // =================== UI ===================
   return (
     <ScrollArea>
+
+      {/* 🔥 TOAST REUTILIZABLE */}
+      <ToastOverlay toast={toast} />
+
       <Group justify="space-between" mb="sm">
         <TextInput
           placeholder="Buscar Cliente"
@@ -342,19 +410,18 @@ export function TableSort() {
           onChange={handleSearchChange}
           style={{ width: '300px' }}
         />
+
         <Group>
-          <Button variant="filled" color="green" onClick={openAddModal}>Agregar Cliente</Button>
-          <Button
-            variant="filled"
-            color="blue"
-            onClick={openAddVehicleModal} // se abre directo
-          >
+          <Button variant="filled" color="green" onClick={openAddModal}>
+            Agregar Cliente
+          </Button>
+          <Button variant="filled" color="blue" onClick={openAddVehicleModal}>
             Agregar Vehículo
           </Button>
         </Group>
       </Group>
 
-      {/* Tabla de clientes */}
+      {/* Tabla clientes */}
       <Table horizontalSpacing="lg" verticalSpacing="xs" miw={700} layout="fixed">
         <Table.Thead>
           <Table.Tr>
@@ -365,11 +432,14 @@ export function TableSort() {
             <Table.Th>Acciones</Table.Th>
           </Table.Tr>
         </Table.Thead>
+
         <Table.Tbody>
           {loading ? (
             <Table.Tr><Table.Td colSpan={5}><CircularIndeterminate /></Table.Td></Table.Tr>
-          ) : rows.length > 0 ? rows : (
-            <Table.Tr><Table.Td colSpan={5}><Text fw={500} ta="center">No se encontraron clientes</Text></Table.Td></Table.Tr>
+          ) : rows.length > 0 ? (
+            rows
+          ) : (
+            <Table.Tr><Table.Td colSpan={5}><Text ta="center">No se encontraron clientes</Text></Table.Td></Table.Tr>
           )}
         </Table.Tbody>
       </Table>
@@ -381,13 +451,17 @@ export function TableSort() {
         page={page}
         onPageChange={(e, newPage) => setPage(newPage)}
         rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
         rowsPerPageOptions={[5, 10, 25, 50]}
         sx={{
-          // aplica color a diversos elementos internos de MUI usados en la paginación
           color: paginationNumberColor,
-          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows, .MuiSelect-select, .MuiInputBase-input, .MuiMenuItem-root': { color: paginationNumberColor },
-          '.MuiSvgIcon-root, .MuiIconButton-root, .MuiButtonBase-root': { color: paginationNumberColor },
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows, .MuiSelect-select, .MuiInputBase-input, .MuiMenuItem-root':
+            { color: paginationNumberColor },
+          '.MuiSvgIcon-root, .MuiIconButton-root, .MuiButtonBase-root':
+            { color: paginationNumberColor },
         }}
       />
 
@@ -400,9 +474,9 @@ export function TableSort() {
             <Text><b>CUIT/CUIL:</b> {selectedClient.cuitCuil}</Text>
             <Text><b>Teléfono:</b> {selectedClient.phone}</Text>
             <Text><b>Dirección:</b> {selectedClient.address}, {selectedClient.city}, {selectedClient.province}</Text>
-            {/* <Text><b>Creado:</b> {new Date(selectedClient.createdAt?.date).toLocaleDateString("es-AR")}</Text> */}
 
             <Text mt="md" fw={600}>Vehículos del cliente:</Text>
+
             {loadingVehicles ? (
               <CircularIndeterminate />
             ) : vehicles.length > 0 ? (
@@ -448,57 +522,70 @@ export function TableSort() {
               const client = clients.find(c => c.id.toString() === value);
               setSelectedClient(client || null);
             }}
-            data={safe(clients).map(c => ({
+            data={clients.map(c => ({
               value: c.id.toString(),
               label: `${c.name} - ${c.email}`,
             }))}
           />
+
           <TextInput label="Patente" name="licensePlate" value={newVehicle.licensePlate} onChange={handleNewVehicleChange} error={newVehicleErrors.licensePlate} />
           <TextInput label="Marca" name="brand" value={newVehicle.brand} onChange={handleNewVehicleChange} error={newVehicleErrors.brand} />
           <TextInput label="Modelo" name="model" value={newVehicle.model} onChange={handleNewVehicleChange} error={newVehicleErrors.model} />
-          <TextInput label="Año" name="year" type="number" value={newVehicle.year} onChange={(e) => { handleNewVehicleChange(e); setNewVehicleErrors((p) => ({ ...p, year: null })); }} error={newVehicleErrors.year} />
-          <Button color="blue" onClick={handleAddVehicle}  disabled={!selectedClient}>
+          <TextInput label="Año" name="year" type="number" value={newVehicle.year} onChange={(e) => { handleNewVehicleChange(e); setNewVehicleErrors(p => ({ ...p, year: null })); }} error={newVehicleErrors.year} />
+
+          <Button color="blue" onClick={handleAddVehicle} disabled={!selectedClient}>
             Guardar Vehículo
           </Button>
         </div>
       </Modal>
 
-      {/* Modales Agregar, Editar y Eliminar Cliente */}
+      {/* Modal Agregar Cliente */}
       <Modal opened={addModalOpened} onClose={closeAddModal} title="Agregar Cliente" centered size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <TextInput label="Nombre" name="name" value={newClient.name} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, name: null })); }} error={newClientErrors.name} />
-          <TextInput label="Email" name="email" value={newClient.email} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, email: null })); }} error={newClientErrors.email} />
-          <TextInput label="CUIT/CUIL" name="cuitCuil" value={newClient.cuitCuil} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, cuitCuil: null })); }} error={newClientErrors.cuitCuil} />
-          <TextInput label="Teléfono" name="phone" value={newClient.phone} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, phone: null })); }} error={newClientErrors.phone} />
-          <TextInput label="Dirección" name="address" value={newClient.address} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, address: null })); }} error={newClientErrors.address} />
-          <TextInput label="Ciudad" name="city" value={newClient.city} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, city: null })); }} error={newClientErrors.city} />
-          <TextInput label="Provincia" name="province" value={newClient.province} onChange={(e) => { handleNewClientChange(e); setNewClientErrors((p) => ({ ...p, province: null })); }} error={newClientErrors.province} />
-          <Button color="green" onClick={handleAddClient} loading={isSaving}>Guardar Cliente</Button>
+          <TextInput label="Nombre" name="name" value={newClient.name} onChange={handleNewClientChange} error={newClientErrors.name} />
+          <TextInput label="Email" name="email" value={newClient.email} onChange={handleNewClientChange} error={newClientErrors.email} />
+          <TextInput label="CUIT/CUIL" name="cuitCuil" value={newClient.cuitCuil} onChange={handleNewClientChange} error={newClientErrors.cuitCuil} />
+          <TextInput label="Teléfono" name="phone" value={newClient.phone} onChange={handleNewClientChange} error={newClientErrors.phone} />
+          <TextInput label="Dirección" name="address" value={newClient.address} onChange={handleNewClientChange} error={newClientErrors.address} />
+          <TextInput label="Ciudad" name="city" value={newClient.city} onChange={handleNewClientChange} error={newClientErrors.city} />
+          <TextInput label="Provincia" name="province" value={newClient.province} onChange={handleNewClientChange} error={newClientErrors.province} />
+
+          <Button color="green" onClick={handleAddClient} loading={isSaving}>
+            Guardar Cliente
+          </Button>
         </div>
       </Modal>
 
+      {/* Modal Editar */}
       <Modal opened={editModalOpened} onClose={closeEditModal} title="Editar Cliente" centered size="md">
         {clientToEdit && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <TextInput label="Nombre" value={clientToEdit.name} onChange={(e) => { setClientToEdit({ ...clientToEdit, name: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, name: null })); }} error={editClientErrors.name} />
-            <TextInput label="Email" value={clientToEdit.email} onChange={(e) => { setClientToEdit({ ...clientToEdit, email: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, email: null })); }} error={editClientErrors.email} />
-            <TextInput label="CUIT/CUIL" value={clientToEdit.cuitCuil} onChange={(e) => { setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, cuitCuil: null })); }} error={editClientErrors.cuitCuil} />
-            <TextInput label="Teléfono" value={clientToEdit.phone} onChange={(e) => { setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, phone: null })); }} error={editClientErrors.phone} />
-            <TextInput label="Dirección" value={clientToEdit.address} onChange={(e) => { setClientToEdit({ ...clientToEdit, address: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, address: null })); }} error={editClientErrors.address} />
-            <TextInput label="Ciudad" value={clientToEdit.city} onChange={(e) => { setClientToEdit({ ...clientToEdit, city: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, city: null })); }} error={editClientErrors.city} />
-            <TextInput label="Provincia" value={clientToEdit.province} onChange={(e) => { setClientToEdit({ ...clientToEdit, province: e.currentTarget.value }); setEditClientErrors((p) => ({ ...p, province: null })); }} error={editClientErrors.province} />
-            <Button color="blue" onClick={handleEditClient} loading={isEditing}>Actualizar Cliente</Button>
+            <TextInput label="Nombre" value={clientToEdit.name} onChange={(e) => { setClientToEdit({ ...clientToEdit, name: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, name: null })); }} error={editClientErrors.name} />
+            <TextInput label="Email" value={clientToEdit.email} onChange={(e) => { setClientToEdit({ ...clientToEdit, email: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, email: null })); }} error={editClientErrors.email} />
+            <TextInput label="CUIT/CUIL" value={clientToEdit.cuitCuil} onChange={(e) => { setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, cuitCuil: null })); }} error={editClientErrors.cuitCuil} />
+            <TextInput label="Teléfono" value={clientToEdit.phone} onChange={(e) => { setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, phone: null })); }} error={editClientErrors.phone} />
+            <TextInput label="Dirección" value={clientToEdit.address} onChange={(e) => { setClientToEdit({ ...clientToEdit, address: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, address: null })); }} error={editClientErrors.address} />
+            <TextInput label="Ciudad" value={clientToEdit.city} onChange={(e) => { setClientToEdit({ ...clientToEdit, city: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, city: null })); }} error={editClientErrors.city} />
+            <TextInput label="Provincia" value={clientToEdit.province} onChange={(e) => { setClientToEdit({ ...clientToEdit, province: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, province: null })); }} error={editClientErrors.province} />
+
+            <Button color="blue" onClick={handleEditClient} loading={isEditing}>
+              Actualizar Cliente
+            </Button>
           </div>
         )}
       </Modal>
 
+      {/* Modal Eliminar */}
       <Modal opened={deleteModalOpened} onClose={closeDeleteModal} title="Eliminar Cliente" centered size="sm">
         <Text>¿Estás seguro que deseas eliminar a {clientToDelete?.name}?</Text>
+
         <Group position="apart" mt="md">
           <Button color="red" onClick={handleDeleteClient} loading={isDeleting}>Eliminar</Button>
           <Button variant="outline" onClick={closeDeleteModal}>Cancelar</Button>
         </Group>
       </Modal>
+
+      {/* Overlay global */}
       {blocking && (
         <Overlay opacity={0.5} color="#000" zIndex={1000} fixed>
           <Center style={{ height: '100vh' }}>
@@ -506,7 +593,6 @@ export function TableSort() {
           </Center>
         </Overlay>
       )}
-
     </ScrollArea>
   );
 }

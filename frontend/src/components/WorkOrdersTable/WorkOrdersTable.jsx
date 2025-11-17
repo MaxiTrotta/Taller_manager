@@ -39,10 +39,26 @@ const stateTextToNumber = (s) => {
   return 1;
 };
 
+
 const stateNumberToText = (n) =>
   n === 1 ? "Pendiente" : n === 2 ? "En proceso" : "Finalizado";
 
 export default function WorkOrdersTable() {
+
+    // TOAST SUPERIOR ✔️
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    color: "green",
+  });
+
+  const showToast = (message, color = "green") => {
+    setToast({ open: true, message, color });
+
+    setTimeout(() => {
+      setToast({ open: false, message: "", color });
+    }, 10000); // 10 segundos
+  };
   // FLAGS
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -213,6 +229,7 @@ export default function WorkOrdersTable() {
       }
 
       await fetchOrders();
+      showToast("Orden creada correctamente ✔️", "green");
       closeAdd();
       setNewOrder({
         idClient: "",
@@ -266,14 +283,14 @@ export default function WorkOrdersTable() {
             tk.description &&
             t.taskDescription &&
             tk.description.trim().toLowerCase() ===
-              t.taskDescription.trim().toLowerCase()
+            t.taskDescription.trim().toLowerCase()
         );
         const foundSector = allSectors.find(
           (s) =>
             s.name &&
             t.sectorName &&
             s.name.trim().toLowerCase() ===
-              t.sectorName.trim().toLowerCase()
+            t.sectorName.trim().toLowerCase()
         );
 
         return {
@@ -395,6 +412,7 @@ export default function WorkOrdersTable() {
         return [updatedOrder, ...rest];
       });
       setPage(0);
+      showToast("Orden modificada correctamente ✔️", "green");
       closeEdit();
     } catch (err) {
       console.error("Error al guardar tareas:", err);
@@ -414,6 +432,8 @@ export default function WorkOrdersTable() {
     try {
       await WorkOrderCreatorService.delete(selectedOrderForDelete.id);
       await fetchOrders();
+      showToast("Orden eliminada correctamente ❌", "red");
+
       closeDelete();
     } catch (err) {
       console.error("Error al eliminar orden:", err);
@@ -428,21 +448,21 @@ export default function WorkOrdersTable() {
     .filter((o) => {
       const byVehicle = vehicleFilter
         ? (o.vehicle || "")
-            .toString()
-            .toLowerCase()
-            .includes(vehicleFilter.toLowerCase())
+          .toString()
+          .toLowerCase()
+          .includes(vehicleFilter.toLowerCase())
         : true;
 
       const byDate = dateFilter
         ? (() => {
-            if (!o.creationDate) return false;
-            try {
-              const d = new Date(o.creationDate).toISOString().slice(0, 10);
-              return d === dateFilter;
-            } catch {
-              return false;
-            }
-          })()
+          if (!o.creationDate) return false;
+          try {
+            const d = new Date(o.creationDate).toISOString().slice(0, 10);
+            return d === dateFilter;
+          } catch {
+            return false;
+          }
+        })()
         : true;
 
       return byVehicle && byDate;
@@ -466,8 +486,8 @@ export default function WorkOrdersTable() {
       <Table.Td>
         {order.creationDate
           ? new Date(order.creationDate).toLocaleString("es-ES", {
-              hour12: false,
-            })
+            hour12: false,
+          })
           : "-"}
       </Table.Td>
       <Table.Td>
@@ -476,8 +496,8 @@ export default function WorkOrdersTable() {
             order.state === 1
               ? "red"
               : order.state === 2
-              ? "yellow"
-              : "green"
+                ? "yellow"
+                : "green"
           }
           variant="filled"
         >
@@ -525,6 +545,27 @@ export default function WorkOrdersTable() {
             <CircularProgress color="success" size={80} />
           </Center>
         </>
+      )}
+      {/* TOAST SUPERIOR */}
+      {toast.open && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            backgroundColor: toast.color === "green" ? "#2ecc71" : "#e74c3c",
+            color: "white",
+            padding: "12px 24px",
+            borderRadius: "8px",
+            boxShadow: "0px 4px 12px rgba(0,0,0,0.3)",
+            zIndex: 99999,
+            fontSize: "16px",
+            fontWeight: "600",
+          }}
+        >
+          {toast.message}
+        </div>
       )}
 
       <ScrollArea>
@@ -660,10 +701,10 @@ export default function WorkOrdersTable() {
               loadingVehicles
                 ? "Cargando vehículos..."
                 : !newOrder.idClient
-                ? "Selecciona un cliente primero"
-                : vehicles.length === 0
-                ? "Sin vehículos registrados"
-                : "Selecciona un vehículo"
+                  ? "Selecciona un cliente primero"
+                  : vehicles.length === 0
+                    ? "Sin vehículos registrados"
+                    : "Selecciona un vehículo"
             }
             rightSection={
               loadingVehicles ? <Loader size={16} color="green" /> : null
@@ -680,8 +721,8 @@ export default function WorkOrdersTable() {
             Tareas
           </Text>
           {newOrderErrors.tasks &&
-          newOrderErrors.tasks[0] &&
-          newOrderErrors.tasks[0].general ? (
+            newOrderErrors.tasks[0] &&
+            newOrderErrors.tasks[0].general ? (
             <Text c="red">{newOrderErrors.tasks[0].general}</Text>
           ) : null}
 
@@ -830,8 +871,8 @@ export default function WorkOrdersTable() {
                     selectedOrder.state === 1
                       ? "red"
                       : selectedOrder.state === 2
-                      ? "yellow"
-                      : "green"
+                        ? "yellow"
+                        : "green"
                   }
                   variant="filled"
                 >
@@ -863,8 +904,8 @@ export default function WorkOrdersTable() {
                               stateTextToNumber(t.state) === 1
                                 ? "red"
                                 : stateTextToNumber(t.state) === 2
-                                ? "yellow"
-                                : "green"
+                                  ? "yellow"
+                                  : "green"
                             }
                             variant="filled"
                           >
