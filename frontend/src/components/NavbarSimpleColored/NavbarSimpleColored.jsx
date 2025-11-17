@@ -18,11 +18,11 @@ import { authService } from '../../services/authService';
 
 
 const data = [
-  { link: '/cliente', label: 'Clientes', icon: IconDatabaseImport },
+  { link: '/home', label: 'Clientes', icon: IconDatabaseImport },
   { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
   { link: '/register', label: 'Registrar Nuevo Usuario', icon: IconKey },
-  { link: '/mecanico', label: 'Vista de mecanico', icon: IconSettings },
+  { link: '/usuarios', label: 'Usuarios', icon: IconKey },
   
 ];
 export function NavbarSimpleColored() {
