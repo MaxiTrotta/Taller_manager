@@ -10,25 +10,24 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     && docker-php-ext-install pdo pdo_mysql
 
-# Habilitar mod_rewrite (necesario para rutas)
+# Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# Instalar Composer oficial dentro de la imagen
+# Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar el backend
+# Copiar el código del backend
 COPY . /var/www/html/
 
-# Establecer directorio de trabajo
 WORKDIR /var/www/html
 
-# Instalar las dependencias de PHP
+# Instalar dependencias PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Permisos
 RUN chown -R www-data:www-data /var/www/html
 
-# Configurar Apache
+# Configuración de Apache
 RUN echo "<Directory /var/www/html>
     AllowOverride All
     Require all granted
