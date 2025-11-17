@@ -4,25 +4,28 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    curl \
     && docker-php-ext-install pdo pdo_mysql
 
 # Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# Instalar Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Instalar Composer (sin usar multi-stage)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
-# Copiar el código del backend
+# Copiar backend
 COPY . /var/www/html/
 
-# Instalar dependencias de Composer dentro del contenedor
+# Directorio de trabajo
 WORKDIR /var/www/html
-RUN composer install --no-dev --optimize-autoloader
 
-# Permisos
+# Instalar dependencias Composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Permisos correctos
 RUN chown -R www-data:www-data /var/www/html
 
-# Configuración de Apache
+# Configuración Apache
 RUN echo "<Directory /var/www/html>
     AllowOverride All
     Require all granted
