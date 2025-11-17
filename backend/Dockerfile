@@ -6,18 +6,29 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && docker-php-ext-install pdo pdo_mysql
 
-# Habilitar mod_rewrite de Apache
+# Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# Configurar Apache para permitir .htaccess
-RUN printf "<Directory /var/www/html/>\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>\n" > /etc/apache2/conf-available/custom.conf \
+# Instalar Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Copiar el código del backend
+COPY . /var/www/html/
+
+# Instalar dependencias de Composer dentro del contenedor
+WORKDIR /var/www/html
+RUN composer install --no-dev --optimize-autoloader
+
+# Permisos
+RUN chown -R www-data:www-data /var/www/html
+
+# Configuración de Apache
+RUN echo "<Directory /var/www/html>
+    AllowOverride All
+    Require all granted
+</Directory>" > /etc/apache2/conf-available/custom.conf \
     && a2enconf custom
 
-# Copiar backend al contenedor
-COPY . /var/www/html
+EXPOSE 80
 
-# Permisos recomendados
-RUN chown -R www-data:www-data /var/www/html
+CMD ["apache2-foreground"]
