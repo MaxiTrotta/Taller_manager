@@ -34,7 +34,10 @@ import { VehicleCreatorService } from "../../services/VehicleCreatorService";
 import { TaskService } from "../../services/TaskService";
 import { OrderTaskService } from "../../services/OrderTaskService";
 import { sectorsService } from "../../services/sectorsService";
-import { validateNewOrderPayload, validateEditedTasksPayload } from "../../utils/validators";
+import {
+  validateNewOrderPayload,
+  validateEditedTasksPayload,
+} from "../../utils/validators";
 
 export default function MecanicPage() {
   const [loading, setLoading] = useState(false);
@@ -46,13 +49,21 @@ export default function MecanicPage() {
   const [sectors, setSectors] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedOrderForEdit, setSelectedOrderForEdit] = useState(null);
-  const [selectedOrderForDelete, setSelectedOrderForDelete] = useState(null);
+  const [selectedOrderForDelete, setSelectedOrderForDelete] =
+    useState(null);
 
-  const [addModalOpened, { open: openAdd, close: closeAdd }] = useDisclosure(false);
-  const [viewModalOpened, { open: openView, close: closeView }] = useDisclosure(false);
-  const [editModalOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
-  const [deleteModalOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
-  const [logoutModalOpened, { open: openLogoutModal, close: closeLogoutModal }] = useDisclosure(false);
+  const [addModalOpened, { open: openAdd, close: closeAdd }] =
+    useDisclosure(false);
+  const [viewModalOpened, { open: openView, close: closeView }] =
+    useDisclosure(false);
+  const [editModalOpened, { open: openEdit, close: closeEdit }] =
+    useDisclosure(false);
+  const [deleteModalOpened, { open: openDelete, close: closeDelete }] =
+    useDisclosure(false);
+  const [
+    logoutModalOpened,
+    { open: openLogoutModal, close: closeLogoutModal },
+  ] = useDisclosure(false);
 
   const [newOrder, setNewOrder] = useState({
     idClient: "",
@@ -67,6 +78,10 @@ export default function MecanicPage() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Confirmar finalización de tarea
+  const [confirmFinishOpened, setConfirmFinishOpened] = useState(false);
+  const [taskIndexToFinish, setTaskIndexToFinish] = useState(null);
 
   // =================== HELPERS ===================
   const stateTextToNumber = (s) => {
@@ -327,6 +342,7 @@ export default function MecanicPage() {
           continue;
         }
 
+        // Recalcular ids por las dudas
         if (!t.idSector && t.sectorName && Array.isArray(sectors)) {
           const foundSector = sectors.find(
             (s) =>
@@ -350,24 +366,47 @@ export default function MecanicPage() {
         }
 
         if (!t.idSector || !t.idTask) {
-          console.warn("⚠️ Falta idSector o idTask, se omite update de:", { t });
+          console.warn(
+            "⚠️ Falta idSector o idTask, se omite update de:",
+            t
+          );
           continue;
         }
+
+        const stateNumber =
+          typeof t.state === "number"
+            ? t.state
+            : (t.state || "").toLowerCase() === "pendiente"
+            ? 1
+            : (t.state || "").toLowerCase().includes("proceso")
+            ? 2
+            : 3;
 
         await OrderTaskService.update(t.id, {
           idOrder: selectedOrderForEdit.id,
           idTask: t.idTask,
           idSector: t.idSector,
-          state:
-            typeof t.state === "number"
-              ? t.state
-              : (t.state || "").toLowerCase() === "pendiente"
-              ? 1
-              : (t.state || "").toLowerCase().includes("proceso")
-              ? 2
-              : 3,
+          state: stateNumber,
           note: t.note || "",
+          updatedAt: new Date().toISOString(),
+          finalizedAt:
+            stateNumber === 3
+              ? t.finalizedAt || new Date().toISOString()
+              : null,
         });
+
+        // Notificación por cada tarea que se finaliza
+        if (
+          stateNumber === 3 &&
+          (t.state || "").toString().toLowerCase() !== "finalizado"
+        ) {
+          showNotification({
+            color: "green",
+            icon: <IconCheck />,
+            message: `Tarea finalizada: ${t.taskDescription}`,
+            position: "bottom-right",
+          });
+        }
       }
 
       try {
@@ -375,11 +414,25 @@ export default function MecanicPage() {
           selectedOrderForEdit.id
         );
         const updatedOrder = resUpdated.data;
+
+        // Si todas las tareas quedaron finalizadas, marcamos la orden como finalizada en el FRONT
+        const allFinished = (updatedOrder.tasks || []).every((tt) => {
+          const st = (tt.state || "").toString().toLowerCase();
+          return st === "finalizado" || Number(tt.state) === 3;
+        });
+
+        if (allFinished) {
+          updatedOrder.state = 3;
+        }
+
         setWorkOrders((prev) =>
           prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
         );
       } catch (err) {
-        console.error("Error al obtener orden actualizada, recargando todas:", err);
+        console.error(
+          "Error al obtener orden actualizada, recargando todas:",
+          err
+        );
         await fetchOrders();
       }
 
@@ -418,7 +471,10 @@ export default function MecanicPage() {
   };
 
   // =================== FILAS ===================
-  const paginated = workOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginated = workOrders.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   const rows = paginated.map((order) => {
     const isFinal =
@@ -569,51 +625,84 @@ export default function MecanicPage() {
                 </Table.Thead>
                 <Table.Tbody>
                   {selectedOrderForEdit.tasks?.length > 0 ? (
-                    selectedOrderForEdit.tasks.map((t, i) => (
-                      <Table.Tr key={i}>
-                        <Table.Td>{t.sectorName}</Table.Td>
-                        <Table.Td>{t.taskDescription}</Table.Td>
-                        <Table.Td>
-                          <Select
-                            data={[
-                              { value: "1", label: "Pendiente" },
-                              { value: "2", label: "En proceso" },
-                              { value: "3", label: "Finalizado" },
-                            ]}
-                            value={
-                              (t.state || "").toLowerCase() === "pendiente"
-                                ? "1"
-                                : (t.state || "").toLowerCase() === "en proceso"
-                                ? "2"
-                                : (t.state || "").toLowerCase() === "finalizado"
-                                ? "3"
-                                : ""
-                            }
-                            onChange={(val) => {
-                              const updated = [...selectedOrderForEdit.tasks];
-                              updated[i].state = stateNumberToText(Number(val));
-                              setSelectedOrderForEdit((prev) => ({
-                                ...prev,
-                                tasks: updated,
-                              }));
-                            }}
-                          />
-                        </Table.Td>
-                        <Table.Td>
-                          <TextInput
-                            value={t.note || ""}
-                            onChange={(e) => {
-                              const updated = [...selectedOrderForEdit.tasks];
-                              updated[i].note = e.currentTarget.value;
-                              setSelectedOrderForEdit((prev) => ({
-                                ...prev,
-                                tasks: updated,
-                              }));
-                            }}
-                          />
-                        </Table.Td>
-                      </Table.Tr>
-                    ))
+                    selectedOrderForEdit.tasks.map((t, i) => {
+                      const isFinal =
+                        (t.state || "").toString().toLowerCase() ===
+                          "finalizado" || t.state === 3;
+
+                      return (
+                        <Table.Tr key={i}>
+                          <Table.Td>{t.sectorName}</Table.Td>
+                          <Table.Td>{t.taskDescription}</Table.Td>
+                          <Table.Td>
+                            <Select
+                              data={[
+                                { value: "1", label: "Pendiente" },
+                                { value: "2", label: "En proceso" },
+                                { value: "3", label: "Finalizado" },
+                              ]}
+                              value={
+                                (t.state || "").toLowerCase() === "pendiente"
+                                  ? "1"
+                                  : (t.state || "").toLowerCase() ===
+                                    "en proceso"
+                                  ? "2"
+                                  : (t.state || "").toLowerCase() ===
+                                    "finalizado"
+                                  ? "3"
+                                  : ""
+                              }
+                              disabled={isFinal}
+                              onChange={(val) => {
+                                // Si NO está finalizando, cambiar sin preguntar
+                                if (val !== "3") {
+                                  const updated = [
+                                    ...selectedOrderForEdit.tasks,
+                                  ];
+                                  updated[i].state =
+                                    stateNumberToText(Number(val));
+                                  setSelectedOrderForEdit((prev) => ({
+                                    ...prev,
+                                    tasks: updated,
+                                  }));
+                                  return;
+                                }
+
+                                // Si va a finalizar → abrir modal de confirmación
+                                setTaskIndexToFinish(i);
+                                setConfirmFinishOpened(true);
+                              }}
+                            />
+                            {isFinal && (
+                              <Badge
+                                mt={4}
+                                color="gray"
+                                variant="light"
+                                size="sm"
+                              >
+                                Edición bloqueada (finalizado)
+                              </Badge>
+                            )}
+                          </Table.Td>
+                          <Table.Td>
+                            <TextInput
+                              value={t.note || ""}
+                              disabled={isFinal}
+                              onChange={(e) => {
+                                const updated = [
+                                  ...selectedOrderForEdit.tasks,
+                                ];
+                                updated[i].note = e.currentTarget.value;
+                                setSelectedOrderForEdit((prev) => ({
+                                  ...prev,
+                                  tasks: updated,
+                                }));
+                              }}
+                            />
+                          </Table.Td>
+                        </Table.Tr>
+                      );
+                    })
                   ) : (
                     <Table.Tr>
                       <Table.Td colSpan={4} align="center">
@@ -637,6 +726,51 @@ export default function MecanicPage() {
           ) : (
             <Text>Cargando orden...</Text>
           )}
+        </Modal>
+
+        {/* MODAL — Confirmar finalización de tarea */}
+        <Modal
+          opened={confirmFinishOpened}
+          onClose={() => setConfirmFinishOpened(false)}
+          centered
+          title="Confirmar finalización"
+        >
+          <Text>
+            ¿Seguro que deseas marcar esta tarea como{" "}
+            <b>FINALIZADA</b>? Una vez finalizada no debería modificarse.
+          </Text>
+
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="default"
+              onClick={() => setConfirmFinishOpened(false)}
+            >
+              Cancelar
+            </Button>
+
+            <Button
+              color="green"
+              onClick={() => {
+                if (
+                  taskIndexToFinish === null ||
+                  !selectedOrderForEdit?.tasks
+                )
+                  return;
+
+                const updated = [...selectedOrderForEdit.tasks];
+                updated[taskIndexToFinish].state = "Finalizado";
+
+                setSelectedOrderForEdit((prev) => ({
+                  ...prev,
+                  tasks: updated,
+                }));
+
+                setConfirmFinishOpened(false);
+              }}
+            >
+              Confirmar
+            </Button>
+          </Group>
         </Modal>
       </ScrollArea>
     </div>

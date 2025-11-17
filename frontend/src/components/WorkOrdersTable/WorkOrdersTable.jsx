@@ -17,6 +17,7 @@ import {
 import { IconPlus, IconTrash, IconEye, IconPencil } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import TablePagination from "@mui/material/TablePagination";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import { WorkOrderCreatorService } from "../../services/WorkOrderCreatorService";
 import { ClientCreatorService } from "../../services/ClientCreatorService";
@@ -29,37 +30,73 @@ import {
   validateEditedTasksPayload,
 } from "../../utils/validators";
 
+// =================== HELPERS ESTADO ===================
+const stateTextToNumber = (s) => {
+  const t = (s || "").toString().toLowerCase();
+  if (t === "pendiente" || t === "1") return 1;
+  if (t.includes("proceso") || t === "2") return 2;
+  if (t === "finalizado" || t === "3") return 3;
+  return 1;
+};
+
+const stateNumberToText = (n) =>
+  n === 1 ? "Pendiente" : n === 2 ? "En proceso" : "Finalizado";
+
 export default function WorkOrdersTable() {
+  // FLAGS
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [blocking, setBlocking] = useState(false);
+
+  // DATA
   const [workOrders, setWorkOrders] = useState([]);
   const [clients, setClients] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [sectors, setSectors] = useState([]);
+
+  // SELECCIONADAS
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedOrderForEdit, setSelectedOrderForEdit] = useState(null);
   const [selectedOrderForDelete, setSelectedOrderForDelete] = useState(null);
 
-  const [addModalOpened, { open: openAdd, close: closeAdd }] = useDisclosure(false);
-  const [viewModalOpened, { open: openView, close: closeView }] = useDisclosure(false);
-  const [editModalOpened, { open: openEdit, close: closeEdit }] = useDisclosure(false);
-  const [deleteModalOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
+  // MODALES
+  const [addModalOpened, { open: openAdd, close: closeAdd }] =
+    useDisclosure(false);
+  const [viewModalOpened, { open: openView, close: closeView }] =
+    useDisclosure(false);
+  const [editModalOpened, { open: openEdit, close: closeEdit }] =
+    useDisclosure(false);
+  const [deleteModalOpened, { open: openDelete, close: closeDelete }] =
+    useDisclosure(false);
 
+  // NUEVA ORDEN
   const [newOrder, setNewOrder] = useState({
     idClient: "",
     idVehicle: "",
     tasks: [{ idSector: "", idTask: "", note: "" }],
   });
-  const [newOrderErrors, setNewOrderErrors] = useState({ idClient: null, idVehicle: null, tasks: [] });
+  const [newOrderErrors, setNewOrderErrors] = useState({
+    idClient: null,
+    idVehicle: null,
+    tasks: [],
+  });
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [vehicleFilter, setVehicleFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState(""); // format YYYY-MM-DD
+  // EDICIÓN ORDEN
   const [editOrderErrors, setEditOrderErrors] = useState({ tasks: [] });
 
-  // Helper para detectar si el objeto de errores contiene algún mensaje
+  // FILTROS
+  const [vehicleFilter, setVehicleFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(""); // YYYY-MM-DD
+
+  // VEHÍCULOS POR CLIENTE
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
+
+  // PAGINACIÓN
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // =================== HELPERS ===================
   const hasErrors = (obj) => {
     if (obj === null || obj === undefined) return false;
     if (typeof obj === "string") return obj.trim() !== "";
@@ -75,20 +112,12 @@ export default function WorkOrdersTable() {
   };
 
   const validateEditedOrder = () => {
-    const errors = validateEditedTasksPayload(selectedOrderForEdit || { tasks: [] });
+    const errors = validateEditedTasksPayload(
+      selectedOrderForEdit || { tasks: [] }
+    );
     setEditOrderErrors(errors);
     return !hasErrors(errors);
   };
-
-  // =================== HELPERS ===================
-  const stateTextToNumber = (s) => {
-    const t = (s || "").toString().toLowerCase();
-    if (t === "pendiente" || t === "1") return 1;
-    if (t.includes("proceso") || t === "2") return 2;
-    if (t === "finalizado" || t === "3") return 3;
-    return 1;
-  };
-  const stateNumberToText = (n) => (n === 1 ? "Pendiente" : n === 2 ? "En proceso" : "Finalizado");
 
   // =================== FETCH ===================
   const fetchOrders = async () => {
@@ -112,8 +141,6 @@ export default function WorkOrdersTable() {
       setClients([]);
     }
   };
-  const [loadingVehicles, setLoadingVehicles] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState("");
 
   const fetchVehiclesByClient = async (idClient) => {
     setLoadingVehicles(true);
@@ -126,7 +153,6 @@ export default function WorkOrdersTable() {
       setLoadingVehicles(false);
     }
   };
-
 
   const fetchTasks = async () => {
     try {
@@ -155,9 +181,11 @@ export default function WorkOrdersTable() {
 
   // =================== CREAR ORDEN ===================
   const handleAddOrder = async () => {
-    // validar antes de enviar
     if (!validateNewOrder()) return;
+
     setSaving(true);
+    setBlocking(true);
+
     try {
       const payloadOrder = {
         idClient: parseInt(newOrder.idClient),
@@ -165,38 +193,42 @@ export default function WorkOrdersTable() {
         idOrderTask: 0,
         deleted: 0,
       };
-      const response = await WorkOrderCreatorService.create(payloadOrder);
 
+      const response = await WorkOrderCreatorService.create(payloadOrder);
       const newOrderId = response.data?.id;
 
       if (newOrderId) {
-        for (const task of newOrder.tasks) {
-          if (task.idTask && task.idSector) {
-            const payloadTask = {
-              idOrder: newOrderId,
-              idTask: parseInt(task.idTask),
-              idSector: parseInt(task.idSector),
-              state: "Pendiente",
-              note: task.note || "",
-              deleted: 0,
-            };
-            await OrderTaskService.create(payloadTask);
-          }
+        for (const t of newOrder.tasks) {
+          if (!t.idTask || !t.idSector) continue;
+
+          await OrderTaskService.create({
+            idOrder: newOrderId,
+            idTask: parseInt(t.idTask),
+            idSector: parseInt(t.idSector),
+            state: 1,
+            note: t.note || "",
+            deleted: 0,
+          });
         }
       }
 
       await fetchOrders();
       closeAdd();
-      setNewOrder({ idClient: "", idVehicle: "", tasks: [{ idSector: "", idTask: "", note: "" }] });
+      setNewOrder({
+        idClient: "",
+        idVehicle: "",
+        tasks: [{ idSector: "", idTask: "", note: "" }],
+      });
       setNewOrderErrors({ idClient: null, idVehicle: null, tasks: [] });
     } catch (err) {
       console.error("Error al crear orden:", err);
     } finally {
       setSaving(false);
+      setBlocking(false);
     }
   };
 
-  // =================== VER DETALLES ===================
+  // =================== VER ORDEN ===================
   const handleViewOrder = async (id) => {
     setLoading(true);
     try {
@@ -210,49 +242,52 @@ export default function WorkOrdersTable() {
     }
   };
 
-  // =================== EDITAR ORDEN (TRAER CON TAREAS) ===================
+  // =================== EDITAR ORDEN ===================
   const handleEditClick = async (id) => {
     setLoading(true);
     try {
       const resOrder = await WorkOrderCreatorService.getById(id);
       const order = resOrder.data;
 
-      // Traigo las ordertasks reales (con id) y los catálogos de tareas y sectores
-      const [resTasksAll, resTasksCatalog, resSectors] = await Promise.all([
+      const [resOTAll, resTasksAll, resSectors] = await Promise.all([
         OrderTaskService.getAll(),
         TaskService.getAll(),
         sectorsService.getAllSectors(),
       ]);
 
-      const allOrderTasks = Array.isArray(resTasksAll.data)
-        ? resTasksAll.data
-        : Array.isArray(resTasksAll.data?.data)
-          ? resTasksAll.data.data
-          : [];
-
-      const allTasks = resTasksCatalog.data || [];
+      const realOrderTasks = Array.isArray(resOTAll.data) ? resOTAll.data : [];
+      const allTasks = resTasksAll.data || [];
       const allSectors = resSectors.data || [];
 
-      // Reconstruir idTask e idSector en cada tarea de la proyección (si vienen solo con descripción)
-      const rebuiltProjection = (order.tasks || []).map((t) => {
+      // reconstruir idTask / idSector y normalizar estado
+      const rebuilt = (order.tasks || []).map((t) => {
         const foundTask = allTasks.find(
-          (tk) => tk.description && t.taskDescription && tk.description.trim().toLowerCase() === t.taskDescription.trim().toLowerCase()
+          (tk) =>
+            tk.description &&
+            t.taskDescription &&
+            tk.description.trim().toLowerCase() ===
+              t.taskDescription.trim().toLowerCase()
         );
         const foundSector = allSectors.find(
-          (s) => s.name && t.sectorName && s.name.trim().toLowerCase() === t.sectorName.trim().toLowerCase()
+          (s) =>
+            s.name &&
+            t.sectorName &&
+            s.name.trim().toLowerCase() ===
+              t.sectorName.trim().toLowerCase()
         );
+
         return {
           ...t,
-          idTask: foundTask ? foundTask.id : t.idTask || null,
-          idSector: foundSector ? foundSector.id : t.idSector || null,
+          idTask: foundTask ? foundTask.id : t.idTask,
+          idSector: foundSector ? foundSector.id : t.idSector,
+          state: stateTextToNumber(t.state), // 🔥 normalizado a número
         };
       });
 
-      // Emparejar proyección reconstruida con tareas reales (para obtener el id de ordertask)
-      // Evitar asignar el mismo orderTask id a múltiples proyecciones iguales: marcamos los ids usados
-      const usedIds = new Set();
-      const mergedTasks = rebuiltProjection.map((pt) => {
-        const candidates = allOrderTasks.filter(
+      // emparejar con orderTasks reales para obtener id de la tabla real
+      const used = new Set();
+      const merged = rebuilt.map((pt) => {
+        const candidates = realOrderTasks.filter(
           (rt) =>
             Number(rt.idOrder) === Number(order.id) &&
             Number(rt.idTask) === Number(pt.idTask) &&
@@ -261,27 +296,36 @@ export default function WorkOrdersTable() {
 
         if (candidates.length === 0) return pt;
 
-        // intentar afinar por nota y que no esté usado
-        let match = candidates.find((rt) => {
-          return !usedIds.has(rt.id) && (rt.note || "").trim() === (pt.note || "").trim();
-        });
+        let match = candidates.find(
+          (rt) =>
+            !used.has(rt.id) &&
+            (rt.note || "").trim() === (pt.note || "").trim()
+        );
 
-        // si no hay match por nota, tomar el primer candidato no usado
-        if (!match) {
-          match = candidates.find((rt) => !usedIds.has(rt.id));
-        }
+        if (!match) match = candidates.find((rt) => !used.has(rt.id));
 
         if (match) {
-          usedIds.add(match.id);
+          used.add(match.id);
           return { ...pt, id: match.id };
         }
 
         return pt;
       });
 
-      setSelectedOrderForEdit({ ...order, tasks: mergedTasks });
-      // inicializar errores de edición vacíos
-      setEditOrderErrors({ tasks: (mergedTasks || []).map(() => ({ idSector: null, idTask: null, state: null, note: null })) });
+      setSelectedOrderForEdit({
+        ...order,
+        tasks: merged,
+      });
+
+      setEditOrderErrors({
+        tasks: merged.map(() => ({
+          idSector: null,
+          idTask: null,
+          state: null,
+          note: null,
+        })),
+      });
+
       openEdit();
     } catch (err) {
       console.error("Error al traer orden para editar:", err);
@@ -290,34 +334,30 @@ export default function WorkOrdersTable() {
     }
   };
 
-  // =================== GUARDAR TAREAS ===================
   const handleSaveEditedTasks = async () => {
     if (!selectedOrderForEdit || !selectedOrderForEdit.tasks) return;
-    // validar antes de guardar
     if (!validateEditedOrder()) return;
+
     setSaving(true);
+    setBlocking(true);
+
     try {
-      // 1️⃣ Traer tareas originales para detectar borradas
-      const resOriginal = await WorkOrderCreatorService.getById(selectedOrderForEdit.id);
+      // tareas originales (vista proyección de la orden)
+      const resOriginal = await WorkOrderCreatorService.getById(
+        selectedOrderForEdit.id
+      );
       const originalTasks = resOriginal.data.tasks || [];
 
-      // 2️⃣ Detectar eliminadas (estaban antes y ya no están)
+      // detectamos las que ya no están
       const deletedTasks = originalTasks.filter(
-        (orig) => !selectedOrderForEdit.tasks.some((curr) => curr.id === orig.id)
+        (orig) =>
+          !selectedOrderForEdit.tasks.some((curr) => curr.id === orig.id)
       );
 
-      // 3️⃣ Actualizar y crear
+      // actualizar / crear
       for (const t of selectedOrderForEdit.tasks) {
-        const stateNumber =
-          typeof t.state === "number"
-            ? t.state
-            : (t.state || "").toLowerCase() === "pendiente"
-              ? 1
-              : (t.state || "").toLowerCase().includes("proceso")
-                ? 2
-                : 3;
+        const stateNumber = stateTextToNumber(t.state);
 
-        // Actualizar
         if (t.id) {
           await OrderTaskService.update(t.id, {
             idOrder: selectedOrderForEdit.id,
@@ -326,49 +366,51 @@ export default function WorkOrdersTable() {
             state: stateNumber,
             note: t.note || "",
           });
-        }
-        // Crear nueva tarea
-        else if (t.idTask && t.idSector) {
+        } else if (t.idTask && t.idSector) {
           await OrderTaskService.create({
             idOrder: selectedOrderForEdit.id,
             idTask: parseInt(t.idTask),
             idSector: parseInt(t.idSector),
-            state: 1, // siempre arranca Pendiente
+            state: 1,
             note: t.note || "",
             deleted: 0,
           });
         }
       }
 
-      // 4️⃣ Eliminar las que se quitaron
+      // eliminar quitadas
       for (const t of deletedTasks) {
         if (t.id) await OrderTaskService.delete(t.id);
       }
 
-      // 5️⃣ Refrescar
-      const resUpdated = await WorkOrderCreatorService.getById(selectedOrderForEdit.id);
+      // refrescar y traer orden actualizada
+      const resUpdated = await WorkOrderCreatorService.getById(
+        selectedOrderForEdit.id
+      );
       const updatedOrder = resUpdated.data;
-      // Como no queremos tocar el backend para modificar la fecha, actualizamos la fecha localmente a ahora
       updatedOrder.creationDate = new Date().toISOString();
-      // Colocar la orden actualizada al principio para que quede arriba (más reciente)
-      setWorkOrders((prev) => {
-        const others = prev.filter((o) => o.id !== updatedOrder.id);
-        return [updatedOrder, ...others];
-      });
-      setPage(0); // mostrar la página con las órdenes más recientes
 
+      setWorkOrders((prev) => {
+        const rest = prev.filter((o) => o.id !== updatedOrder.id);
+        return [updatedOrder, ...rest];
+      });
+      setPage(0);
       closeEdit();
     } catch (err) {
       console.error("Error al guardar tareas:", err);
     } finally {
       setSaving(false);
+      setBlocking(false);
     }
   };
 
   // =================== ELIMINAR ORDEN ===================
   const handleDeleteOrder = async () => {
     if (!selectedOrderForDelete) return;
+
     setSaving(true);
+    setBlocking(true);
+
     try {
       await WorkOrderCreatorService.delete(selectedOrderForDelete.id);
       await fetchOrders();
@@ -377,61 +419,85 @@ export default function WorkOrdersTable() {
       console.error("Error al eliminar orden:", err);
     } finally {
       setSaving(false);
+      setBlocking(false);
     }
   };
 
-  // =================== FILAS ===================
-  // Filtrar por vehículo y fecha, y ordenar por creationDate descendente
+  // =================== TABLA / FILTROS ===================
   const filteredAndSorted = (workOrders || [])
     .filter((o) => {
       const byVehicle = vehicleFilter
-        ? (o.vehicle || "").toString().toLowerCase().includes(vehicleFilter.toLowerCase())
+        ? (o.vehicle || "")
+            .toString()
+            .toLowerCase()
+            .includes(vehicleFilter.toLowerCase())
         : true;
+
       const byDate = dateFilter
         ? (() => {
-          if (!o.creationDate) return false;
-          try {
-            const od = new Date(o.creationDate);
-            // comparar YYYY-MM-DD
-            const odDate = od.toISOString().slice(0, 10);
-            return odDate === dateFilter;
-          } catch (e) {
-            return false;
-          }
-        })()
+            if (!o.creationDate) return false;
+            try {
+              const d = new Date(o.creationDate).toISOString().slice(0, 10);
+              return d === dateFilter;
+            } catch {
+              return false;
+            }
+          })()
         : true;
+
       return byVehicle && byDate;
     })
     .sort((a, b) => {
       const da = a.creationDate ? new Date(a.creationDate).getTime() : 0;
       const db = b.creationDate ? new Date(b.creationDate).getTime() : 0;
-      return db - da; // más reciente primero
+      return db - da; // más recientes primero
     });
 
-  const paginated = filteredAndSorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginated = filteredAndSorted.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   const rows = paginated.map((order) => (
     <Table.Tr key={order.id}>
       <Table.Td>{order.id}</Table.Td>
       <Table.Td>{order.client}</Table.Td>
       <Table.Td>{order.vehicle}</Table.Td>
-      <Table.Td>{order.creationDate ? new Date(order.creationDate).toLocaleString('es-ES', {
-        hour12: false,
-      }) : '-'}</Table.Td>
+      <Table.Td>
+        {order.creationDate
+          ? new Date(order.creationDate).toLocaleString("es-ES", {
+              hour12: false,
+            })
+          : "-"}
+      </Table.Td>
       <Table.Td>
         <Badge
-          color={order.state === 1 ? "red" : order.state === 2 ? "yellow" : order.state === 3 ? "green" : "gray"}
+          color={
+            order.state === 1
+              ? "red"
+              : order.state === 2
+              ? "yellow"
+              : "green"
+          }
           variant="filled"
         >
-          {order.state === 1 ? "Pendiente" : order.state === 2 ? "En proceso" : order.state === 3 ? "Finalizado" : "Sin tareas"}
+          {stateNumberToText(order.state)}
         </Badge>
       </Table.Td>
       <Table.Td>
         <Group gap={0} justify="flex-end">
-          <ActionIcon color="gray" variant="subtle" onClick={() => handleViewOrder(order.id)}>
+          <ActionIcon
+            color="gray"
+            variant="subtle"
+            onClick={() => handleViewOrder(order.id)}
+          >
             <IconEye size={16} />
           </ActionIcon>
-          <ActionIcon color="gray" variant="subtle" onClick={() => handleEditClick(order.id)}>
+          <ActionIcon
+            color="gray"
+            variant="subtle"
+            onClick={() => handleEditClick(order.id)}
+          >
             <IconPencil size={16} />
           </ActionIcon>
           <ActionIcon
@@ -449,19 +515,20 @@ export default function WorkOrdersTable() {
     </Table.Tr>
   ));
 
-  // =================== UI ===================
+  // =================== RENDER ===================
   return (
     <div style={{ position: "relative" }}>
-      {(loading || saving) && (
+      {(loading || saving || blocking) && (
         <>
           <Overlay opacity={0.6} color="#000" blur={2} zIndex={9998} />
           <Center style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
-            <Loader size="xl" color="green" />
+            <CircularProgress color="success" size={80} />
           </Center>
         </>
       )}
 
       <ScrollArea>
+        {/* Header */}
         <Group justify="space-between" mb="sm">
           <Text fz="xl" fw={600}>
             Órdenes de Trabajo
@@ -470,26 +537,42 @@ export default function WorkOrdersTable() {
             Nueva Orden
           </Button>
         </Group>
-        {/* Filtros: vehículo y fecha */}
+
+        {/* Filtros */}
         <Group mb="sm">
           <TextInput
             placeholder="Buscar por vehículo (patente, marca, etc.)"
             value={vehicleFilter}
-            onChange={(e) => { setVehicleFilter(e.currentTarget.value); setPage(0); }}
+            onChange={(e) => {
+              setVehicleFilter(e.currentTarget.value);
+              setPage(0);
+            }}
             style={{ width: 300 }}
           />
           <TextInput
             type="date"
             label="Fecha creación"
             value={dateFilter}
-            onChange={(e) => { setDateFilter(e.currentTarget.value); setPage(0); }}
+            onChange={(e) => {
+              setDateFilter(e.currentTarget.value);
+              setPage(0);
+            }}
             style={{ width: 200 }}
           />
-          <Button variant="outline" color="gray" onClick={() => { setVehicleFilter(""); setDateFilter(""); setPage(0); }}>
+          <Button
+            variant="outline"
+            color="gray"
+            onClick={() => {
+              setVehicleFilter("");
+              setDateFilter("");
+              setPage(0);
+            }}
+          >
             Limpiar filtros
           </Button>
         </Group>
 
+        {/* Tabla */}
         <Table highlightOnHover>
           <Table.Thead>
             <Table.Tr>
@@ -504,6 +587,7 @@ export default function WorkOrdersTable() {
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
 
+        {/* Paginación */}
         <TablePagination
           component="div"
           className="table-pagination-contrast"
@@ -517,47 +601,55 @@ export default function WorkOrdersTable() {
           }}
           rowsPerPageOptions={[5, 10, 25, 50]}
           sx={{
-            color: 'white !important',
-            '& .MuiTablePagination-toolbar, & .MuiTablePagination-root': { color: 'white !important' },
-            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows, & .MuiTablePagination-select': { color: 'white !important' },
-            '& .MuiSvgIcon-root, & .MuiIconButton-root, & .MuiButtonBase-root, & .MuiSelect-icon': { color: 'white !important' },
-            '& .MuiSelect-select, & .MuiInputBase-input, & .MuiMenuItem-root, & .MuiTypography-root': { color: 'white !important' },
+            color: "white !important",
+            "& .MuiTablePagination-toolbar, & .MuiTablePagination-root": {
+              color: "white !important",
+            },
+            "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows, & .MuiTablePagination-select":
+              { color: "white !important" },
+            "& .MuiSvgIcon-root, & .MuiIconButton-root, & .MuiButtonBase-root, & .MuiSelect-icon":
+              { color: "white !important" },
+            "& .MuiSelect-select, & .MuiInputBase-input, & .MuiMenuItem-root, & .MuiTypography-root":
+              { color: "white !important" },
           }}
         />
 
         {/* =================== MODALES =================== */}
 
-        {/* CREAR */}
-        <Modal opened={addModalOpened} onClose={closeAdd} title="Crear nueva orden" centered size="lg">
+        {/* CREAR ORDEN */}
+        <Modal
+          opened={addModalOpened}
+          onClose={closeAdd}
+          title="Crear nueva orden"
+          centered
+          size="lg"
+        >
           <Select
             label="Cliente"
-            data={clients.map((c) => ({ value: c.id.toString(), label: c.name }))}
+            data={clients.map((c) => ({
+              value: c.id.toString(),
+              label: c.name,
+            }))}
             value={newOrder.idClient}
             onChange={(val) => {
-              // 🔹 Limpiar de inmediato antes del fetch
+              // Resetea vehículo y tareas cada vez que se cambia de cliente
               setVehicles([]);
-              setSelectedVehicle(""); // 🔹 borra la selección visible
               setNewOrder({
                 idClient: val,
                 idVehicle: "",
                 tasks: [{ idSector: "", idTask: "", note: "" }],
               });
               setNewOrderErrors({ idClient: null, idVehicle: null, tasks: [] });
-              setLoadingVehicles(true);
 
-              // 🔹 Traer los vehículos del nuevo cliente
               if (val) {
-                fetchVehiclesByClient(val).finally(() => setLoadingVehicles(false));
-              } else {
-                setLoadingVehicles(false);
+                fetchVehiclesByClient(val);
               }
             }}
             error={newOrderErrors.idClient}
           />
 
-
           <Select
-            key={newOrder.idClient} // 🔹 fuerza el remount al cambiar de cliente
+            key={newOrder.idClient} // fuerza remount al cambiar de cliente
             label="Vehículo"
             data={vehicles.map((v) => ({
               value: v.id.toString(),
@@ -568,12 +660,14 @@ export default function WorkOrdersTable() {
               loadingVehicles
                 ? "Cargando vehículos..."
                 : !newOrder.idClient
-                  ? "Selecciona un cliente primero"
-                  : vehicles.length === 0
-                    ? "Sin vehículos registrados"
-                    : "Selecciona un vehículo"
+                ? "Selecciona un cliente primero"
+                : vehicles.length === 0
+                ? "Sin vehículos registrados"
+                : "Selecciona un vehículo"
             }
-            rightSection={loadingVehicles ? <Loader size={16} color="green" /> : null}
+            rightSection={
+              loadingVehicles ? <Loader size={16} color="green" /> : null
+            }
             onChange={(val) => {
               setNewOrder((prev) => ({ ...prev, idVehicle: val }));
               setNewOrderErrors((prev) => ({ ...prev, idVehicle: null }));
@@ -582,52 +676,64 @@ export default function WorkOrdersTable() {
             error={newOrderErrors.idVehicle}
           />
 
-
-
           <Text fw={600} mt="md">
             Tareas
           </Text>
-          {newOrderErrors.tasks && newOrderErrors.tasks[0] && newOrderErrors.tasks[0].general ? (
-            <Text color="red">{newOrderErrors.tasks[0].general}</Text>
+          {newOrderErrors.tasks &&
+          newOrderErrors.tasks[0] &&
+          newOrderErrors.tasks[0].general ? (
+            <Text c="red">{newOrderErrors.tasks[0].general}</Text>
           ) : null}
+
           {newOrder.tasks.map((t, i) => (
             <Group key={i} grow>
-              {/** obtener errores de tarea si existen */}
-              {(() => {
-                const te = (newOrderErrors.tasks && newOrderErrors.tasks[i]) || {};
-                return null;
-              })()}
               <Select
                 label="Sector"
-                data={sectors.map((s) => ({ value: s.id.toString(), label: s.name }))}
+                data={sectors.map((s) => ({
+                  value: s.id.toString(),
+                  label: s.name,
+                }))}
                 value={t.idSector}
                 onChange={(val) => {
                   const updated = [...newOrder.tasks];
                   updated[i].idSector = val;
                   setNewOrder((prev) => ({ ...prev, tasks: updated }));
                   setNewOrderErrors((prev) => {
-                    const t = (prev.tasks || []).slice();
-                    t[i] = { ...(t[i] || {}), idSector: null };
-                    return { ...prev, tasks: t };
+                    const ts = (prev.tasks || []).slice();
+                    ts[i] = { ...(ts[i] || {}), idSector: null };
+                    return { ...prev, tasks: ts };
                   });
                 }}
-                error={(newOrderErrors.tasks && newOrderErrors.tasks[i] && newOrderErrors.tasks[i].idSector) || null}
+                error={
+                  (newOrderErrors.tasks &&
+                    newOrderErrors.tasks[i] &&
+                    newOrderErrors.tasks[i].idSector) ||
+                  null
+                }
               />
               <Select
                 label={`Tarea ${i + 1}`}
-                data={tasks.map((task) => ({ value: task.id.toString(), label: task.description }))}
+                data={tasks.map((task) => ({
+                  value: task.id.toString(),
+                  label: task.description,
+                }))}
                 value={t.idTask}
                 onChange={(val) => {
                   const updated = [...newOrder.tasks];
                   updated[i].idTask = val;
                   setNewOrder((prev) => ({ ...prev, tasks: updated }));
                   setNewOrderErrors((prev) => {
-                    const t = (prev.tasks || []).slice();
-                    t[i] = { ...(t[i] || {}), idTask: null };
-                    return { ...prev, tasks: t };
+                    const ts = (prev.tasks || []).slice();
+                    ts[i] = { ...(ts[i] || {}), idTask: null };
+                    return { ...prev, tasks: ts };
                   });
                 }}
-                error={(newOrderErrors.tasks && newOrderErrors.tasks[i] && newOrderErrors.tasks[i].idTask) || null}
+                error={
+                  (newOrderErrors.tasks &&
+                    newOrderErrors.tasks[i] &&
+                    newOrderErrors.tasks[i].idTask) ||
+                  null
+                }
               />
               <TextInput
                 label="Nota"
@@ -637,12 +743,17 @@ export default function WorkOrdersTable() {
                   updated[i].note = e.currentTarget.value;
                   setNewOrder((prev) => ({ ...prev, tasks: updated }));
                   setNewOrderErrors((prev) => {
-                    const t = (prev.tasks || []).slice();
-                    t[i] = { ...(t[i] || {}), note: null };
-                    return { ...prev, tasks: t };
+                    const ts = (prev.tasks || []).slice();
+                    ts[i] = { ...(ts[i] || {}), note: null };
+                    return { ...prev, tasks: ts };
                   });
                 }}
-                error={(newOrderErrors.tasks && newOrderErrors.tasks[i] && newOrderErrors.tasks[i].note) || null}
+                error={
+                  (newOrderErrors.tasks &&
+                    newOrderErrors.tasks[i] &&
+                    newOrderErrors.tasks[i].note) ||
+                  null
+                }
               />
               {i > 0 && (
                 <ActionIcon
@@ -654,7 +765,9 @@ export default function WorkOrdersTable() {
                     }));
                     setNewOrderErrors((prev) => ({
                       ...prev,
-                      tasks: (prev.tasks || []).filter((_, idx) => idx !== i),
+                      tasks: (prev.tasks || []).filter(
+                        (_, idx) => idx !== i
+                      ),
                     }));
                   }}
                 >
@@ -663,6 +776,7 @@ export default function WorkOrdersTable() {
               )}
             </Group>
           ))}
+
           <Button
             leftSection={<IconPlus size={16} />}
             mt="sm"
@@ -670,23 +784,36 @@ export default function WorkOrdersTable() {
             onClick={() => {
               setNewOrder((prev) => ({
                 ...prev,
-                tasks: [...prev.tasks, { idSector: "", idTask: "", note: "" }],
+                tasks: [
+                  ...prev.tasks,
+                  { idSector: "", idTask: "", note: "" },
+                ],
               }));
               setNewOrderErrors((prev) => ({
                 ...prev,
-                tasks: [...(prev.tasks || []), { idSector: null, idTask: null, note: null }],
+                tasks: [
+                  ...(prev.tasks || []),
+                  { idSector: null, idTask: null, note: null },
+                ],
               }));
             }}
           >
             Agregar tarea
           </Button>
+
           <Button fullWidth mt="md" color="green" onClick={handleAddOrder}>
             Guardar Orden
           </Button>
         </Modal>
 
-        {/* VER */}
-        <Modal opened={viewModalOpened} onClose={closeView} title="Detalle de Orden" centered size="xl">
+        {/* VER ORDEN */}
+        <Modal
+          opened={viewModalOpened}
+          onClose={closeView}
+          title="Detalle de Orden"
+          centered
+          size="xl"
+        >
           {selectedOrder ? (
             <>
               <Text>
@@ -703,20 +830,12 @@ export default function WorkOrdersTable() {
                     selectedOrder.state === 1
                       ? "red"
                       : selectedOrder.state === 2
-                        ? "yellow"
-                        : selectedOrder.state === 3
-                          ? "green"
-                          : "gray"
+                      ? "yellow"
+                      : "green"
                   }
                   variant="filled"
                 >
-                  {selectedOrder.state === 1
-                    ? "Pendiente"
-                    : selectedOrder.state === 2
-                      ? "En proceso"
-                      : selectedOrder.state === 3
-                        ? "Finalizado"
-                        : "Sin tareas"}
+                  {stateNumberToText(selectedOrder.state)}
                 </Badge>
               </Group>
 
@@ -741,13 +860,11 @@ export default function WorkOrdersTable() {
                         <Table.Td>
                           <Badge
                             color={
-                              (t.state || "").toLowerCase() === "pendiente"
+                              stateTextToNumber(t.state) === 1
                                 ? "red"
-                                : (t.state || "").toLowerCase() === "en proceso"
-                                  ? "yellow"
-                                  : (t.state || "").toLowerCase() === "finalizado"
-                                    ? "green"
-                                    : "gray"
+                                : stateTextToNumber(t.state) === 2
+                                ? "yellow"
+                                : "green"
                             }
                             variant="filled"
                           >
@@ -772,15 +889,19 @@ export default function WorkOrdersTable() {
           )}
         </Modal>
 
-        {/* EDITAR */}
-        {/* =================== MODAL EDITAR =================== */}
-        <Modal opened={editModalOpened} onClose={closeEdit} title="Editar Orden" centered size="xl">
+        {/* EDITAR ORDEN */}
+        <Modal
+          opened={editModalOpened}
+          onClose={closeEdit}
+          title="Editar Orden"
+          centered
+          size="xl"
+        >
           {selectedOrderForEdit ? (
             <>
               <Text fw={600} mb="sm">
                 Editar tareas de la orden #{selectedOrderForEdit.id}
               </Text>
-
               <Table highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
@@ -791,47 +912,60 @@ export default function WorkOrdersTable() {
                     <Table.Th>Acciones</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
-
                 <Table.Tbody>
                   {selectedOrderForEdit.tasks?.length > 0 ? (
                     selectedOrderForEdit.tasks.map((t, i) => (
                       <Table.Tr key={i}>
                         <Table.Td>
                           <Select
-                            data={sectors.map((s) => ({ value: s.id.toString(), label: s.name }))}
+                            data={sectors.map((s) => ({
+                              value: s.id.toString(),
+                              label: s.name,
+                            }))}
                             value={t.idSector?.toString() || ""}
                             onChange={(val) => {
-                              const updated = [...selectedOrderForEdit.tasks];
+                              const updated = [
+                                ...selectedOrderForEdit.tasks,
+                              ];
                               updated[i].idSector = val;
-                              setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
-                              setEditOrderErrors((prev) => {
-                                const tarr = (prev.tasks || []).slice();
-                                tarr[i] = { ...(tarr[i] || {}), idSector: null };
-                                return { ...prev, tasks: tarr };
-                              });
+                              setSelectedOrderForEdit((prev) => ({
+                                ...prev,
+                                tasks: updated,
+                              }));
                             }}
-                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].idSector) || null}
+                            error={
+                              (editOrderErrors.tasks &&
+                                editOrderErrors.tasks[i] &&
+                                editOrderErrors.tasks[i].idSector) ||
+                              null
+                            }
                           />
                         </Table.Td>
-
                         <Table.Td>
                           <Select
-                            data={tasks.map((task) => ({ value: task.id.toString(), label: task.description }))}
+                            data={tasks.map((tk) => ({
+                              value: tk.id.toString(),
+                              label: tk.description,
+                            }))}
                             value={t.idTask?.toString() || ""}
                             onChange={(val) => {
-                              const updated = [...selectedOrderForEdit.tasks];
+                              const updated = [
+                                ...selectedOrderForEdit.tasks,
+                              ];
                               updated[i].idTask = val;
-                              setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
-                              setEditOrderErrors((prev) => {
-                                const tarr = (prev.tasks || []).slice();
-                                tarr[i] = { ...(tarr[i] || {}), idTask: null };
-                                return { ...prev, tasks: tarr };
-                              });
+                              setSelectedOrderForEdit((prev) => ({
+                                ...prev,
+                                tasks: updated,
+                              }));
                             }}
-                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].idTask) || null}
+                            error={
+                              (editOrderErrors.tasks &&
+                                editOrderErrors.tasks[i] &&
+                                editOrderErrors.tasks[i].idTask) ||
+                              null
+                            }
                           />
                         </Table.Td>
-
                         <Table.Td>
                           <Select
                             data={[
@@ -839,46 +973,46 @@ export default function WorkOrdersTable() {
                               { value: "2", label: "En proceso" },
                               { value: "3", label: "Finalizado" },
                             ]}
-                            value={
-                              typeof t.state === "number"
-                                ? t.state.toString()
-                                : (t.state || "").toLowerCase() === "pendiente"
-                                  ? "1"
-                                  : (t.state || "").toLowerCase().includes("proceso")
-                                    ? "2"
-                                    : "3"
-                            }
+                            value={t.state?.toString() || "1"}
                             onChange={(val) => {
-                              const updated = [...selectedOrderForEdit.tasks];
+                              const updated = [
+                                ...selectedOrderForEdit.tasks,
+                              ];
                               updated[i].state = parseInt(val);
-                              setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
-                              setEditOrderErrors((prev) => {
-                                const tarr = (prev.tasks || []).slice();
-                                tarr[i] = { ...(tarr[i] || {}), state: null };
-                                return { ...prev, tasks: tarr };
-                              });
+                              setSelectedOrderForEdit((prev) => ({
+                                ...prev,
+                                tasks: updated,
+                              }));
                             }}
-                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].state) || null}
+                            error={
+                              (editOrderErrors.tasks &&
+                                editOrderErrors.tasks[i] &&
+                                editOrderErrors.tasks[i].state) ||
+                              null
+                            }
                           />
                         </Table.Td>
-
                         <Table.Td>
                           <TextInput
                             value={t.note || ""}
                             onChange={(e) => {
-                              const updated = [...selectedOrderForEdit.tasks];
+                              const updated = [
+                                ...selectedOrderForEdit.tasks,
+                              ];
                               updated[i].note = e.currentTarget.value;
-                              setSelectedOrderForEdit((prev) => ({ ...prev, tasks: updated }));
-                              setEditOrderErrors((prev) => {
-                                const tarr = (prev.tasks || []).slice();
-                                tarr[i] = { ...(tarr[i] || {}), note: null };
-                                return { ...prev, tasks: tarr };
-                              });
+                              setSelectedOrderForEdit((prev) => ({
+                                ...prev,
+                                tasks: updated,
+                              }));
                             }}
-                            error={(editOrderErrors.tasks && editOrderErrors.tasks[i] && editOrderErrors.tasks[i].note) || null}
+                            error={
+                              (editOrderErrors.tasks &&
+                                editOrderErrors.tasks[i] &&
+                                editOrderErrors.tasks[i].note) ||
+                              null
+                            }
                           />
                         </Table.Td>
-
                         <Table.Td>
                           <ActionIcon
                             color="red"
@@ -886,14 +1020,11 @@ export default function WorkOrdersTable() {
                             onClick={() => {
                               setSelectedOrderForEdit((prev) => ({
                                 ...prev,
-                                tasks: prev.tasks.filter((_, idx) => idx !== i),
-                              }));
-                              setEditOrderErrors((prev) => ({
-                                ...prev,
-                                tasks: (prev.tasks || []).filter((_, idx) => idx !== i),
+                                tasks: prev.tasks.filter(
+                                  (_, idx) => idx !== i
+                                ),
                               }));
                             }}
-                            title={"Eliminar tarea"}
                           >
                             <IconTrash size={16} />
                           </ActionIcon>
@@ -909,8 +1040,6 @@ export default function WorkOrdersTable() {
                   )}
                 </Table.Tbody>
               </Table>
-
-              {/* ✅ Botón fuera de la tabla */}
               <Group justify="space-between" mt="md">
                 <Button
                   variant="light"
@@ -925,15 +1054,27 @@ export default function WorkOrdersTable() {
                     }));
                     setEditOrderErrors((prev) => ({
                       ...prev,
-                      tasks: [...(prev.tasks || []), { idSector: null, idTask: null, state: null, note: null }],
+                      tasks: [
+                        ...(prev.tasks || []),
+                        {
+                          idSector: null,
+                          idTask: null,
+                          state: null,
+                          note: null,
+                        },
+                      ],
                     }));
                   }}
                 >
                   Agregar tarea
                 </Button>
-
                 {selectedOrderForEdit.tasks?.length > 0 && (
-                  <Button fullWidth mt="md" color="blue" onClick={handleSaveEditedTasks}>
+                  <Button
+                    fullWidth
+                    mt="md"
+                    color="blue"
+                    onClick={handleSaveEditedTasks}
+                  >
                     Guardar todos los cambios
                   </Button>
                 )}
@@ -944,12 +1085,20 @@ export default function WorkOrdersTable() {
           )}
         </Modal>
 
-
-        {/* ELIMINAR */}
-        <Modal opened={deleteModalOpened} onClose={closeDelete} title="Eliminar Orden" centered size="sm">
+        {/* ELIMINAR ORDEN */}
+        <Modal
+          opened={deleteModalOpened}
+          onClose={closeDelete}
+          title="Eliminar Orden"
+          centered
+          size="sm"
+        >
           {selectedOrderForDelete && (
             <>
-              <Text>¿Seguro que quieres eliminar la orden #{selectedOrderForDelete.id}?</Text>
+              <Text>
+                ¿Seguro que quieres eliminar la orden #
+                {selectedOrderForDelete.id}?
+              </Text>
               <Group justify="flex-end" mt="md">
                 <Button variant="default" onClick={closeDelete}>
                   Cancelar
