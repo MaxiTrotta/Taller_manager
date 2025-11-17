@@ -16,7 +16,7 @@ RUN a2enmod rewrite
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar el código del backend
+# Copiar backend
 COPY . /var/www/html/
 
 WORKDIR /var/www/html
@@ -27,11 +27,11 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Permisos
 RUN chown -R www-data:www-data /var/www/html
 
-# Configuración de Apache
-RUN echo "<Directory /var/www/html>
-    AllowOverride All
-    Require all granted
-</Directory>" > /etc/apache2/conf-available/custom.conf \
+# Configuración Apache (FORMA CORRECTA)
+RUN printf "<Directory /var/www/html>\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>\n" > /etc/apache2/conf-available/custom.conf \
     && a2enconf custom
 
 EXPOSE 80
