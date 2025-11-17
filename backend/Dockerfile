@@ -4,32 +4,30 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    curl \
     && docker-php-ext-install pdo pdo_mysql
 
 # Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# Instalar Composer (sin usar multi-stage)
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+# Instalar Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar backend
+# Copiar el backend al contenedor
 COPY . /var/www/html/
 
-# Directorio de trabajo
 WORKDIR /var/www/html
 
-# Instalar dependencias Composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# Instalar dependencias PHP
+RUN composer install --no-dev --optimize-autoloader
 
-# Permisos correctos
+# Permisos
 RUN chown -R www-data:www-data /var/www/html
 
-# Configuración Apache
-RUN echo "<Directory /var/www/html>
-    AllowOverride All
-    Require all granted
-</Directory>" > /etc/apache2/conf-available/custom.conf \
+# Agregar configuración de Apache correctamente (sin romper el Dockerfile)
+RUN printf "<Directory /var/www/html>\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>\n" > /etc/apache2/conf-available/custom.conf \
     && a2enconf custom
 
 EXPOSE 80
