@@ -23,11 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Cargamos configuración de composer
-require_once dirname(__DIR__).'/html/vendor/autoload.php';
-// Inicializamos el routeador
-require_once dirname(__DIR__).'/html/app/Router/Routes.php';
-// Inicializamos el autoloader
-require_once dirname(__DIR__).'/html/app/Autoloader/Autoloader.php';
+require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/app/Router/Routes.php';
+require_once __DIR__.'/app/Autoloader/Autoloader.php';
+
 
 // Utilizamos la libreria 'Dotenv' para cargar nuestros datos
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
