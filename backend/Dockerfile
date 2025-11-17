@@ -1,16 +1,19 @@
 FROM php:8.2-apache
 
-# Instalar dependencias necesarias del sistema
+# Instalar dependencias de sistema necesarias para compilar PDO y MySQL
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libpng-dev \
     libonig-dev \
+    libzip-dev \
     libxml2-dev \
-    default-mysql-client \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    default-libmysqlclient-dev \
     && docker-php-ext-install pdo pdo_mysql
 
-# Habilitar mod_rewrite
+# Activar mod_rewrite
 RUN a2enmod rewrite
 
 # Instalar Composer
@@ -24,10 +27,10 @@ WORKDIR /var/www/html
 # Instalar dependencias PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Permisos
+# Asignar permisos correctos
 RUN chown -R www-data:www-data /var/www/html
 
-# Configuración Apache (FORMA CORRECTA)
+# Configuración Apache
 RUN printf "<Directory /var/www/html>\n\
     AllowOverride All\n\
     Require all granted\n\
