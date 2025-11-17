@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
 # Apache rewrite
 RUN a2enmod rewrite
 
-# Copiar backend al webroot
-COPY . /var/www/html
+# Copiar SOLO el contenido del backend al webroot
+COPY ./ /var/www/html/
 
 # Permisos
 RUN chown -R www-data:www-data /var/www/html
