@@ -12,48 +12,30 @@ final class PDOClient {
 
     public function connect(): PDO
     {
-        $client = $this->client();
+        // Railway env vars
+        $host = $_ENV['MYSQLHOST'];
+        $port = $_ENV['MYSQLPORT'];
+        $db   = $_ENV['MYSQLDATABASE'];
+        $user = $_ENV['MYSQLUSER'];
+        $pass = $_ENV['MYSQLPASSWORD'];
 
-        if ($client === null) {
-            $client = $this->connectClient();
-        }
+        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
-        return $client;
-    }
-
-    private function client(): ?PDO
-    {
-        return self::$activeClients[$_ENV['DATABASE_USER']] ?? null;
-    }
-
-
-    private function connectClient(): PDO
-    {
         try {
             $conn = new PDO(
-                $this->generateUrl(),
-                $_ENV['DATABASE_USER'],
-                $_ENV['DATABASE_PASSWORD']
+                $dsn,
+                $user,
+                $pass,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                ]
             );
-            
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            self::$activeClients[$_ENV['DATABASE_USER']] = $conn;
 
             return $conn;
         } catch (PDOException $e) {
-            echo "Hubo un error en la base de datos ".$e->getMessage();
+            echo "Hubo un error en la base de datos: " . $e->getMessage();
             exit();
         }
-    }
-
-    private function generateUrl(): string
-    {
-        return sprintf(
-            '%s:host=%s;dbname=%s',
-            $_ENV['DATABASE_DRIVER'],
-            sprintf('%s:%s', $_ENV['DATABASE_HOST'], $_ENV['DATABASE_PORT']),
-            $_ENV['DATABASE_NAME']
-        );
     }
 }
