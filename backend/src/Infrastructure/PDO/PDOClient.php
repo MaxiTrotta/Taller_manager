@@ -23,36 +23,45 @@ final class PDOClient {
 
     private function client(): ?PDO
     {
-        return self::$activeClients[$_ENV['MYSQLUSER']] ?? null;
+        $username = $this->env('MYSQLUSER') ?? $this->env('DATABASE_USER');
+        return self::$activeClients[$username] ?? null;
     }
 
 
     private function connectClient(): PDO
     {
+        // Railway first, local fallback
+        $host = $this->env('MYSQLHOST')       ?? $this->env('DATABASE_HOST');
+        $port = $this->env('MYSQLPORT')       ?? $this->env('DATABASE_PORT');
+        $db   = $this->env('MYSQLDATABASE')   ?? $this->env('DATABASE_NAME');
+        $user = $this->env('MYSQLUSER')       ?? $this->env('DATABASE_USER');
+        $pass = $this->env('MYSQLPASSWORD')   ?? $this->env('DATABASE_PASSWORD');
+
+        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+
         try {
-
-            $dsn = sprintf(
-                'mysql:host=%s;port=%s;dbname=%s',
-                $_ENV['MYSQLHOST'],
-                $_ENV['MYSQLPORT'],
-                $_ENV['MYSQLDATABASE']
-            );
-
             $conn = new PDO(
                 $dsn,
-                $_ENV['MYSQLUSER'],
-                $_ENV['MYSQLPASSWORD']
+                $user,
+                $pass,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false
+                ]
             );
-            
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            self::$activeClients[$_ENV['MYSQLUSER']] = $conn;
-
+            self::$activeClients[$user] = $conn;
             return $conn;
 
         } catch (PDOException $e) {
             echo "Hubo un error en la base de datos: " . $e->getMessage();
             exit();
         }
+    }
+
+    private function env(string $key): ?string
+    {
+        return $_ENV[$key] ?? $_SERVER[$key] ?? null;
     }
 }
