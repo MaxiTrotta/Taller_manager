@@ -1,166 +1,179 @@
 import "./RegisterPage.css";
 import { Link, useNavigate } from "react-router-dom";
 import {
-	Container,
-	Title,
-	Text,
-	TextInput,
-	PasswordInput,
-	Button,
-	Paper,
-	Checkbox,
-	Modal
+  Container,
+  Title,
+  Text,
+  TextInput,
+  PasswordInput,
+  Button,
+  Paper,
+  Checkbox,
+  Modal
 } from "@mantine/core";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { z } from "zod";
 import { authService } from "../../services/authService";
 
+import { ToastOverlay } from "../../components/Toast/ToastOverlay"; // 🔥
+
 const UserSchema = z.object({
-	name: z
-		.string("Ingresa un nombre válido")
-		.min(4, "Debe tener mínimo 4 caracteres")
-		.max(32, "Debe tener máximo 32 caracteres"),
-	email: z
-		.email("El correo electrónico no es válido")
-		.max(48, "Debe tener máximo 48 caracteres"),
-	password: z
-		.string("La contraseña no es válida")
-		.min(4, "Debe tener mínimo 4 caracteres")
-		.max(32, "Debe tener máximo 32 caracteres"),
-	admin: z.boolean() // <-- agregamos el campo admin
+  name: z.string().min(4, "Debe tener mínimo 4 caracteres").max(32),
+  email: z.email("El correo electrónico no es válido").max(48),
+  password: z.string().min(4, "Debe tener mínimo 4 caracteres").max(32),
+  admin: z.boolean(),
 });
 
 export function RegisterPage() {
-	const form = useForm({
-		resolver: zodResolver(UserSchema),
-		defaultValues: { admin: false } // por defecto no admin
-	});
+  const form = useForm({
+    resolver: zodResolver(UserSchema),
+    defaultValues: { admin: false }
+  });
 
-	const navigate = useNavigate();
-	const [error, setError] = useState(undefined);
-	const [confirmAdminModal, setConfirmAdminModal] = useState(false);
+  const navigate = useNavigate();
+  const [error, setError] = useState(undefined);
+  const [confirmAdminModal, setConfirmAdminModal] = useState(false);
 
-	// Cuando se marca admin, mostramos modal
-	function handleAdminToggle(e) {
-		const checked = e.currentTarget.checked;
+  // === TOAST ===
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    color: "green",
+  });
 
-		if (checked) {
-			// Mostrar modal de confirmación
-			setConfirmAdminModal(true);
-		} else {
-			// Si desmarca, simplemente actualizar
-			form.setValue("admin", false);
-		}
-	}
+  const showToast = (message, color = "green") => {
+    setToast({ open: true, message, color });
 
-	// Aceptar modal → confirmar admin = true
-	function confirmAdmin() {
-		form.setValue("admin", true);
-		setConfirmAdminModal(false);
-	}
+    setTimeout(() => {
+      setToast({ open: false, message: "", color });
+    }, 4000);
+  };
 
-	// Cancelar modal → volver admin = false
-	function cancelAdmin() {
-		form.setValue("admin", false);
-		setConfirmAdminModal(false);
-	}
+  // Checkbox admin
+  function handleAdminToggle(e) {
+    const checked = e.currentTarget.checked;
 
-	async function onSubmit(formData) {
-		try {
-			setError(undefined);
+    if (checked) setConfirmAdminModal(true);
+    else form.setValue("admin", false);
+  }
 
-			const response = await authService.register(formData);
+  function confirmAdmin() {
+    form.setValue("admin", true);
+    setConfirmAdminModal(false);
+  }
 
-			if (response.status === 200) navigate("/home");
-			else throw new Error("Ocurrió un error inesperado");
+  function cancelAdmin() {
+    form.setValue("admin", false);
+    setConfirmAdminModal(false);
+  }
 
-		} catch (error) {
-			setError(error.message);
-		}
-	}
+  async function onSubmit(formData) {
+    try {
+      setError(undefined);
 
-	return (
-		<main className="wrapper">
-			<Paper className="form" radius="lg" >
-				<Title order={2} className="title">
-					Registrar nuevo Usuario!
-				</Title>
+      const response = await authService.register(formData);
 
-				<form>
-					<TextInput
-						label="Nombre"
-						placeholder="Nombre"
-						error={form.formState.errors.name?.message}
-						{...form.register("name")}
-						size="md"
-						radius="md"
-					/>
+      if (response.status === 200) {
+        showToast("Usuario registrado correctamente ✔️", "green");
+        setTimeout(() => navigate("/usuarios"), 1200);
+      } else {
+        throw new Error("Ocurrió un error inesperado");
+      }
 
-					<TextInput
-						label="Correo electrónico"
-						placeholder="usuario@gmail.com"
-						error={form.formState.errors.email?.message}
-						{...form.register("email")}
-						size="md"
-						radius="md"
-					/>
+    } catch (error) {
+      setError(error.message);
+      showToast("Error al registrar usuario ❌", "red");
+    }
+  }
 
-					<PasswordInput
-						label="Contraseña"
-						placeholder="Contraseña"
-						error={form.formState.errors.password?.message}
-						{...form.register("password")}
-						size="md"
-						radius="md"
-					/>
+  return (
+    <main className="wrapper">
 
-					{/* CHECKBOX ADMIN */}
-					<Checkbox
-						mt="md"
-						label="¿Es administrador?"
-						checked={form.watch("admin")}
-						onChange={handleAdminToggle}
-					/>
+      {/* 🔥 TOAST */}
+      <ToastOverlay toast={toast} />
 
-					{error ? <p className="errorMessage">{error}</p> : null}
+      <Paper className="form" radius="lg">
+        <Title order={2} className="title">
+          Registrar nuevo Usuario!
+        </Title>
 
-					<Button
-						fullWidth
-						mt="xl"
-						size="md"
-						radius="md"
-						variant="filled"
-						onClick={form.handleSubmit(onSubmit)}
-						loading={form.formState.isSubmitting}
-					>
-						Registrar nuevo Usuario!
-					</Button>
-				</form>
-			</Paper>
+        <form>
+          <TextInput
+            label="Nombre"
+            placeholder="Nombre"
+            error={form.formState.errors.name?.message}
+            {...form.register("name")}
+            size="md"
+            radius="md"
+          />
 
-			{/* MODAL DE CONFIRMACIÓN */}
-			<Modal
-				opened={confirmAdminModal}
-				onClose={cancelAdmin}
-				title="Confirmar administrador"
-				centered
-			>
-				<Text>
-					Estás por marcar a este usuario como <strong>administrador</strong>.  
-					Esto le dará acceso completo al sistema.
-				</Text>
+          <TextInput
+            label="Correo electrónico"
+            placeholder="usuario@gmail.com"
+            error={form.formState.errors.email?.message}
+            {...form.register("email")}
+            size="md"
+            radius="md"
+          />
 
-				<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20, gap: 10 }}>
-					<Button variant="outline" color="gray" onClick={cancelAdmin}>
-						Cancelar
-					</Button>
-					<Button color="red" onClick={confirmAdmin}>
-						Confirmar
-					</Button>
-				</div>
-			</Modal>
-		</main>
-	);
+          <PasswordInput
+            label="Contraseña"
+            placeholder="Contraseña"
+            error={form.formState.errors.password?.message}
+            {...form.register("password")}
+            size="md"
+            radius="md"
+          />
+
+          {/* CHECKBOX ADMIN */}
+          <Checkbox
+            mt="md"
+            label="¿Es administrador?"
+            checked={form.watch("admin")}
+            onChange={handleAdminToggle}
+          />
+
+          {error ? <p className="errorMessage">{error}</p> : null}
+
+          <Button
+            fullWidth
+            mt="xl"
+            size="md"
+            radius="md"
+            variant="filled"
+            onClick={form.handleSubmit(onSubmit)}
+            loading={form.formState.isSubmitting}
+          >
+            Registrar nuevo Usuario!
+          </Button>
+        </form>
+      </Paper>
+
+      {/* MODAL CONFIRMAR ADMIN */}
+      <Modal
+        opened={confirmAdminModal}
+        onClose={cancelAdmin}
+        title="Confirmar administrador"
+        centered
+      >
+        <Text>
+          Estás por marcar a este usuario como <strong>administrador</strong>.  
+          Esto le dará acceso completo al sistema.
+        </Text>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20, gap: 10 }}>
+          <Button variant="outline" color="gray" onClick={cancelAdmin}>
+            Cancelar
+          </Button>
+          <Button color="red" onClick={confirmAdmin}>
+            Confirmar
+          </Button>
+        </div>
+      </Modal>
+
+    </main>
+  );
 }
