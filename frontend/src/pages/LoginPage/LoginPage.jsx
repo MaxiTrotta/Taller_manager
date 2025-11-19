@@ -52,13 +52,9 @@ export function LoginPage() {
             const name = response.data.name;
 
 
-            if (token) {
-                localStorage.setItem("token", token);
-                localStorage.setItem("admin", admin);
-                if (name) {
-                    localStorage.setItem("userName", name);
-                }
-            }
+
+            if (!token) throw new Error("Ocurrió un error inesperado");
+
             // Guardamos en localStorage
             localStorage.setItem("token", token);
             localStorage.setItem("admin", admin);
@@ -92,6 +88,7 @@ export function LoginPage() {
                     params="autoplay=1&mute=1&loop=1&playlist=BkBkN5-x3ss&controls=0&showinfo=0&modestbranding=1&rel=0"
                     iframeClass={classes.videoIframe}
                 />
+
             </div>
 
             {/* FORMULARIO */}
@@ -102,41 +99,50 @@ export function LoginPage() {
                         Bienvenido a Ortiz Hnos!
                     </Title>
 
+                    {/* IMPORTANTE → ahora es un FORM REAL */}
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
 
-                        <form onSubmit={form.handleSubmit(onSubmit)}>
-                            <TextInput label="Email" placeholder="usuario@gmail.com"
-                                size="md" radius="md"
-                                error={form.formState.errors.email?.message}
-                                {...form.register("email")}
-                            />
-                            <PasswordInput label="Contraseña" placeholder="Contraseña"
-                                mt="md" size="md" radius="md"
-                                error={form.formState.errors.password?.message}
-                                {...form.register("password")}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        form.handleSubmit(onSubmit)();
-                                    }
-                                }}
-                            />
-                            {error ? <p className="errorMessage">{error}</p> : null}
+                        <TextInput
+                            label="Email"
+                            placeholder="usuario@gmail.com"
+                            size="md"
+                            radius="md"
+                            error={form.formState.errors.email?.message}
+                            {...form.register("email")}
+                        />
 
-                            <Button 
-                                fullWidth 
-                                mt="xl" 
-                                size="md" 
-                                radius="md"
-                                variant="filled"
-                                type="submit"
-                                loading={form.formState.isSubmitting}>
-                                Iniciar sesión
-                            </Button>
-                        </form>
+                        <PasswordInput
+                            label="Contraseña"
+                            placeholder="Contraseña"
+                            mt="md"
+                            size="md"
+                            radius="md"
+                            error={form.formState.errors.password?.message}
+                            {...form.register("password")}
+                        />
 
+                        {/* Error del servidor */}
+                        {error && (
+                            <Text c="red" mt="md" size="sm" ta="center">
+                                {error}
+                            </Text>
+                        )}
+
+                        <Button
+                            type="submit"
+                            fullWidth
+                            mt="xl"
+                            size="md"
+                            radius="md"
+                            variant="filled"
+                            loading={form.formState.isSubmitting}
+                        >
+                            Iniciar sesión
+                        </Button>
+
+                    </form>
                 </Paper>
             </div>
-
         </div>
     );
 }

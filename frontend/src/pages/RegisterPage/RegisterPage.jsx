@@ -78,8 +78,9 @@ export function RegisterPage() {
 
       if (response.status === 200) {
         showToast("Usuario registrado correctamente ✔️", "green");
-        setTimeout(() => navigate("/home"), 1200);
-      } else {
+
+        setTimeout(() => navigate("/usuarios"), 1200);
+     } else {
         throw new Error("Ocurrió un error inesperado");
       }
 
