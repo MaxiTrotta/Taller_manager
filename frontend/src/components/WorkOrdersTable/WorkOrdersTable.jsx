@@ -45,7 +45,7 @@ const stateNumberToText = (n) =>
 
 export default function WorkOrdersTable() {
 
-    // TOAST SUPERIOR ✔️
+  // TOAST SUPERIOR ✔️
   const [toast, setToast] = useState({
     open: false,
     message: "",
@@ -667,13 +667,15 @@ export default function WorkOrdersTable() {
         >
           <Select
             label="Cliente"
+            placeholder="Buscar cliente..."
+            searchable
+            nothingFoundMessage="No se encontró"
             data={clients.map((c) => ({
               value: c.id.toString(),
               label: c.name,
             }))}
             value={newOrder.idClient}
             onChange={(val) => {
-              // Resetea vehículo y tareas cada vez que se cambia de cliente
               setVehicles([]);
               setNewOrder({
                 idClient: val,
@@ -682,40 +684,32 @@ export default function WorkOrdersTable() {
               });
               setNewOrderErrors({ idClient: null, idVehicle: null, tasks: [] });
 
-              if (val) {
-                fetchVehiclesByClient(val);
-              }
+              if (val) fetchVehiclesByClient(val);
             }}
             error={newOrderErrors.idClient}
           />
 
+
           <Select
-            key={newOrder.idClient} // fuerza remount al cambiar de cliente
+            key={newOrder.idClient}
             label="Vehículo"
+            placeholder="Buscar vehículo..."
+            searchable
+            nothingFoundMessage="No se encontró"
             data={vehicles.map((v) => ({
               value: v.id.toString(),
               label: `${v.licensePlate} - ${v.brand} ${v.model}`,
             }))}
             value={newOrder.idVehicle}
-            placeholder={
-              loadingVehicles
-                ? "Cargando vehículos..."
-                : !newOrder.idClient
-                  ? "Selecciona un cliente primero"
-                  : vehicles.length === 0
-                    ? "Sin vehículos registrados"
-                    : "Selecciona un vehículo"
-            }
-            rightSection={
-              loadingVehicles ? <Loader size={16} color="green" /> : null
-            }
+            rightSection={loadingVehicles ? <Loader size={16} color="green" /> : null}
+            disabled={!newOrder.idClient || loadingVehicles}
             onChange={(val) => {
               setNewOrder((prev) => ({ ...prev, idVehicle: val }));
               setNewOrderErrors((prev) => ({ ...prev, idVehicle: null }));
             }}
-            disabled={!newOrder.idClient || loadingVehicles}
             error={newOrderErrors.idVehicle}
           />
+
 
           <Text fw={600} mt="md">
             Tareas
