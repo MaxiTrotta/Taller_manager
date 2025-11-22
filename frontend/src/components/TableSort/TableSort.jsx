@@ -559,8 +559,8 @@ export function TableSort() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <TextInput label="Nombre" name="name" value={newClient.name} onChange={handleNewClientChange} error={newClientErrors.name} />
           <TextInput label="Email" name="email" value={newClient.email} onChange={handleNewClientChange} error={newClientErrors.email} />
-          <TextInput label="CUIT/CUIL" name="cuitCuil" value={newClient.cuitCuil} onChange={handleNewClientChange} error={newClientErrors.cuitCuil} />
-          <TextInput label="Teléfono" name="phone" value={newClient.phone} onChange={handleNewClientChange} error={newClientErrors.phone} />
+          <TextInput label="CUIT/CUIL (no agregar guion ni espacios)" name="cuitCuil" value={newClient.cuitCuil} onChange={handleNewClientChange} error={newClientErrors.cuitCuil} />
+          <TextInput label="Teléfono (no agregar signos ni espacios" name="phone" value={newClient.phone} onChange={handleNewClientChange} error={newClientErrors.phone} />
           <TextInput label="Dirección" name="address" value={newClient.address} onChange={handleNewClientChange} error={newClientErrors.address} />
           <TextInput label="Ciudad" name="city" value={newClient.city} onChange={handleNewClientChange} error={newClientErrors.city} />
           <TextInput label="Provincia" name="province" value={newClient.province} onChange={handleNewClientChange} error={newClientErrors.province} />
