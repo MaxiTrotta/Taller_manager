@@ -50,7 +50,7 @@ export function NavbarSimpleColored() {
 
           <div style={{ display: "flex" }}>
             <a href="/cliente">
-              <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
+              <img src="/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
 
            
