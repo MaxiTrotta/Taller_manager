@@ -295,12 +295,27 @@ export function TableSort() {
         showToast("Cliente creado correctamente ✔️");
       }
     } catch (err) {
-      console.error("Error al crear cliente:", err);
-      showToast("Error al crear cliente ❌", "red");
-    } finally {
-      setIsSaving(false);
-      setBlocking(false);
-    }
+  console.error("Error al crear cliente:", err);
+
+  // Si el backend manda un mensaje simple
+  if (err.response?.data?.message) {
+    showToast(err.response.data.message, "red");
+  }
+  // Si el backend manda errores por campo (objeto errors)
+  else if (err.response?.data?.errors) {
+    const errors = err.response.data.errors;
+
+    setNewClientErrors(errors); // ← muestra errores en inputs
+
+    const firstError = Object.values(errors)[0];
+    showToast(firstError, "red"); // ← muestra el primer error
+  }
+  // Error desconocido
+  else {
+    showToast("Error inesperado ❌", "red");
+  }
+}
+
   };
 
   const handleEditClient = async () => {
