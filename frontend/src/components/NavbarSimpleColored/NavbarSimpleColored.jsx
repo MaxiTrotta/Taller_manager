@@ -22,7 +22,7 @@ const data = [
   { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
   { link: '/register', label: 'Registrar Nuevo Usuario', icon: IconKey },
-  { link: '/usuarios', label: 'Usuarios', icon: IconKey },
+//  { link: '/usuarios', label: 'Usuarios', icon: IconKey },
   
 ];
 export function NavbarSimpleColored() {
