@@ -153,6 +153,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                             idClient = :idClient,
                             idVehicle = :idVehicle,
                             idOrderTask = :idOrderTask,
+                            creationDate = :creationDate,
                             deleted = :deleted
                         WHERE
                             id = :id
@@ -162,6 +163,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             "idClient" => $order->idClient(),
             "idVehicle" => $order->idVehicle(),
             "idOrderTask" => $order->idOrderTask(),
+            "creationDate" => $order->creationDate(),
             "deleted" => $order->isDeleted(),
             "id" => $order->id()
         ];
