@@ -3,6 +3,7 @@
 namespace Src\Service\Vehicle;
 
 use Src\Entity\Vehicle\Vehicle;
+use Src\Entity\Vehicle\Exception\VehicleLicensePlateAlreadyExistsException;
 use Src\Infrastructure\Repository\Vehicle\VehicleRepository;
 
 final readonly class VehicleUpdaterService
@@ -25,6 +26,12 @@ final readonly class VehicleUpdaterService
         ?int $year
     ): void {
         $vehicle = $this->finder->find($id);
+
+        // Validar que la patente no esté duplicada (excluyendo el vehículo actual)
+        $existingVehicle = $this->repository->findByLicensePlate($licensePlate);
+        if (!empty($existingVehicle) && $existingVehicle->id() !== $id) {
+            throw new VehicleLicensePlateAlreadyExistsException($licensePlate);
+        }
 
         $vehicle->modify(
             $clientId,
