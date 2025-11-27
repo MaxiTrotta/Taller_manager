@@ -37,6 +37,8 @@ final class Order {
         $this->idClient = $idClient;
         $this->idVehicle = $idVehicle;
         $this->idOrderTask = $idOrderTask;
+        // Actualizar fecha de creación cuando se modifica
+        $this->creationDate = new DateTime();
     }
 
     public function delete(): void
