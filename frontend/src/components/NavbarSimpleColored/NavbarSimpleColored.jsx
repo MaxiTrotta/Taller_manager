@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Icon2fa,
+  IconListCheck,
   IconBellRinging,
   IconDatabaseImport,
   IconFingerprint,
@@ -10,7 +11,7 @@ import {
   IconSettings,
   IconSwitchHorizontal,
 } from '@tabler/icons-react';
-import { Code, Group } from '@mantine/core';
+import { Code, Group, Text } from '@mantine/core';
 import classes from './NavbarSimpleColored.module.css';
 import ActionToggle from '../ActionToggle/ActionToggle';
 import { Link, useNavigate } from 'react-router-dom';
@@ -21,13 +22,19 @@ const data = [
   { link: '/home', label: 'Clientes', icon: IconDatabaseImport },
   { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
-  { link: '/register', label: 'Registrar Nuevo Usuario', icon: IconKey },
-//  { link: '/usuarios', label: 'Usuarios', icon: IconKey },
-  
+  { link: '/usuarios', label: 'Usuarios', icon: IconKey },
+  { link: '/tareas', label: 'Tareas', icon: IconListCheck },
 ];
 export function NavbarSimpleColored() {
   const navigate = useNavigate();
   const [active, setActive] = useState('Billing');
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    // Obtener el nombre del usuario desde localStorage
+    const name = localStorage.getItem('userName') || 'Usuario';
+    setUserName(name);
+  }, []);
 
   const links = data.map((item) => (
 
@@ -48,13 +55,18 @@ export function NavbarSimpleColored() {
       <div className={classes.navbarMain}>
         <Group className={classes.header} justify="space-between">
 
-          <div style={{ display: "flex" }}>
-            <a href="/cliente">
-              <img src="/Logo.png" alt="Logo Ortiz Hnos" />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <a href="/cliente" style={{ display: "flex", justifyContent: "center" }}>
+              <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
-
-           
-
+            <Text 
+              size="sm" 
+              fw={500} 
+              mt="xs"
+              style={{ color: 'var(--mantine-color-text)', textAlign: 'center' }}
+            >
+              Bienvenido, {userName}
+            </Text>
           </div> 
           <Code fw={700} className={classes.version}>
             v 1.0
