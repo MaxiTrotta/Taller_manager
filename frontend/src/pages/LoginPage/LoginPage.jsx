@@ -50,11 +50,13 @@ export function LoginPage() {
             const token = response.data.token;
             const admin = response.data.admin;
             const name = response.data.name;
-
-
-
-            if (!token) throw new Error("Ocurrió un error inesperado");
-
+            if (token) {
+                localStorage.setItem("token", token);
+                localStorage.setItem("admin", admin);
+                if (name) {
+                    localStorage.setItem("userName", name);
+                }
+            }
             // Guardamos en localStorage
             localStorage.setItem("token", token);
             localStorage.setItem("admin", admin);
@@ -99,48 +101,38 @@ export function LoginPage() {
                         Bienvenido a Ortiz Hnos!
                     </Title>
 
-                    {/* IMPORTANTE → ahora es un FORM REAL */}
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
 
-                        <TextInput
-                            label="Email"
-                            placeholder="usuario@gmail.com"
-                            size="md"
-                            radius="md"
-                            error={form.formState.errors.email?.message}
-                            {...form.register("email")}
-                        />
+                        <form onSubmit={form.handleSubmit(onSubmit)}>
+                            <TextInput label="Email" placeholder="usuario@gmail.com"
+                                size="md" radius="md"
+                                error={form.formState.errors.email?.message}
+                                {...form.register("email")}
+                            />
+                            <PasswordInput label="Contraseña" placeholder="Contraseña"
+                                mt="md" size="md" radius="md"
+                                error={form.formState.errors.password?.message}
+                                {...form.register("password")}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        form.handleSubmit(onSubmit)();
+                                    }
+                                }}
+                            />
+                            {error ? <p className="errorMessage">{error}</p> : null}
 
-                        <PasswordInput
-                            label="Contraseña"
-                            placeholder="Contraseña"
-                            mt="md"
-                            size="md"
-                            radius="md"
-                            error={form.formState.errors.password?.message}
-                            {...form.register("password")}
-                        />
+                            <Button 
+                                fullWidth 
+                                mt="xl" 
+                                size="md" 
+                                radius="md"
+                                variant="filled"
+                                type="submit"
+                                loading={form.formState.isSubmitting}>
+                                Iniciar sesión
+                            </Button>
+                        </form>
 
-                        {/* Error del servidor */}
-                        {error && (
-                            <Text c="red" mt="md" size="sm" ta="center">
-                                {error}
-                            </Text>
-                        )}
-
-                        <Button
-                            type="submit"
-                            fullWidth
-                            mt="xl"
-                            size="md"
-                            radius="md"
-                            variant="filled"
-                            loading={form.formState.isSubmitting}
-                        >
-                            Iniciar sesión
-                        </Button>
-
-                    </form>
                 </Paper>
             </div>
         </div>
