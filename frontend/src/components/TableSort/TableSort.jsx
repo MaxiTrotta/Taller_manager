@@ -17,9 +17,9 @@ import Box from '@mui/material/Box';
 import TablePagination from '@mui/material/TablePagination';
 import { validateClientPayload, validateVehiclePayload, hasAnyError } from '../../utils/validators';
 
-import { ToastOverlay } from "../Toast/ToastOverlay"; // 🔥 NUEVO
+import { ToastOverlay } from "../Toast/ToastOverlay";
 
-// =================== Helpers ===================
+/* =================== Helpers =================== */
 function Th({ children, reversed, sorted, onSort }) {
   const Icon = sorted ? (reversed ? IconChevronUp : IconChevronDown) : IconSelector;
   return (
@@ -46,7 +46,6 @@ function filterData(data, search) {
 function sortData(data, payload) {
   const { sortBy, reversed, search } = payload;
   if (!sortBy) return filterData(data, search);
-
   return filterData(
     [...data].sort((a, b) => {
       const aValue = a[sortBy] ?? '';
@@ -66,11 +65,11 @@ export function CircularIndeterminate() {
   );
 }
 
-// =================== Componente principal ===================
+/* =================== Componente principal =================== */
 export function TableSort() {
   const safe = (a) => (Array.isArray(a) ? a : []);
 
-  // =================== Estados ===================
+  /* Estados =================== */
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -81,10 +80,14 @@ export function TableSort() {
   const [addModalOpened, { open: openAddModal, close: closeAddModal }] = useDisclosure(false);
   const [viewModalOpened, { open: openViewModal, close: closeViewModal }] = useDisclosure(false);
   const [addVehicleModalOpened, { open: openAddVehicleModal, close: closeAddVehicleModal }] = useDisclosure(false);
+  const [editVehicleModalOpened, { open: openEditVehicleModal, close: closeEditVehicleModal }] = useDisclosure(false);
+  const [deleteVehicleModalOpened, { open: openDeleteVehicleModal, close: closeDeleteVehicleModal }] = useDisclosure(false);
 
   const [clientToEdit, setClientToEdit] = useState(null);
   const [clientToDelete, setClientToDelete] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [vehicleToEdit, setVehicleToEdit] = useState(null);
+  const [vehicleToDelete, setVehicleToDelete] = useState(null);
 
   const [search, setSearch] = useState('');
   const [clients, setClients] = useState([]);
@@ -104,14 +107,21 @@ export function TableSort() {
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState([]);
   const [loadingVehicles, setLoadingVehicles] = useState(false);
+
   const [newVehicle, setNewVehicle] = useState({
     licensePlate: '', brand: '', model: '', year: ''
   });
   const [newVehicleErrors, setNewVehicleErrors] = useState({});
+  const [editVehicleErrors, setEditVehicleErrors] = useState({});
+  const [isEditingVehicle, setIsEditingVehicle] = useState(false);
+  const [isDeletingVehicle, setIsDeletingVehicle] = useState(false);
+
+  /* 🔥 LISTA GLOBAL DE PATENTES (solo frontend) */
+  const [masterPlates, setMasterPlates] = useState([]);
 
   const paginationNumberColor = "#1976d2";
 
-  // =================== 🔥 TOAST GLOBAL ===================
+  /* =================== TOAST =================== */
   const [toast, setToast] = useState({
     open: false,
     message: "",
@@ -120,43 +130,93 @@ export function TableSort() {
 
   const showToast = (message, color = "green") => {
     setToast({ open: true, message, color });
-
     setTimeout(() => {
       setToast({ open: false, message: "", color });
     }, 4000);
   };
-  // ======================================================
 
-  // =================== Fetch clientes ===================
+  /* =================== MODAL DE ERROR BACKEND =================== */
+  const [errorModalOpened, { open: openErrorModal, close: closeErrorModal }] = useDisclosure(false);
+  const [backendError, setBackendError] = useState("");
+
+  const showBackendError = (err) => {
+    let msg = "Error inesperado en el servidor.";
+
+    if (err?.response?.data?.message) msg = err.response.data.message;
+    else if (err?.response?.data?.error) msg = err.response.data.error;
+    else if (err?.message) msg = err.message;
+
+    setBackendError(msg);
+    openErrorModal();
+  };
+
+  /* =================== FETCH CLIENTES =================== */
   const fetchClients = async () => {
     setLoading(true);
     try {
       const response = await ClientCreatorService.getAll();
-      if (response.status === 200) {
-        const data = Array.isArray(response.data)
-          ? response.data
-          : Array.isArray(response.data?.data)
-            ? response.data.data
-            : [];
-        setClients(data);
-        setSortedData(sortData(data, { sortBy, reversed: reverseSortDirection, search }));
-      } else {
-        setClients([]);
-        setSortedData([]);
-      }
+      const data = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
+
+      setClients(data);
+      setSortedData(sortData(data, { sortBy, reversed: reverseSortDirection, search }));
+      return data; // Retornar los datos para usarlos inmediatamente
     } catch (err) {
-      console.error('Error al traer clientes:', err);
-      setClients([]);
-      setSortedData([]);
-      showToast("Error al cargar clientes ❌", "red"); // 🔥
+      showBackendError(err);
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  /* =================== ARMAR LISTA GLOBAL DE PATENTES =================== */
+  const buildMasterPlates = async (clientsList) => {
+    try {
+      // Obtener todos los vehículos de una vez (más eficiente)
+      const res = await VehicleCreatorService.getAll();
 
-  // =================== Ordenamiento ===================
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+        ? res.data.data
+        : [];
+
+      const plates = data.map(v => v.licensePlate?.trim().toLowerCase()).filter(Boolean);
+      setMasterPlates(plates);
+    } catch (err) {
+      // Si falla, intentar método por cliente (fallback)
+      let plates = [];
+      for (const c of clientsList || []) {
+        try {
+          const res = await VehicleCreatorService.getAllByClient(c.id);
+          const data = Array.isArray(res.data)
+            ? res.data
+            : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
+          plates.push(...data.map(v => v.licensePlate?.trim().toLowerCase()).filter(Boolean));
+        } catch (_) {}
+      }
+      setMasterPlates(plates);
+    }
+  };
+
+  /* =================== useEffect =================== */
+  useEffect(() => {
+    const load = async () => {
+      const clientsData = await fetchClients();
+      // Usar los datos directamente del fetch en lugar del estado
+      if (clientsData && clientsData.length > 0) {
+        await buildMasterPlates(clientsData);
+      }
+    };
+
+    load();
+  }, []);
+  /* =================== Ordenamiento =================== */
   const setSorting = (field) => {
     const reversed = field === sortBy ? !reverseSortDirection : false;
     setReverseSortDirection(reversed);
@@ -165,7 +225,7 @@ export function TableSort() {
     setPage(0);
   };
 
-  // =================== Búsqueda ===================
+  /* =================== Search =================== */
   const handleSearchChange = (event) => {
     const { value } = event.currentTarget;
     setSearch(value);
@@ -173,21 +233,185 @@ export function TableSort() {
     setPage(0);
   };
 
-  // =================== Formulario agregar cliente ===================
+  /* =================== Handlers Cliente =================== */
+
   const handleNewClientChange = (event) => {
     const { name, value } = event.currentTarget;
     setNewClient((prev) => ({ ...prev, [name]: value }));
     setNewClientErrors((p) => ({ ...p, [name]: null }));
   };
 
-  // =================== Formulario agregar vehículo ===================
+  /* 🔥 CREAR CLIENTE (validación: email + CUIT duplicado) */
+  const handleAddClient = async () => {
+
+    // ❌ Validar email duplicado
+    const emailExists = clients.some(
+      (c) => c.email.toLowerCase() === newClient.email.toLowerCase()
+    );
+    if (emailExists) {
+      setNewClientErrors((p) => ({ ...p, email: "El email ya está registrado" }));
+      showToast("El email ya existe ❌", "red");
+      return;
+    }
+
+    // ❌ Validar CUIT/CUIL duplicado
+    const cuitExists = clients.some(
+      (c) => c.cuitCuil.toString() === newClient.cuitCuil.toString()
+    );
+    if (cuitExists) {
+      setNewClientErrors((p) => ({ ...p, cuitCuil: "El CUIT/CUIL ya está registrado" }));
+      showToast("El CUIT/CUIL ya existe ❌", "red");
+      return;
+    }
+
+    // Validación general
+    const errors = validateClientPayload(newClient);
+    setNewClientErrors(errors);
+    if (hasAnyError(errors)) return;
+
+    setIsSaving(true);
+    setBlocking(true);
+
+    try {
+      const response = await clientService.createClient(newClient);
+
+      if (response.status === 201 || response.status === 200) {
+        const updatedClients = await fetchClients();
+        if (updatedClients && updatedClients.length > 0) {
+          await buildMasterPlates(updatedClients); // 🔥 actualizar todas las patentes
+        }
+        closeAddModal();
+
+        setNewClient({
+          name: '', email: '', cuitCuil: '', phone: '',
+          address: '', city: '', province: ''
+        });
+
+        showToast("Cliente creado correctamente ✔️");
+      }
+    } catch (err) {
+      showBackendError(err);
+    } finally {
+      setIsSaving(false);
+      setBlocking(false);
+    }
+  };
+
+  /* 🔥 EDITAR CLIENTE (validación: email + CUIT duplicado) */
+  const handleEditClient = async () => {
+    if (!clientToEdit) return;
+
+    // ❌ Email duplicado
+    const emailExists = clients.some(
+      (c) =>
+        c.email.toLowerCase() === clientToEdit.email.toLowerCase() &&
+        c.id !== clientToEdit.id
+    );
+    if (emailExists) {
+      setEditClientErrors((p) => ({ ...p, email: "El email ya está registrado" }));
+      showToast("El email ya existe ❌", "red");
+      return;
+    }
+
+    // ❌ CUIT duplicado
+    const cuitExists = clients.some(
+      (c) =>
+        c.cuitCuil.toString() === clientToEdit.cuitCuil.toString() &&
+        c.id !== clientToEdit.id
+    );
+    if (cuitExists) {
+      setEditClientErrors((p) => ({ ...p, cuitCuil: "El CUIT/CUIL ya está registrado" }));
+      showToast("El CUIT/CUIL ya existe ❌", "red");
+      return;
+    }
+
+    const errors = validateClientPayload(clientToEdit);
+    setEditClientErrors(errors);
+    if (hasAnyError(errors)) return;
+
+    setIsEditing(true);
+
+    try {
+      const response = await clientService.updateClient(clientToEdit.id, clientToEdit);
+
+      if (response.status === 200) {
+        await fetchClients();
+        closeEditModal();
+        showToast("Cliente actualizado ✔️");
+      }
+    } catch (err) {
+      showBackendError(err);
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  /* =================== ELIMINAR CLIENTE =================== */
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await clientService.deleteClient(clientToDelete.id);
+
+      if (response.status === 200 || response.status === 204) {
+        const updatedClients = await fetchClients();
+        if (updatedClients && updatedClients.length > 0) {
+          await buildMasterPlates(updatedClients);   // 🔥 recalcular patentes globales
+        }
+        closeDeleteModal();
+        showToast("Cliente eliminado ❌", "red");
+      }
+    } catch (err) {
+      showBackendError(err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  /* =================== VEHÍCULOS =================== */
+
   const handleNewVehicleChange = (event) => {
     const { name, value } = event.currentTarget;
     setNewVehicle(prev => ({ ...prev, [name]: value }));
-    setNewVehicleErrors((p) => ({ ...p, [name]: null }));
+    setNewVehicleErrors(p => ({ ...p, [name]: null }));
   };
+
+  const fetchVehiclesByClient = async (clientId) => {
+    setLoadingVehicles(true);
+    try {
+      const res = await VehicleCreatorService.getAllByClient(clientId);
+
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+        ? res.data.data
+        : [];
+
+      setVehicles(data);
+    } catch (err) {
+      showBackendError(err);
+    } finally {
+      setLoadingVehicles(false);
+    }
+  };
+
+  /* 🔥 CREAR VEHÍCULO (validación solo frontend → masterPlates) */
   const handleAddVehicle = async () => {
     if (!selectedClient) return;
+
+    const normalizedPlate = newVehicle.licensePlate.trim().toLowerCase();
+
+    // ❌ Validar patente duplicada global (solo frontend)
+    if (masterPlates.includes(normalizedPlate)) {
+      setNewVehicleErrors(prev => ({
+        ...prev,
+        licensePlate: "La patente ya está registrada"
+      }));
+      showToast("La patente ya existe ❌", "red");
+      return;
+    }
 
     const errors = validateVehiclePayload(newVehicle);
     setNewVehicleErrors(errors);
@@ -197,31 +421,143 @@ export function TableSort() {
 
     try {
       const payload = { ...newVehicle, clientId: selectedClient.id };
-      const response = await VehicleCreatorService.create(payload);
+      const res = await VehicleCreatorService.create(payload);
 
-      if (response.status === 201 || response.status === 200) {
+      if (res.status === 201 || res.status === 200) {
+        // Recargar todas las patentes desde el backend para mantener consistencia
+        const updatedClients = await fetchClients();
+        if (updatedClients && updatedClients.length > 0) {
+          await buildMasterPlates(updatedClients);
+        }
+
         await fetchVehiclesByClient(selectedClient.id);
-        setNewVehicle({ licensePlate: '', brand: '', model: '', year: '' });
-        setNewVehicleErrors({});
-        closeAddVehicleModal();
 
-        showToast("Vehículo agregado correctamente ✔️");
+        setNewVehicle({ licensePlate: '', brand: '', model: '', year: '' });
+        closeAddVehicleModal();
+        showToast("Vehículo agregado ✔️");
       }
     } catch (err) {
-      console.error('Error al agregar vehículo:', err);
-      showToast("Error al agregar vehículo ❌", "red");
+      // Si es un error de patente duplicada, mostrarlo en el campo también
+      const errorMessage = err?.response?.data?.message || err?.message || "";
+      if (errorMessage.toLowerCase().includes("patente") || errorMessage.toLowerCase().includes("ya se encuentra")) {
+        setNewVehicleErrors(prev => ({
+          ...prev,
+          licensePlate: errorMessage
+        }));
+        showToast(errorMessage, "red");
+      } else {
+        showBackendError(err);
+      }
     } finally {
       setBlocking(false);
     }
   };
 
-  // =================== Paginación ===================
+  /* 🔥 EDITAR VEHÍCULO */
+  const handleEditVehicle = async () => {
+    if (!vehicleToEdit || !selectedClient) return;
+
+    const normalizedPlate = vehicleToEdit.licensePlate.trim().toLowerCase();
+    // Obtener la patente original del vehículo antes de editar
+    const originalVehicle = vehicles.find(v => v.id === vehicleToEdit.id);
+    const originalPlate = originalVehicle?.licensePlate?.trim().toLowerCase();
+
+    // ❌ Validar patente duplicada global (excluyendo el vehículo actual)
+    // Si la patente cambió, verificar que no esté duplicada
+    if (normalizedPlate !== originalPlate) {
+      // Verificar si la nueva patente ya existe en otro vehículo
+      const plateExistsInOtherVehicle = vehicles.some(v => 
+        v.id !== vehicleToEdit.id && 
+        v.licensePlate?.trim().toLowerCase() === normalizedPlate
+      );
+      
+      if (plateExistsInOtherVehicle || masterPlates.includes(normalizedPlate)) {
+        setEditVehicleErrors(prev => ({
+          ...prev,
+          licensePlate: "La patente ya está registrada en otro vehículo"
+        }));
+        showToast("La patente ya existe en otro vehículo ❌", "red");
+        return;
+      }
+    }
+
+    const errors = validateVehiclePayload(vehicleToEdit);
+    setEditVehicleErrors(errors);
+    if (hasAnyError(errors)) return;
+
+    setIsEditingVehicle(true);
+    setBlocking(true);
+
+    try {
+      const payload = { 
+        ...vehicleToEdit, 
+        clientId: selectedClient.id 
+      };
+      const res = await VehicleCreatorService.update(vehicleToEdit.id, payload);
+
+      if (res.status === 200) {
+        // Recargar todas las patentes desde el backend
+        const updatedClients = await fetchClients();
+        if (updatedClients && updatedClients.length > 0) {
+          await buildMasterPlates(updatedClients);
+        }
+
+        await fetchVehiclesByClient(selectedClient.id);
+        closeEditVehicleModal();
+        showToast("Vehículo actualizado ✔️");
+      }
+    } catch (err) {
+      // Si es un error de patente duplicada, mostrarlo en el campo también
+      const errorMessage = err?.response?.data?.message || err?.message || "";
+      if (errorMessage.toLowerCase().includes("patente") || errorMessage.toLowerCase().includes("ya se encuentra")) {
+        setEditVehicleErrors(prev => ({
+          ...prev,
+          licensePlate: errorMessage
+        }));
+        showToast(errorMessage, "red");
+      } else {
+        showBackendError(err);
+      }
+    } finally {
+      setIsEditingVehicle(false);
+      setBlocking(false);
+    }
+  };
+
+  /* 🔥 ELIMINAR VEHÍCULO */
+  const handleDeleteVehicle = async () => {
+    if (!vehicleToDelete || !selectedClient) return;
+
+    setIsDeletingVehicle(true);
+    setBlocking(true);
+
+    try {
+      const res = await VehicleCreatorService.delete(vehicleToDelete.id);
+
+      if (res.status === 200 || res.status === 204) {
+        // Recargar todas las patentes desde el backend
+        const updatedClients = await fetchClients();
+        if (updatedClients && updatedClients.length > 0) {
+          await buildMasterPlates(updatedClients);
+        }
+
+        await fetchVehiclesByClient(selectedClient.id);
+        closeDeleteVehicleModal();
+        showToast("Vehículo eliminado ❌", "red");
+      }
+    } catch (err) {
+      showBackendError(err);
+    } finally {
+      setIsDeletingVehicle(false);
+      setBlocking(false);
+    }
+  };
+  /* =================== Filas de tabla =================== */
   const paginatedData = sortedData.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
 
-  // =================== Filas ===================
   const rows = paginatedData.map((row) => (
     <Table.Tr key={row.id}>
       <Table.Td>{row.name}</Table.Td>
@@ -264,159 +600,20 @@ export function TableSort() {
     </Table.Tr>
   ));
 
-  // =================== Acciones ===================
-  const handleAddClient = async () => {
-    const errors = validateClientPayload(newClient);
-    setNewClientErrors(errors);
-
-    if (hasAnyError(errors)) return;
-
-    setIsSaving(true);
-    setBlocking(true);
-
-    try {
-      const payload = { ...newClient };
-      const response = await clientService.createClient(payload);
-
-      if (response.status === 201 || response.status === 200) {
-        await fetchClients();
-        setNewClient({
-          name: '',
-          email: '',
-          cuitCuil: '',
-          phone: '',
-          address: '',
-          city: '',
-          province: ''
-        });
-        setNewClientErrors({});
-        closeAddModal();
-
-        showToast("Cliente creado correctamente ✔️");
-      }
-    } catch (err) {
-  console.error("Error al crear cliente:", err);
-
-  // Si el backend manda un mensaje simple
-  if (err.response?.data?.message) {
-    showToast(err.response.data.message, "red");
-  }
-  // Si el backend manda errores por campo (objeto errors)
-  else if (err.response?.data?.errors) {
-    const errors = err.response.data.errors;
-
-    setNewClientErrors(errors); // ← muestra errores en inputs
-
-    const firstError = Object.values(errors)[0];
-    showToast(firstError, "red"); // ← muestra el primer error
-  }
-  // Error desconocido
-  else {
-    showToast("Error inesperado ❌", "red");
-  }
-}
-
-  };
-
-  const handleEditClient = async () => {
-    if (!clientToEdit) return;
-
-    const errors = validateClientPayload(clientToEdit);
-    setEditClientErrors(errors);
-
-    if (hasAnyError(errors)) return;
-
-    setIsEditing(true);
-
-    try {
-      const payload = {
-        name: clientToEdit.name,
-        cuitCuil: clientToEdit.cuitCuil,
-        address: clientToEdit.address,
-        city: clientToEdit.city,
-        province: clientToEdit.province,
-        email: clientToEdit.email,
-        phone: clientToEdit.phone
-      };
-
-      const response = await clientService.updateClient(clientToEdit.id, payload);
-
-      if (response.status === 200) {
-        await fetchClients();
-        closeEditModal();
-        setEditClientErrors({});
-
-        showToast("Cliente actualizado ✔️");
-      }
-    } catch (err) {
-      console.error("Error al actualizar cliente:", err);
-      showToast("Error al actualizar cliente ❌", "red");
-    } finally {
-      setIsEditing(false);
-    }
-  };
-
-  const handleDeleteClient = async () => {
-    if (!clientToDelete) return;
-
-    setIsDeleting(true);
-
-    try {
-      const response = await clientService.deleteClient(clientToDelete.id);
-
-      if (response.status === 200 || response.status === 204) {
-        await fetchClients();
-        closeDeleteModal();
-
-        showToast("Cliente eliminado ❌", "red");
-      }
-    } catch (err) {
-      console.error("Error al eliminar cliente:", err);
-      showToast("Error al eliminar cliente ❌", "red");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // =================== VEHÍCULOS ===================
-  const fetchVehiclesByClient = async (clientId) => {
-    setLoadingVehicles(true);
-
-    try {
-      const response = await VehicleCreatorService.getAllByClient(clientId);
-
-      if (response.status === 200) {
-        const data = Array.isArray(response.data)
-          ? response.data
-          : Array.isArray(response.data?.data)
-            ? response.data.data
-            : [];
-        setVehicles(data);
-      } else {
-        setVehicles([]);
-      }
-    } catch (err) {
-      console.error("Error al cargar vehículos:", err);
-      setVehicles([]);
-      showToast("Error al cargar vehículos ❌", "red");
-    } finally {
-      setLoadingVehicles(false);
-    }
-  };
-
+  /* =================== Modal Ver Cliente =================== */
   const handleOpenViewClientModal = (client) => {
     setSelectedClient(client);
     fetchVehiclesByClient(client.id);
     openViewModal();
   };
 
-  // =================== UI ===================
   return (
     <ScrollArea>
 
-      {/* 🔥 TOAST REUTILIZABLE */}
+      {/* Toast reutilizable */}
       <ToastOverlay toast={toast} />
 
+      {/* Barra superior */}
       <Group justify="space-between" mb="sm">
         <TextInput
           placeholder="Buscar Cliente"
@@ -436,13 +633,13 @@ export function TableSort() {
         </Group>
       </Group>
 
-      {/* Tabla clientes */}
+      {/* =================== TABLA CLIENTES =================== */}
       <Table horizontalSpacing="lg" verticalSpacing="xs" miw={700} layout="fixed">
         <Table.Thead>
           <Table.Tr>
             <Th sorted={sortBy === 'name'} reversed={reverseSortDirection} onSort={() => setSorting('name')}>Nombre</Th>
             <Th sorted={sortBy === 'email'} reversed={reverseSortDirection} onSort={() => setSorting('email')}>Email</Th>
-            <Th sorted={sortBy === 'cuitCuil'} reversed={reverseSortDirection} onSort={() => setSorting('cuitCuil')}>CUIT / CUIL</Th>
+            <Th sorted={sortBy === 'cuitCuil'} reversed={reverseSortDirection} onSort={() => setSorting('cuitCuil')}>CUIT/CUIL</Th>
             <Th sorted={sortBy === 'phone'} reversed={reverseSortDirection} onSort={() => setSorting('phone')}>Teléfono</Th>
             <Table.Th>Acciones</Table.Th>
           </Table.Tr>
@@ -459,7 +656,7 @@ export function TableSort() {
         </Table.Tbody>
       </Table>
 
-      {/* Paginación */}
+      {/* =================== PAGINACIÓN =================== */}
       <TablePagination
         component="div"
         count={sortedData.length}
@@ -471,16 +668,9 @@ export function TableSort() {
           setPage(0);
         }}
         rowsPerPageOptions={[5, 10, 25, 50]}
-        sx={{
-          color: paginationNumberColor,
-          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows, .MuiSelect-select, .MuiInputBase-input, .MuiMenuItem-root':
-            { color: paginationNumberColor },
-          '.MuiSvgIcon-root, .MuiIconButton-root, .MuiButtonBase-root':
-            { color: paginationNumberColor },
-        }}
       />
 
-      {/* Modal Ver Cliente */}
+      {/* =================== MODAL VER CLIENTE =================== */}
       <Modal opened={viewModalOpened} onClose={closeViewModal} title="Detalles del Cliente" centered size="xl">
         {selectedClient ? (
           <>
@@ -502,15 +692,40 @@ export function TableSort() {
                     <Table.Th>Marca</Table.Th>
                     <Table.Th>Modelo</Table.Th>
                     <Table.Th>Año</Table.Th>
+                    <Table.Th>Acciones</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {vehicles.map(v => (
+                  {vehicles.map((v) => (
                     <Table.Tr key={v.id}>
                       <Table.Td>{v.licensePlate}</Table.Td>
                       <Table.Td>{v.brand}</Table.Td>
                       <Table.Td>{v.model}</Table.Td>
                       <Table.Td>{v.year}</Table.Td>
+                      <Table.Td>
+                        <Group gap={0} justify="flex-end">
+                          <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            onClick={() => {
+                              setVehicleToEdit({ ...v }); // Crear copia para no modificar el original
+                              openEditVehicleModal();
+                            }}
+                          >
+                            <IconPencil size={16} stroke={1.5} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={() => {
+                              setVehicleToDelete(v);
+                              openDeleteVehicleModal();
+                            }}
+                          >
+                            <IconTrash size={16} stroke={1.5} />
+                          </ActionIcon>
+                        </Group>
+                      </Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -524,9 +739,10 @@ export function TableSort() {
         )}
       </Modal>
 
-      {/* Modal Agregar Vehículo */}
+      {/* =================== MODAL AGREGAR VEHÍCULO =================== */}
       <Modal opened={addVehicleModalOpened} onClose={closeAddVehicleModal} title="Agregar Vehículo" centered size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
           <Select
             label="Seleccionar Cliente"
             placeholder="Busca un cliente..."
@@ -543,45 +759,259 @@ export function TableSort() {
             }))}
           />
 
-          <TextInput label="Patente" name="licensePlate" value={newVehicle.licensePlate} onChange={handleNewVehicleChange} error={newVehicleErrors.licensePlate} />
-          <TextInput label="Marca" name="brand" value={newVehicle.brand} onChange={handleNewVehicleChange} error={newVehicleErrors.brand} />
-          <TextInput label="Modelo" name="model" value={newVehicle.model} onChange={handleNewVehicleChange} error={newVehicleErrors.model} />
-          <TextInput label="Año" name="year" type="number" value={newVehicle.year} onChange={(e) => { handleNewVehicleChange(e); setNewVehicleErrors(p => ({ ...p, year: null })); }} error={newVehicleErrors.year} />
+          <TextInput
+            label="Patente"
+            name="licensePlate"
+            value={newVehicle.licensePlate}
+            onChange={handleNewVehicleChange}
+            error={newVehicleErrors.licensePlate}
+          />
+
+          <TextInput
+            label="Marca"
+            name="brand"
+            value={newVehicle.brand}
+            onChange={handleNewVehicleChange}
+            error={newVehicleErrors.brand}
+          />
+
+          <TextInput
+            label="Modelo"
+            name="model"
+            value={newVehicle.model}
+            onChange={handleNewVehicleChange}
+            error={newVehicleErrors.model}
+          />
+
+          <TextInput
+            label="Año"
+            name="year"
+            type="number"
+            value={newVehicle.year}
+            onChange={handleNewVehicleChange}
+            error={newVehicleErrors.year}
+          />
 
           <Button color="blue" onClick={handleAddVehicle} disabled={!selectedClient}>
             Guardar Vehículo
           </Button>
+
         </div>
       </Modal>
 
-      {/* Modal Agregar Cliente */}
+      {/* =================== MODAL EDITAR VEHÍCULO =================== */}
+      <Modal opened={editVehicleModalOpened} onClose={closeEditVehicleModal} title="Editar Vehículo" centered size="md">
+        {vehicleToEdit && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <TextInput
+              label="Patente"
+              name="licensePlate"
+              value={vehicleToEdit.licensePlate}
+              onChange={(e) => {
+                setVehicleToEdit({ ...vehicleToEdit, licensePlate: e.currentTarget.value });
+                setEditVehicleErrors((p) => ({ ...p, licensePlate: null }));
+              }}
+              error={editVehicleErrors.licensePlate}
+            />
+
+            <TextInput
+              label="Marca"
+              name="brand"
+              value={vehicleToEdit.brand}
+              onChange={(e) => {
+                setVehicleToEdit({ ...vehicleToEdit, brand: e.currentTarget.value });
+                setEditVehicleErrors((p) => ({ ...p, brand: null }));
+              }}
+              error={editVehicleErrors.brand}
+            />
+
+            <TextInput
+              label="Modelo"
+              name="model"
+              value={vehicleToEdit.model}
+              onChange={(e) => {
+                setVehicleToEdit({ ...vehicleToEdit, model: e.currentTarget.value });
+                setEditVehicleErrors((p) => ({ ...p, model: null }));
+              }}
+              error={editVehicleErrors.model}
+            />
+
+            <TextInput
+              label="Año"
+              name="year"
+              type="number"
+              value={vehicleToEdit.year}
+              onChange={(e) => {
+                setVehicleToEdit({ ...vehicleToEdit, year: e.currentTarget.value });
+                setEditVehicleErrors((p) => ({ ...p, year: null }));
+              }}
+              error={editVehicleErrors.year}
+            />
+
+            <Button color="blue" onClick={handleEditVehicle} loading={isEditingVehicle}>
+              Actualizar Vehículo
+            </Button>
+          </div>
+        )}
+      </Modal>
+
+      {/* =================== MODAL ELIMINAR VEHÍCULO =================== */}
+      <Modal opened={deleteVehicleModalOpened} onClose={closeDeleteVehicleModal} title="Eliminar Vehículo" centered size="sm">
+        <Text>
+          ¿Estás seguro que deseas eliminar el vehículo con patente <b>{vehicleToDelete?.licensePlate}</b>?
+        </Text>
+
+        <Group position="apart" mt="md">
+          <Button color="red" onClick={handleDeleteVehicle} loading={isDeletingVehicle}>
+            Eliminar
+          </Button>
+          <Button variant="outline" onClick={closeDeleteVehicleModal}>
+            Cancelar
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* =================== MODAL AGREGAR CLIENTE =================== */}
       <Modal opened={addModalOpened} onClose={closeAddModal} title="Agregar Cliente" centered size="md">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <TextInput label="Nombre" name="name" value={newClient.name} onChange={handleNewClientChange} error={newClientErrors.name} />
-          <TextInput label="Email" name="email" value={newClient.email} onChange={handleNewClientChange} error={newClientErrors.email} />
-          <TextInput label="CUIT/CUIL (no agregar guion ni espacios)" name="cuitCuil" value={newClient.cuitCuil} onChange={handleNewClientChange} error={newClientErrors.cuitCuil} />
-          <TextInput label="Teléfono (no agregar signos ni espacios)" name="phone" value={newClient.phone} onChange={handleNewClientChange} error={newClientErrors.phone} />
-          <TextInput label="Dirección" name="address" value={newClient.address} onChange={handleNewClientChange} error={newClientErrors.address} />
-          <TextInput label="Ciudad" name="city" value={newClient.city} onChange={handleNewClientChange} error={newClientErrors.city} />
-          <TextInput label="Provincia" name="province" value={newClient.province} onChange={handleNewClientChange} error={newClientErrors.province} />
+          
+          <TextInput
+            label="Nombre"
+            name="name"
+            value={newClient.name}
+            onChange={handleNewClientChange}
+            error={newClientErrors.name}
+          />
+
+          <TextInput
+            label="Email"
+            name="email"
+            value={newClient.email}
+            onChange={handleNewClientChange}
+            error={newClientErrors.email}
+          />
+
+          <TextInput
+            label="CUIT/CUIL"
+            name="cuitCuil"
+            value={newClient.cuitCuil}
+            onChange={handleNewClientChange}
+            error={newClientErrors.cuitCuil}
+          />
+
+          <TextInput
+            label="Teléfono"
+            name="phone"
+            value={newClient.phone}
+            onChange={handleNewClientChange}
+            error={newClientErrors.phone}
+          />
+
+          <TextInput
+            label="Dirección"
+            name="address"
+            value={newClient.address}
+            onChange={handleNewClientChange}
+            error={newClientErrors.address}
+          />
+
+          <TextInput
+            label="Ciudad"
+            name="city"
+            value={newClient.city}
+            onChange={handleNewClientChange}
+            error={newClientErrors.city}
+          />
+
+          <TextInput
+            label="Provincia"
+            name="province"
+            value={newClient.province}
+            onChange={handleNewClientChange}
+            error={newClientErrors.province}
+          />
 
           <Button color="green" onClick={handleAddClient} loading={isSaving}>
             Guardar Cliente
           </Button>
+
         </div>
       </Modal>
 
-      {/* Modal Editar */}
+      {/* =================== MODAL EDITAR CLIENTE =================== */}
       <Modal opened={editModalOpened} onClose={closeEditModal} title="Editar Cliente" centered size="md">
         {clientToEdit && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <TextInput label="Nombre" value={clientToEdit.name} onChange={(e) => { setClientToEdit({ ...clientToEdit, name: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, name: null })); }} error={editClientErrors.name} />
-            <TextInput label="Email" value={clientToEdit.email} onChange={(e) => { setClientToEdit({ ...clientToEdit, email: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, email: null })); }} error={editClientErrors.email} />
-            <TextInput label="CUIT/CUIL" value={clientToEdit.cuitCuil} onChange={(e) => { setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, cuitCuil: null })); }} error={editClientErrors.cuitCuil} />
-            <TextInput label="Teléfono" value={clientToEdit.phone} onChange={(e) => { setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, phone: null })); }} error={editClientErrors.phone} />
-            <TextInput label="Dirección" value={clientToEdit.address} onChange={(e) => { setClientToEdit({ ...clientToEdit, address: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, address: null })); }} error={editClientErrors.address} />
-            <TextInput label="Ciudad" value={clientToEdit.city} onChange={(e) => { setClientToEdit({ ...clientToEdit, city: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, city: null })); }} error={editClientErrors.city} />
-            <TextInput label="Provincia" value={clientToEdit.province} onChange={(e) => { setClientToEdit({ ...clientToEdit, province: e.currentTarget.value }); setEditClientErrors(p => ({ ...p, province: null })); }} error={editClientErrors.province} />
+
+            <TextInput
+              label="Nombre"
+              value={clientToEdit.name}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, name: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, name: null }));
+              }}
+              error={editClientErrors.name}
+            />
+
+            <TextInput
+              label="Email"
+              value={clientToEdit.email}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, email: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, email: null }));
+              }}
+              error={editClientErrors.email}
+            />
+
+            <TextInput
+              label="CUIT/CUIL"
+              value={clientToEdit.cuitCuil}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, cuitCuil: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, cuitCuil: null }));
+              }}
+              error={editClientErrors.cuitCuil}
+            />
+
+            <TextInput
+              label="Teléfono"
+              value={clientToEdit.phone}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, phone: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, phone: null }));
+              }}
+              error={editClientErrors.phone}
+            />
+
+            <TextInput
+              label="Dirección"
+              value={clientToEdit.address}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, address: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, address: null }));
+              }}
+              error={editClientErrors.address}
+            />
+
+            <TextInput
+              label="Ciudad"
+              value={clientToEdit.city}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, city: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, city: null }));
+              }}
+              error={editClientErrors.city}
+            />
+
+            <TextInput
+              label="Provincia"
+              value={clientToEdit.province}
+              onChange={(e) => {
+                setClientToEdit({ ...clientToEdit, province: e.currentTarget.value });
+                setEditClientErrors((p) => ({ ...p, province: null }));
+              }}
+              error={editClientErrors.province}
+            />
 
             <Button color="blue" onClick={handleEditClient} loading={isEditing}>
               Actualizar Cliente
@@ -590,17 +1020,42 @@ export function TableSort() {
         )}
       </Modal>
 
-      {/* Modal Eliminar */}
+      {/* =================== MODAL ELIMINAR CLIENTE =================== */}
       <Modal opened={deleteModalOpened} onClose={closeDeleteModal} title="Eliminar Cliente" centered size="sm">
-        <Text>¿Estás seguro que deseas eliminar a {clientToDelete?.name}?</Text>
+        <Text>
+          ¿Estás seguro que deseas eliminar a <b>{clientToDelete?.name}</b>?
+        </Text>
 
         <Group position="apart" mt="md">
-          <Button color="red" onClick={handleDeleteClient} loading={isDeleting}>Eliminar</Button>
-          <Button variant="outline" onClick={closeDeleteModal}>Cancelar</Button>
+          <Button color="red" onClick={handleDeleteClient} loading={isDeleting}>
+            Eliminar
+          </Button>
+          <Button variant="outline" onClick={closeDeleteModal}>
+            Cancelar
+          </Button>
         </Group>
       </Modal>
 
-      {/* Overlay global */}
+      {/* =================== MODAL DE ERROR DEL BACKEND =================== */}
+      <Modal
+        opened={errorModalOpened}
+        onClose={closeErrorModal}
+        title="Error del servidor"
+        centered
+        size="md"
+      >
+        <Text c="red" fw={600} mb="md">
+          {backendError}
+        </Text>
+
+        <Group position="right">
+          <Button color="red" onClick={closeErrorModal}>
+            Cerrar
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* =================== OVERLAY GLOBAL =================== */}
       {blocking && (
         <Overlay opacity={0.5} color="#000" zIndex={1000} fixed>
           <Center style={{ height: '100vh' }}>
@@ -608,6 +1063,7 @@ export function TableSort() {
           </Center>
         </Overlay>
       )}
+
     </ScrollArea>
   );
 }
