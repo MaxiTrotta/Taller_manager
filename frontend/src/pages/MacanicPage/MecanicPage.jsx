@@ -24,6 +24,7 @@ import {
   IconWreckingBall,
   IconNut,
   IconCheck,
+  IconSearch,
 } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import TablePagination from "@mui/material/TablePagination";
@@ -40,6 +41,8 @@ import {
 } from "../../utils/validators";
 
 export default function MecanicPage() {
+  const [userName, setUserName] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [workOrders, setWorkOrders] = useState([]);
@@ -78,6 +81,7 @@ export default function MecanicPage() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState("");
 
   // Confirmar finalización de tarea
   const [confirmFinishOpened, setConfirmFinishOpened] = useState(false);
@@ -111,7 +115,14 @@ export default function MecanicPage() {
     setLoading(true);
     try {
       const res = await WorkOrderCreatorService.getAll();
-      setWorkOrders(Array.isArray(res.data) ? res.data : []);
+      const orders = Array.isArray(res.data) ? res.data : [];
+      // Ordenar por fecha más reciente (más reciente primero)
+      const sortedOrders = orders.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.creationDate || 0);
+        const dateB = new Date(b.createdAt || b.creationDate || 0);
+        return dateB - dateA; // Más reciente primero
+      });
+      setWorkOrders(sortedOrders);
     } catch (err) {
       console.error("Error al cargar órdenes:", err);
       setWorkOrders([]);
@@ -181,6 +192,10 @@ export default function MecanicPage() {
     fetchClients();
     fetchTasks();
     fetchSectors();
+    
+    // Obtener el nombre del usuario desde localStorage
+    const name = localStorage.getItem('userName') || 'Usuario';
+    setUserName(name);
   }, []);
 
   // =================== LOGOUT ===================
@@ -409,6 +424,39 @@ export default function MecanicPage() {
         }
       }
 
+      // Actualizar la fecha de creación de la orden al modificar tareas
+      // Necesitamos obtener los IDs reales de la orden
+      try {
+        // Buscar el cliente por nombre para obtener su ID
+        const foundClient = clients.find(
+          (c) => c.name === selectedOrderForEdit.client
+        );
+
+        if (foundClient) {
+          // Obtener vehículos del cliente para buscar el vehículo por patente
+          const clientVehicles = await VehicleCreatorService.getAllByClient(foundClient.id);
+          const vehiclesData = Array.isArray(clientVehicles.data)
+            ? clientVehicles.data
+            : Array.isArray(clientVehicles.data?.data)
+            ? clientVehicles.data.data
+            : [];
+
+          const foundVehicle = vehiclesData.find(
+            (v) => v.licensePlate === selectedOrderForEdit.vehicle
+          );
+
+          if (foundVehicle) {
+            await WorkOrderCreatorService.update(selectedOrderForEdit.id, {
+              idClient: foundClient.id,
+              idVehicle: foundVehicle.id,
+              idOrderTask: 0,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error al actualizar fecha de orden:", err);
+      }
+
       try {
         const resUpdated = await WorkOrderCreatorService.getById(
           selectedOrderForEdit.id
@@ -425,9 +473,15 @@ export default function MecanicPage() {
           updatedOrder.state = 3;
         }
 
-        setWorkOrders((prev) =>
-          prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
-        );
+        // Ordenar por fecha más reciente después de actualizar
+        setWorkOrders((prev) => {
+          const updated = prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o));
+          return updated.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.creationDate || 0);
+            const dateB = new Date(b.createdAt || b.creationDate || 0);
+            return dateB - dateA; // Más reciente primero
+          });
+        });
       } catch (err) {
         console.error(
           "Error al obtener orden actualizada, recargando todas:",
@@ -470,8 +524,17 @@ export default function MecanicPage() {
     }
   };
 
+  // =================== FILTRO Y BÚSQUEDA ===================
+  const filteredOrders = workOrders.filter((order) => {
+    if (!search || search.trim() === "") return true;
+    const searchLower = search.toLowerCase().trim();
+    const clientMatch = (order.client || "").toLowerCase().includes(searchLower);
+    const vehicleMatch = (order.vehicle || "").toLowerCase().includes(searchLower);
+    return clientMatch || vehicleMatch;
+  });
+
   // =================== FILAS ===================
-  const paginated = workOrders.slice(
+  const paginated = filteredOrders.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
@@ -543,9 +606,14 @@ export default function MecanicPage() {
 
       <ScrollArea>
         <Group justify="space-between" align="center" mb="sm" mt="sm">
-          <Text fz="xl" fw={600}>
-            Órdenes de Trabajo
-          </Text>
+          <div>
+            <Text fz="xl" fw={600}>
+              Órdenes de Trabajo
+            </Text>
+            <Text size="sm" c="dimmed" mt={4}>
+              Bienvenido, {userName}
+            </Text>
+          </div>
           <Button
             color="red"
             leftSection={<IconXboxX size={16} />}
@@ -556,12 +624,25 @@ export default function MecanicPage() {
           </Button>
         </Group>
 
+        {/* Buscador */}
+        <TextInput
+          placeholder="Buscar por cliente o patente..."
+          leftSection={<IconSearch size={16} />}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.currentTarget.value);
+            setPage(0); // Resetear página al buscar
+          }}
+          mb="md"
+          style={{ maxWidth: "400px" }}
+        />
+
         <Table highlightOnHover>
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Cliente</Table.Th>
               <Table.Th>Vehículo</Table.Th>
-              <Table.Th>Fecha creación</Table.Th>
+              <Table.Th>Fecha creación / Modificación</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th style={{ textAlign: "center" }}>Acciones</Table.Th>
             </Table.Tr>
@@ -571,7 +652,7 @@ export default function MecanicPage() {
 
         <TablePagination
           component="div"
-          count={workOrders.length}
+          count={filteredOrders.length}
           page={page}
           onPageChange={(e, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
