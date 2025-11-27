@@ -7,6 +7,8 @@ use Src\Entity\Vehicle\Vehicle;
 interface VehicleRepositoryInterface {
     public function find(int $id): ?Vehicle;
 
+    public function findByLicensePlate(string $licensePlate): ?Vehicle;
+
     /** @return Vehicle[] */
     public function search(): array;
 
