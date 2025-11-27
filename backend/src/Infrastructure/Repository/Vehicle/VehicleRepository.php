@@ -50,6 +50,26 @@ final readonly class VehicleRepository extends PDOManager implements VehicleRepo
         return $this->toVehicle($result[0] ?? null);
     }
 
+    public function findByLicensePlate(string $licensePlate): ?Vehicle
+    {
+        $query = <<<HEREDOC
+                        SELECT 
+                            *
+                        FROM
+                            vehicle V
+                        WHERE
+                            LOWER(TRIM(V.licensePlate)) = LOWER(TRIM(:licensePlate)) AND V.deleted = 0
+                    HEREDOC;
+
+        $parameters = [
+            "licensePlate" => $licensePlate,
+        ];
+
+        $result = $this->execute($query, $parameters);
+
+        return $this->toVehicle($result[0] ?? null);
+    }
+
     /** @return VehicleProjection[] */
     public function search(): array
     {
