@@ -23,15 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Cargamos configuración de composer
-require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/app/Router/Routes.php';
-require_once __DIR__.'/app/Autoloader/Autoloader.php';
-
+require_once dirname(__DIR__).'/html/vendor/autoload.php';
+// Inicializamos el routeador
+require_once dirname(__DIR__).'/html/app/Router/Routes.php';
+// Inicializamos el autoloader
+require_once dirname(__DIR__).'/html/app/Autoloader/Autoloader.php';
 
 // Utilizamos la libreria 'Dotenv' para cargar nuestros datos
-$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
-$dotenv->safeLoad();  // NO pisa las variables de Railway
-
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load(); 
 
 // Cargamos el autoloader
 spl_autoload_register(
@@ -62,13 +62,21 @@ try {
     );
 } catch (Exception $e) {   
     $status = 404;
+    $statusText = "Not Found";
 
     if ($e->getMessage() == "El usuario no se encuentra autorizado.") {
         $status = 401;
+        $statusText = "Unauthorized";
+    } elseif (strpos($e->getMessage(), "ya se encuentra") !== false || 
+              strpos($e->getMessage(), "ya está") !== false ||
+              strpos($e->getMessage(), "ya existe") !== false) {
+        // Errores de duplicados (patentes, emails, etc.)
+        $status = 409;
+        $statusText = "Conflict";
     }
 
     // Si la ruta no existe, devolvemos un error 404
-    header("HTTP/1.0 $status Not Found");
+    header("HTTP/1.0 $status $statusText");
     echo json_encode([
         "status" => $status,
         "message"=> $e->getMessage()
