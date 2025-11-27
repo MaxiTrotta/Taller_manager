@@ -12,7 +12,7 @@ import EmployeesTable from './components/EmployeesTable/EmployeesTable';
 import WorkOrdersTable from './components/WorkOrdersTable/WorkOrdersTable';
 import MecanicPage from './pages/MacanicPage/MecanicPage';
 import UsersTable from './components/UsersTable/UsersTable';
-
+import { TasksTable } from './components/TasksTable/TasksTable';
 function App() {
 	return (
 		<MantineProvider defaultColorScheme="white" forceColorScheme='dark'>
@@ -32,6 +32,8 @@ function App() {
 						<Route path="/empleado" element={<EmployeesTable />} />
 						<Route path="/ordenes" element={<WorkOrdersTable />} />
 						<Route path="/cliente" element={<TableSort />} />
+						<Route path="/tareas" element={<TasksTable />} />
+						
 					</Route>
 
 					{/* RUTA SOLO MECANICOS */}
