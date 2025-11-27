@@ -620,7 +620,7 @@ export default function WorkOrdersTable() {
               <Table.Th>ID</Table.Th>
               <Table.Th>Cliente</Table.Th>
               <Table.Th>Vehículo</Table.Th>
-              <Table.Th>Fecha</Table.Th>
+              <Table.Th>Fecha de creación / Modificación</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th>Acciones</Table.Th>
             </Table.Tr>
