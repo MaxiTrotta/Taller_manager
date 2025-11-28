@@ -12,7 +12,18 @@ final readonly class VehiclesGetController {
 
     public function start(): void
     {
-        $clientId = ControllerUtils::getGet('clientId');
+           // clientId may be sent as 'clientId' or 'client_id' and is optional
+        $clientId = null;
+        try {
+            $clientId = ControllerUtils::getGet('clientId', false, null);
+        } catch (Exception $e) {
+            // try alternative param name
+            try {
+                $clientId = ControllerUtils::getGet('client_id', false, null);
+            } catch (Exception $e) {
+                $clientId = null;
+            }
+        }
 
         $vehicles = $this->service->search($clientId);
 
