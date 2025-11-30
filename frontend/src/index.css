@@ -44,6 +44,16 @@ h1 {
   color: rgb(129, 129, 129) !important;
 }
 
+/* Remove white background / shadow on hover for chart containers */
+.chartPaper:hover {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.chartPaper {
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
 /* If background is light, add subtle dark background to pagination for contrast */
 /* .table-pagination-contrast {
   background: rgba(240, 13, 13, 0.25);
