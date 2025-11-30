@@ -10,6 +10,7 @@ import {
   IconReceipt2,
   IconSettings,
   IconSwitchHorizontal,
+  IconChartBar,
 } from '@tabler/icons-react';
 import { Code, Group, Text } from '@mantine/core';
 import classes from './NavbarSimpleColored.module.css';
@@ -19,7 +20,8 @@ import { authService } from '../../services/authService';
 
 
 const data = [
-  { link: '/home', label: 'Clientes', icon: IconDatabaseImport },
+  { link: '/dashboard', label: 'Dashboard', icon: IconChartBar },
+  { link: '/cliente', label: 'Clientes', icon: IconDatabaseImport },
   { link: '/ordenes', label: 'Ordenes De Trabajo', icon: IconReceipt2 },
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
   { link: '/usuarios', label: 'Usuarios', icon: IconKey },
@@ -56,8 +58,8 @@ export function NavbarSimpleColored() {
         <Group className={classes.header} justify="space-between">
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <a href="/cliente" style={{ display: "flex", justifyContent: "center" }}>
-              <img src="/Logo.png" alt="Logo Ortiz Hnos" />
+            <a href="/dashboard" style={{ display: "flex", justifyContent: "center" }}>
+              <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
             <Text 
               size="sm" 
