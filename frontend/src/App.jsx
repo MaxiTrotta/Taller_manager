@@ -13,6 +13,8 @@ import WorkOrdersTable from './components/WorkOrdersTable/WorkOrdersTable';
 import MecanicPage from './pages/MacanicPage/MecanicPage';
 import UsersTable from './components/UsersTable/UsersTable';
 import { TasksTable } from './components/TasksTable/TasksTable';
+import Dashboard from './components/Dashboard/Dashboard';
+
 function App() {
 	return (
 		<MantineProvider defaultColorScheme="white" forceColorScheme='dark'>
@@ -24,19 +26,18 @@ function App() {
 						<Route path="/login" element={<LoginPage />} />
 					</Route>
 
-					{/* RUTAS SOLO ADMIN */}
-					<Route element={<PrivateRoute />}>
-						<Route path="/home" element={<TableSort />} />
-						<Route path="/usuarios" element={<UsersTable />} />
-						<Route path="/register" element={<RegisterPage />} />
-						<Route path="/empleado" element={<EmployeesTable />} />
-						<Route path="/ordenes" element={<WorkOrdersTable />} />
-						<Route path="/cliente" element={<TableSort />} />
-						<Route path="/tareas" element={<TasksTable />} />
-						
-					</Route>
-
-					{/* RUTA SOLO MECANICOS */}
+				{/* RUTAS SOLO ADMIN */}
+				<Route element={<PrivateRoute />}>
+					<Route path="/home" element={<Dashboard />} />
+					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/usuarios" element={<UsersTable />} />
+					<Route path="/register" element={<RegisterPage />} />
+					<Route path="/empleado" element={<EmployeesTable />} />
+					<Route path="/ordenes" element={<WorkOrdersTable />} />
+					<Route path="/cliente" element={<TableSort />} />
+					<Route path="/tareas" element={<TasksTable />} />
+					
+				</Route>					{/* RUTA SOLO MECANICOS */}
 					<Route element={<MecanicRoute />}>
 						<Route path="/mecanico" element={<MecanicPage />} />
 					</Route>
