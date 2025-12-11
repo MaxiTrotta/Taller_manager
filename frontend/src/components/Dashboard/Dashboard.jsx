@@ -85,7 +85,7 @@ export default function Dashboard() {
                   Órdenes Pendientes
                 </Text>
                 <Text size="lg" fw={700} c="orange">
-                  {summary.pendingOrders.toString()}
+                  {summary.pendingOrders || 0}
                 </Text>
               </Stack>
             </Card>
@@ -184,7 +184,7 @@ export default function Dashboard() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="count" fill="#4ECDC4" name="Cantidad" />
+                  <Bar dataKey="count" fill="#f71919ff" name="Cantidad" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
