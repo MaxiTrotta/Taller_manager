@@ -159,7 +159,7 @@ final readonly class DashboardRepository extends PDOManager {
         }
 
         // Asegurar que siempre existan las 3 categorías principales para el gráfico
-        $categories = ['Pendientes', 'En Proceso', 'Finalizadas', 'Sin Tareas'];
+        $categories = ['Pendientes', 'En Proceso', 'Finalizadas'];
         $existNames = array_map(fn($r) => $r['name'], $normalized);
         foreach ($categories as $cat) {
             if (!in_array($cat, $existNames)) {
