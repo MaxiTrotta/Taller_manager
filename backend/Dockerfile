@@ -13,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     && docker-php-ext-install pdo pdo_mysql
 
+# Desactivar MPMs conflictivos y activar solo mpm_prefork (compatible con PHP)
+RUN a2dismod mpm_event mpm_worker mpm_async 2>/dev/null || true
+RUN a2enmod mpm_prefork
+
 # Activar mod_rewrite
 RUN a2enmod rewrite
 
