@@ -1,11 +1,7 @@
 FROM php:8.2-apache
 
-# Remove conflicting MPM modules completely - keep only mpm_prefork
-# Disable first (while files still exist), then remove, then enable prefork
+# Disable MPM modules already enabled in the base image, then enable prefork
 RUN a2dismod mpm_event mpm_worker \
-    && rm -f /etc/apache2/mods-available/mpm_event.load \
-    && rm -f /etc/apache2/mods-available/mpm_worker.load \
-    && rm -f /etc/apache2/mods-available/mpm_async.load \
     && a2enmod mpm_prefork
 
 # Instalar dependencias de sistema necesarias para compilar PDO y MySQL
