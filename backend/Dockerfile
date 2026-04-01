@@ -1,5 +1,10 @@
 FROM php:8.2-apache
 
+# Remove conflicting MPM modules completely - keep only mpm_prefork
+RUN rm -f /etc/apache2/mods-available/mpm_event.load \
+    && rm -f /etc/apache2/mods-available/mpm_worker.load \
+    && rm -f /etc/apache2/mods-available/mpm_async.load
+
 # Instalar dependencias de sistema necesarias para compilar PDO y MySQL
 RUN apt-get update && apt-get install -y \
     git \
@@ -12,10 +17,6 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     default-libmysqlclient-dev \
     && docker-php-ext-install pdo pdo_mysql
-
-# Desactivar MPMs conflictivos y activar solo mpm_prefork (compatible con PHP)
-RUN a2dismod mpm_event mpm_worker mpm_async 2>/dev/null || true
-RUN a2enmod mpm_prefork
 
 # Activar mod_rewrite
 RUN a2enmod rewrite
