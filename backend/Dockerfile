@@ -1,5 +1,8 @@
 FROM php:8.2-apache
 
+# Disable conflicting MPM modules - keep only mpm_prefork
+RUN a2dismod mpm_event mpm_worker && a2enmod mpm_prefork
+
 # ================================
 # Instalar dependencias del sistema
 # ================================
@@ -21,11 +24,6 @@ RUN apt-get update && apt-get install -y \
 # ================================
 # Activar mod_rewrite
 RUN a2enmod rewrite
-
-# 🔧 FIX CRÍTICO: evitar error "More than one MPM loaded"
-RUN a2dismod mpm_event && \
-    a2dismod mpm_worker && \
-    a2enmod mpm_prefork
 
 # ================================
 # Instalar Composer
