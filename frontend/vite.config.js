@@ -11,7 +11,7 @@ export default defineConfig({
 
   preview: {
     allowedHosts: [
-      'tallermanager-production.up.railway.app'
+      'ortiz.up.railway.app'
     ]
   }
 })
