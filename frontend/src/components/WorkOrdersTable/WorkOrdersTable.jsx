@@ -104,6 +104,16 @@ export default function WorkOrdersTable() {
   // FILTROS
   const [vehicleFilter, setVehicleFilter] = useState("");
   const [dateFilter, setDateFilter] = useState(""); // YYYY-MM-DD
+  // default date range: last 7 days
+  const _today = new Date();
+  const _todayStr = _today.toISOString().slice(0, 10);
+  const _sevenDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const _sevenDaysAgoStr = _sevenDaysAgo.toISOString().slice(0, 10);
+
+  const [nameFilter, setNameFilter] = useState("");
+  const [taskIdFilter, setTaskIdFilter] = useState("");
+  const [startDate, setStartDate] = useState(_sevenDaysAgoStr); // YYYY-MM-DD
+  const [endDate, setEndDate] = useState(_todayStr); // YYYY-MM-DD
 
   // VEHÍCULOS POR CLIENTE
   const [loadingVehicles, setLoadingVehicles] = useState(false);
@@ -453,16 +463,32 @@ export default function WorkOrdersTable() {
           .includes(vehicleFilter.toLowerCase())
         : true;
 
-      const byDate = dateFilter
-        ? (() => {
-          if (!o.creationDate) return false;
-          try {
-            const d = new Date(o.creationDate).toISOString().slice(0, 10);
-            return d === dateFilter;
-          } catch {
-            return false;
-          }
-        })()
+            const byDate = (() => {
+        if (!startDate && !endDate) return true;
+        if (!o.creationDate) return false;
+        try {
+          const d = new Date(o.creationDate).toISOString().slice(0, 10);
+          if (startDate && endDate) return d >= startDate && d <= endDate;
+          if (startDate) return d >= startDate;
+          if (endDate) return d <= endDate;
+          return true;
+        } catch {
+          return false;
+        }
+      })();
+
+      const byName = nameFilter
+        ? (o.client || "")
+            .toString()
+            .toLowerCase()
+            .includes(nameFilter.toLowerCase())
+        : true;
+
+      const byTaskId = taskIdFilter
+        ? (o.tasks || []).some((t) => {
+            const candidates = [t?.idTask, t?.id, t?.taskId, t?.idTask];
+            return candidates.some((v) => v !== undefined && v !== null && String(v) === String(taskIdFilter));
+          })
         : true;
 
       return byVehicle && byDate;
@@ -590,7 +616,7 @@ export default function WorkOrdersTable() {
             }}
             style={{ width: 300 }}
           />
-          <TextInput
+          {/* <TextInput
             type="date"
             label="Fecha creación"
             value={dateFilter}
@@ -599,7 +625,31 @@ export default function WorkOrdersTable() {
               setPage(0);
             }}
             style={{ width: 200 }}
+          /> */}
+
+          <TextInput
+            type="date"
+            label="Desde"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.currentTarget.value);
+              setPage(0);
+            }}
+            style={{ width: 200 }}
           />
+          <TextInput
+            type="date"
+            label="Hasta"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.currentTarget.value);
+              setPage(0);
+            }}
+            style={{ width: 200 }}
+          />
+        
+      
+       
           <Button
             variant="outline"
             color="gray"
@@ -748,10 +798,15 @@ export default function WorkOrdersTable() {
               />
               <Select
                 label={`Tarea ${i + 1}`}
-                data={tasks.map((task) => ({
-                  value: task.id.toString(),
-                  label: task.description,
-                }))}
+                placeholder="Buscar tarea..."
+                searchable
+                nothingFoundMessage="No se encontró"
+                data={
+                  ((tasks.some((tk) => tk && tk.idSector !== undefined && tk.idSector !== null) && t.idSector)
+                    ? tasks.filter((tk) => String(tk.idSector) === String(t.idSector))
+                    : tasks
+                  ).map((task) => ({ value: task.id.toString(), label: task.description }))
+                }
                 value={t.idTask}
                 onChange={(val) => {
                   const updated = [...newOrder.tasks];
@@ -978,10 +1033,15 @@ export default function WorkOrdersTable() {
                         </Table.Td>
                         <Table.Td>
                           <Select
-                            data={tasks.map((tk) => ({
-                              value: tk.id.toString(),
-                              label: tk.description,
-                            }))}
+                            placeholder="Buscar tarea..."
+                            searchable
+                            nothingFoundMessage="No se encontró"
+                            data={
+                              ((tasks.some((tk) => tk && tk.idSector !== undefined && tk.idSector !== null) && t.idSector)
+                                ? tasks.filter((tk) => String(tk.idSector) === String(t.idSector))
+                                : tasks
+                              ).map((tk) => ({ value: tk.id.toString(), label: tk.description }))
+                            }
                             value={t.idTask?.toString() || ""}
                             onChange={(val) => {
                               const updated = [
