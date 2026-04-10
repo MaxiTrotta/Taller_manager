@@ -826,7 +826,7 @@ export default function WorkOrdersTable() {
                 }
               />
               <TextInput
-                label="Nota"
+                label="Detalle / Observaciones"
                 value={t.note}
                 onChange={(e) => {
                   const updated = [...newOrder.tasks];
@@ -938,7 +938,7 @@ export default function WorkOrdersTable() {
                     <Table.Th>Sector</Table.Th>
                     <Table.Th>Tarea</Table.Th>
                     <Table.Th>Estado</Table.Th>
-                    <Table.Th>Nota</Table.Th>
+                    <Table.Th>Detalle / Observaciones</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -998,7 +998,7 @@ export default function WorkOrdersTable() {
                     <Table.Th>Sector</Table.Th>
                     <Table.Th>Tarea</Table.Th>
                     <Table.Th>Estado</Table.Th>
-                    <Table.Th>Nota</Table.Th>
+                    <Table.Th>Detalle / Observaciones</Table.Th>
                     <Table.Th>Acciones</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
