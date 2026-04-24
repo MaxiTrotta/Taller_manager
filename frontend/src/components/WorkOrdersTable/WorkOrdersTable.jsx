@@ -7,6 +7,7 @@ import {
   Modal,
   Select,
   TextInput,
+  Textarea,
   ScrollArea,
   ActionIcon,
   Loader,
@@ -203,6 +204,13 @@ export default function WorkOrdersTable() {
     fetchClients();
     fetchTasks();
     fetchSectors();
+
+    // Auto-refresh cada 60s
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // =================== CREAR ORDEN ===================
@@ -218,6 +226,7 @@ export default function WorkOrdersTable() {
         idVehicle: parseInt(newOrder.idVehicle),
         idOrderTask: 0,
         deleted: 0,
+        createdBy: localStorage.getItem("userName") || null,
       };
 
       const response = await WorkOrderCreatorService.create(payloadOrder);
@@ -463,7 +472,7 @@ export default function WorkOrdersTable() {
           .includes(vehicleFilter.toLowerCase())
         : true;
 
-            const byDate = (() => {
+      const byDate = (() => {
         if (!startDate && !endDate) return true;
         if (!o.creationDate) return false;
         try {
@@ -479,16 +488,16 @@ export default function WorkOrdersTable() {
 
       const byName = nameFilter
         ? (o.client || "")
-            .toString()
-            .toLowerCase()
-            .includes(nameFilter.toLowerCase())
+          .toString()
+          .toLowerCase()
+          .includes(nameFilter.toLowerCase())
         : true;
 
       const byTaskId = taskIdFilter
         ? (o.tasks || []).some((t) => {
-            const candidates = [t?.idTask, t?.id, t?.taskId, t?.idTask];
-            return candidates.some((v) => v !== undefined && v !== null && String(v) === String(taskIdFilter));
-          })
+          const candidates = [t?.idTask, t?.id, t?.taskId, t?.idTask];
+          return candidates.some((v) => v !== undefined && v !== null && String(v) === String(taskIdFilter));
+        })
         : true;
 
       return byVehicle && byDate;
@@ -647,9 +656,9 @@ export default function WorkOrdersTable() {
             }}
             style={{ width: 200 }}
           />
-        
-      
-       
+
+
+
           <Button
             variant="outline"
             color="gray"
@@ -711,9 +720,9 @@ export default function WorkOrdersTable() {
         <Modal
           opened={addModalOpened}
           onClose={closeAdd}
-          title="Crear nueva orden"
+          title="Crear nueva orden de trabajo"
           centered
-          size="lg"
+          size="xl"
         >
           <Select
             label="Cliente"
@@ -761,8 +770,8 @@ export default function WorkOrdersTable() {
           />
 
 
-          <Text fw={600} mt="md">
-            Tareas
+          <Text fw={600} mt="lg">
+            TRABAJOS A REALIZAR
           </Text>
           {newOrderErrors.tasks &&
             newOrderErrors.tasks[0] &&
@@ -773,7 +782,7 @@ export default function WorkOrdersTable() {
           {newOrder.tasks.map((t, i) => (
             <Group key={i} grow>
               <Select
-                label="Sector"
+                label="SECTOR "
                 data={sectors.map((s) => ({
                   value: s.id.toString(),
                   label: s.name,
@@ -797,7 +806,7 @@ export default function WorkOrdersTable() {
                 }
               />
               <Select
-                label={`Tarea ${i + 1}`}
+                label={`Trabajo a realizar ${i + 1}`}
                 placeholder="Buscar tarea..."
                 searchable
                 nothingFoundMessage="No se encontró"
@@ -825,9 +834,10 @@ export default function WorkOrdersTable() {
                   null
                 }
               />
-              <TextInput
+              <Textarea
                 label="Detalle / Observaciones"
                 value={t.note}
+                minRows={3}
                 onChange={(e) => {
                   const updated = [...newOrder.tasks];
                   updated[i].note = e.currentTarget.value;
@@ -900,7 +910,7 @@ export default function WorkOrdersTable() {
         <Modal
           opened={viewModalOpened}
           onClose={closeView}
-          title="Detalle de Orden"
+          title="Detalle de Orden de Trabajo"
           centered
           size="xl"
         >
@@ -912,6 +922,16 @@ export default function WorkOrdersTable() {
               <Text>
                 <b>Vehículo:</b> {selectedOrder.vehicle}
               </Text>
+              {selectedOrder.vehicleBrand || selectedOrder.vehicleModel ? (
+                <Text>
+                  <b>Marca / Modelo:</b> {selectedOrder.vehicleBrand || "-"} {selectedOrder.vehicleModel || ""}
+                </Text>
+              ) : null}
+
+              <Text mt="sm"><b>Creado por:</b> {selectedOrder.createdBy || "-"}</Text>
+              <Text><b>Creado el:</b> {selectedOrder.creationDate || "-"}</Text>
+              <Text><b>Última modificación por:</b> {selectedOrder.modifiedBy || "-"}</Text>
+              <Text><b>Última modificación el:</b> {selectedOrder.modifiedAt || "-"}</Text>
 
               <Group gap="xs" align="center" mt="sm">
                 <Text fw={500}>Estado:</Text>
@@ -936,9 +956,9 @@ export default function WorkOrdersTable() {
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Sector</Table.Th>
-                    <Table.Th>Tarea</Table.Th>
+                    <Table.Th>Trabajo a realizar</Table.Th>
                     <Table.Th>Estado</Table.Th>
-                    <Table.Th>Detalle / Observaciones</Table.Th>
+                    <Table.Th>Detalles / Observaciones </Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -961,7 +981,16 @@ export default function WorkOrdersTable() {
                             {t.state || "Sin estado"}
                           </Badge>
                         </Table.Td>
-                        <Table.Td>{t.note || "-"}</Table.Td>
+                        <Table.Td
+                          style={{
+                            maxWidth: "400px",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            overflowWrap: "break-word",
+                          }}
+                        >
+                          {t.note || "-"}
+                        </Table.Td>
                       </Table.Tr>
                     ))
                   ) : (
@@ -983,22 +1012,34 @@ export default function WorkOrdersTable() {
         <Modal
           opened={editModalOpened}
           onClose={closeEdit}
-          title="Editar Orden"
+          title="Editar Orden de Trabajo"
           centered
           size="xl"
         >
           {selectedOrderForEdit ? (
             <>
-              <Text fw={600} mb="sm">
+
+              <Text fw={600} mb="md">
                 Editar tareas de la orden #{selectedOrderForEdit.id}
+                <Text>
+                  <b>Cliente:</b> {selectedOrderForEdit.client}
+                </Text>
+                <Text>
+                  <b>Vehículo:</b> {selectedOrderForEdit.vehicle}
+                </Text>
+                {selectedOrderForEdit.vehicleBrand || selectedOrderForEdit.vehicleModel ? (
+                  <Text>
+                    <b>Marca / Modelo:</b> {selectedOrderForEdit.vehicleBrand || "-"} {selectedOrderForEdit.vehicleModel || ""}
+                  </Text>
+                ) : null}
               </Text>
               <Table highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Sector</Table.Th>
-                    <Table.Th>Tarea</Table.Th>
+                    <Table.Th>Trabajo a realizar</Table.Th>
                     <Table.Th>Estado</Table.Th>
-                    <Table.Th>Detalle / Observaciones</Table.Th>
+                    <Table.Th>Detalles / Observaciones</Table.Th>
                     <Table.Th>Acciones</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -1088,12 +1129,11 @@ export default function WorkOrdersTable() {
                           />
                         </Table.Td>
                         <Table.Td>
-                          <TextInput
+                          <Textarea
                             value={t.note || ""}
+                            minRows={3}
                             onChange={(e) => {
-                              const updated = [
-                                ...selectedOrderForEdit.tasks,
-                              ];
+                              const updated = [...selectedOrderForEdit.tasks];
                               updated[i].note = e.currentTarget.value;
                               setSelectedOrderForEdit((prev) => ({
                                 ...prev,
