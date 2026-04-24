@@ -1,3 +1,4 @@
+
 <?php
 
 declare(strict_types=1);
@@ -36,12 +37,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                 o.id AS idOrder,
                 c.name AS clientName,
                 v.licensePlate AS vehiclePlate,
-                v.brand AS vehicleBrand,
-                v.model AS vehicleModel,
-                o.creationDate AS creationDate,
-                o.createdBy AS createdBy,
-                o.modifiedBy AS modifiedBy,
-                o.modifiedAt AS modifiedAt
+                o.creationDate AS creationDate
             FROM order_base o
             INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
             INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
@@ -108,12 +104,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                 o.id AS idOrder,
                 c.name AS clientName,
                 v.licensePlate AS vehiclePlate,
-                v.brand AS vehicleBrand,
-                v.model AS vehicleModel,
-                o.creationDate AS creationDate,
-                o.createdBy AS createdBy,
-                o.modifiedBy AS modifiedBy,
-                o.modifiedAt AS modifiedAt
+                o.creationDate AS creationDate
             FROM order_base o
             INNER JOIN client c ON (c.id = o.idClient AND c.deleted = 0)
             INNER JOIN vehicle v ON (v.id = o.idVehicle AND v.deleted = 0)
@@ -138,7 +129,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
     public function insert(Order $order): int
     {
         $query = <<<INSERT_QUERY
-                    INSERT INTO order_base (idClient, idVehicle, idOrderTask, creationDate, createdBy, deleted) VALUES (:idClient, :idVehicle, :idOrderTask, :creationDate, :createdBy, :deleted)
+                    INSERT INTO order_base (idClient, idVehicle, idOrderTask, creationDate, deleted) VALUES (:idClient, :idVehicle, :idOrderTask, :creationDate, :deleted)
                 INSERT_QUERY;
 
         $parameters = [
@@ -146,7 +137,6 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             "idVehicle" => $order->idVehicle(),
             "idOrderTask" => $order->idOrderTask(),
             "creationDate" => $order->creationDate(),
-            "createdBy" => $order->createdBy(),
             "deleted" => $order->isDeleted()
         ];
 
@@ -164,8 +154,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                             idClient = :idClient,
                             idVehicle = :idVehicle,
                             idOrderTask = :idOrderTask,
-                            modifiedAt = :modifiedAt,
-                            modifiedBy = :modifiedBy,
+                            creationDate = :creationDate,
                             deleted = :deleted
                         WHERE
                             id = :id
@@ -175,8 +164,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             "idClient" => $order->idClient(),
             "idVehicle" => $order->idVehicle(),
             "idOrderTask" => $order->idOrderTask(),
-            "modifiedAt" => $order->modifiedAt(),
-            "modifiedBy" => $order->modifiedBy(),
+            "creationDate" => $order->creationDate(),
             "deleted" => $order->isDeleted(),
             "id" => $order->id()
         ];
@@ -222,9 +210,6 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             (int) $primitive["idVehicle"],
             (int) $primitive["idOrderTask"],
             $creationDate,
-            !empty($primitive["modifiedAt"]) ? new DateTime($primitive["modifiedAt"], new \DateTimeZone('America/Argentina/Buenos_Aires')) : null,
-            $primitive["createdBy"] ?? null,
-            $primitive["modifiedBy"] ?? null,
             (bool) $primitive["deleted"]
         );
     }
@@ -262,12 +247,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             (int) $primitive["idOrder"],
             (string) $primitive["clientName"],
             (string) $primitive["vehiclePlate"],
-            $primitive["vehicleBrand"] ?? null,
-            $primitive["vehicleModel"] ?? null,
-            $formattedDate, // string ISO 8601 o null
-            $primitive["createdBy"] ?? null,
-            $primitive["modifiedBy"] ?? null,
-            $primitive["modifiedAt"] ?? null
+            $formattedDate // string ISO 8601 o null
         );
     }
 
