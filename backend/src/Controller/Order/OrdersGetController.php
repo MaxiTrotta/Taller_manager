@@ -28,7 +28,12 @@ final readonly class OrdersGetController {
             "id" => $response->id(),
             "client" => $response->client(),
             "vehicle" => $response->vehicle(),
+            "vehicleBrand" => method_exists($response, 'vehicleBrand') ? $response->vehicleBrand() : null,
+            "vehicleModel" => method_exists($response, 'vehicleModel') ? $response->vehicleModel() : null,
             "creationDate" => $response->creationDate(),
+            "createdBy" => method_exists($response, 'createdBy') ? $response->createdBy() : null,
+            "modifiedBy" => method_exists($response, 'modifiedBy') ? $response->modifiedBy() : null,
+            "modifiedAt" => method_exists($response, 'modifiedAt') ? $response->modifiedAt() : null,
             "state" => $response->getOrderTaskState(),
         ];
     }
