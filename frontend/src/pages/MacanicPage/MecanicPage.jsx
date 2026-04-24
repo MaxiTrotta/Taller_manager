@@ -116,6 +116,7 @@ export default function MecanicPage() {
     setLoading(true);
     try {
       const res = await WorkOrderCreatorService.getAll();
+console.log("DATA BACKEND:", res.data);
       const orders = Array.isArray(res.data) ? res.data : [];
       // Normalizar campos de vehículo (por si el backend los devuelve en distintas formas)
       const normalized = orders.map((o) => {
