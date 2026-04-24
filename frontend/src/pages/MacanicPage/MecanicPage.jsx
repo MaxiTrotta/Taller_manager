@@ -760,7 +760,7 @@ export default function MecanicPage() {
           {selectedOrder ? (
             <>
               <Text>
-                <b>Cliente:</b> {selectedOrder.client}
+                <b>Cliente.:</b> {selectedOrder.client}
               </Text>
               <Text>
                 <b>Vehículo:</b> {selectedOrder.vehicle}
