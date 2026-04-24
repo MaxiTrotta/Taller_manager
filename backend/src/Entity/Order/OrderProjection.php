@@ -9,8 +9,13 @@ final class OrderProjection {
     public function __construct(
         private readonly int $id,
         private readonly string $client,
-        private readonly string $vehicle,
+        private readonly string $vehiclePlate,
+        private readonly ?string $vehicleBrand = null,
+        private readonly ?string $vehicleModel = null,
         private readonly string $creationDate,
+        private readonly ?string $createdBy = null,
+        private readonly ?string $modifiedBy = null,
+        private readonly ?string $modifiedAt = null,
         private array $orderTaskProjection = [],
     ) {
     }
@@ -27,12 +32,37 @@ final class OrderProjection {
 
     public function vehicle(): string
     {
-        return $this->vehicle;
+        return $this->vehiclePlate;
+    }
+
+    public function vehicleBrand(): ?string
+    {
+        return $this->vehicleBrand;
+    }
+
+    public function vehicleModel(): ?string
+    {
+        return $this->vehicleModel;
     }
 
     public function creationDate(): string
     {
         return $this->creationDate;
+    }
+
+    public function createdBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function modifiedBy(): ?string
+    {
+        return $this->modifiedBy;
+    }
+
+    public function modifiedAt(): ?string
+    {
+        return $this->modifiedAt;
     }
 
     public function orderTaskProjection(): array
