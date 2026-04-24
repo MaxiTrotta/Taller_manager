@@ -14,3 +14,4 @@ export const WorkOrderCreatorService = {
     }),
   delete: (id) => api.delete(`/orders/${id}`),
 };
+
