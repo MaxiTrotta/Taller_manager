@@ -39,7 +39,12 @@ final readonly class OrderGetController extends AuthMiddleware {
             "id" => $order->id(),
             "client" => $order->client(),
             "vehicle" => $order->vehicle(),
+            "vehicleBrand" => method_exists($order, 'vehicleBrand') ? $order->vehicleBrand() : null,
+            "vehicleModel" => method_exists($order, 'vehicleModel') ? $order->vehicleModel() : null,
             "creationDate" => $order->creationDate(),
+            "createdBy" => method_exists($order, 'createdBy') ? $order->createdBy() : null,
+            "modifiedBy" => method_exists($order, 'modifiedBy') ? $order->modifiedBy() : null,
+            "modifiedAt" => method_exists($order, 'modifiedAt') ? $order->modifiedAt() : null,
             "state" => $order->getOrderTaskState(),
             "tasks" => $tasks,
         ], JSON_PRETTY_PRINT);
