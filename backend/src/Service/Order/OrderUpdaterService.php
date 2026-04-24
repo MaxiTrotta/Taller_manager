@@ -13,11 +13,11 @@ final readonly class OrderUpdaterService {
         $this->finder = new OrderFinderService();
     }
 
-    public function update(int $idClient, int $idVehicle, int $idOrderTask, int $id): void
+    public function update(int $idClient, int $idVehicle, int $idOrderTask, int $id, ?string $modifiedBy = null): void
     {
         $order = $this->finder->find($id);
 
-        $order->modify($idClient, $idVehicle, $idOrderTask);
+        $order->modify($idClient, $idVehicle, $idOrderTask, $modifiedBy);
 
         $this->repository->update($order);
     }
