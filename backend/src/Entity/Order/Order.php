@@ -12,6 +12,9 @@ final class Order {
         private int $idVehicle,
         private int $idOrderTask,
         private ?DateTime $creationDate = null,
+        private ?DateTime $modifiedAt = null,
+        private ?string $createdBy = null,
+        private ?string $modifiedBy = null,
         private bool $deleted
     ) {
     }
@@ -20,6 +23,7 @@ final class Order {
         int $idClient,
         int $idVehicle,
         int $idOrderTask
+        , ?string $createdBy = null
         ): self
     {
         return new self(
@@ -28,17 +32,23 @@ final class Order {
             $idVehicle,
             $idOrderTask,
             new Datetime(),
+            null,
+            $createdBy,
+            null,
             false
         );
     }
 
-    public function modify(int $idClient, int $idVehicle, int $idOrderTask): void
+    public function modify(int $idClient, int $idVehicle, int $idOrderTask, ?string $modifiedBy = null): void
     {
         $this->idClient = $idClient;
         $this->idVehicle = $idVehicle;
         $this->idOrderTask = $idOrderTask;
-        // Actualizar fecha de creación cuando se modifica
-        $this->creationDate = new DateTime();
+        // Registrar fecha de modificación y usuario
+        $this->modifiedAt = new DateTime();
+        if ($modifiedBy !== null) {
+            $this->modifiedBy = $modifiedBy;
+        }
     }
 
     public function delete(): void
@@ -69,6 +79,21 @@ final class Order {
     public function creationDate(): ?string
     {
         return $this->creationDate?->format('Y-m-d H:i:s');
+    }
+
+    public function modifiedAt(): ?string
+    {
+        return $this->modifiedAt?->format('Y-m-d H:i:s');
+    }
+
+    public function createdBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function modifiedBy(): ?string
+    {
+        return $this->modifiedBy;
     }
 
     public function isDeleted(): int
