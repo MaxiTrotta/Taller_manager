@@ -16,6 +16,8 @@ final readonly class OrderPutController {
         $idVehicle = ControllerUtils::getPost("idVehicle");
         $idOrderTask = ControllerUtils::getPost("idOrderTask");
 
-        $this->service->update( $idClient, $idVehicle, $idOrderTask, $id);
+        $modifiedBy = ControllerUtils::getPost("modifiedBy", false, null);
+
+        $this->service->update( $idClient, $idVehicle, $idOrderTask, $id, $modifiedBy);
     }
 }
