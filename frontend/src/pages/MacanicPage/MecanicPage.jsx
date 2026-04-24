@@ -117,8 +117,26 @@ export default function MecanicPage() {
     try {
       const res = await WorkOrderCreatorService.getAll();
       const orders = Array.isArray(res.data) ? res.data : [];
+      // Normalizar campos de vehículo (por si el backend los devuelve en distintas formas)
+      const normalized = orders.map((o) => {
+        const vehicle = o.vehicle || o.vehicleData || {};
+        const vehicleBrand =
+          o.vehicleBrand ||
+          o.vehicle_brand ||
+          vehicle.brand ||
+          o.brand ||
+          "";
+        const vehicleModel =
+          o.vehicleModel ||
+          o.vehicle_model ||
+          vehicle.model ||
+          o.model ||
+          "";
+        return { ...o, vehicleBrand, vehicleModel };
+      });
+
       // Ordenar por fecha más reciente (más reciente primero)
-      const sortedOrders = orders.sort((a, b) => {
+      const sortedOrders = normalized.sort((a, b) => {
         const dateA = new Date(a.createdAt || a.creationDate || 0);
         const dateB = new Date(b.createdAt || b.creationDate || 0);
         return dateB - dateA; // Más reciente primero
