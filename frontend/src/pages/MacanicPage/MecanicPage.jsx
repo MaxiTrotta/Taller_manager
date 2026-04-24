@@ -7,6 +7,7 @@ import {
   Modal,
   Select,
   TextInput,
+  Textarea,
   ScrollArea,
   Loader,
   Center,
@@ -42,7 +43,7 @@ import {
 
 export default function MecanicPage() {
   const [userName, setUserName] = useState('');
-  
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [workOrders, setWorkOrders] = useState([]);
@@ -80,7 +81,7 @@ export default function MecanicPage() {
   });
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [search, setSearch] = useState("");
 
   // Confirmar finalización de tarea
@@ -137,8 +138,8 @@ export default function MecanicPage() {
       const data = Array.isArray(res.data)
         ? res.data
         : Array.isArray(res.data?.data)
-        ? res.data.data
-        : [];
+          ? res.data.data
+          : [];
       setClients(data);
     } catch {
       setClients([]);
@@ -151,8 +152,8 @@ export default function MecanicPage() {
       const data = Array.isArray(res.data)
         ? res.data
         : Array.isArray(res.data?.data)
-        ? res.data.data
-        : [];
+          ? res.data.data
+          : [];
       setVehicles(data);
     } catch {
       setVehicles([]);
@@ -165,8 +166,8 @@ export default function MecanicPage() {
       const data = Array.isArray(res.data)
         ? res.data
         : Array.isArray(res.data?.data)
-        ? res.data.data
-        : [];
+          ? res.data.data
+          : [];
       setTasks(data);
     } catch {
       setTasks([]);
@@ -179,8 +180,8 @@ export default function MecanicPage() {
       const data = Array.isArray(res.data)
         ? res.data
         : Array.isArray(res.data?.data)
-        ? res.data.data
-        : [];
+          ? res.data.data
+          : [];
       setSectors(data);
     } catch {
       setSectors([]);
@@ -192,10 +193,17 @@ export default function MecanicPage() {
     fetchClients();
     fetchTasks();
     fetchSectors();
-    
+
     // Obtener el nombre del usuario desde localStorage
-    const name = localStorage.getItem('userName') || 'Usuario';
+    const name = localStorage.getItem("userName") || "Usuario";
     setUserName(name);
+
+    // Auto-refresh cada 10 minutos
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 600000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // =================== LOGOUT ===================
@@ -224,6 +232,7 @@ export default function MecanicPage() {
         idVehicle: parseInt(newOrder.idVehicle),
         idOrderTask: 0,
         deleted: 0,
+        createdBy: localStorage.getItem("userName") || null,
       };
       await WorkOrderCreatorService.create(payloadOrder);
 
@@ -281,8 +290,8 @@ export default function MecanicPage() {
       const allOrderTasks = Array.isArray(resTasksAll.data)
         ? resTasksAll.data
         : Array.isArray(resTasksAll.data?.data)
-        ? resTasksAll.data.data
-        : [];
+          ? resTasksAll.data.data
+          : [];
 
       const allTasks = resTasksCatalog.data || [];
       const allSectors = resSectors.data || [];
@@ -293,7 +302,7 @@ export default function MecanicPage() {
             tk.description &&
             t.taskDescription &&
             tk.description.trim().toLowerCase() ===
-              t.taskDescription.trim().toLowerCase()
+            t.taskDescription.trim().toLowerCase()
         );
         const foundSector = allSectors.find(
           (s) =>
@@ -346,6 +355,21 @@ export default function MecanicPage() {
     }
   };
 
+  // =================== VER ORDEN (solo vista) ===================
+  const handleViewOrder = async (id) => {
+    setLoading(true);
+    try {
+      const res = await WorkOrderCreatorService.getById(id);
+      setSelectedOrder(res.data);
+      openView();
+    } catch (err) {
+      console.error("Error al traer orden para ver:", err);
+      setSelectedOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // =================== GUARDAR TAREAS ===================
   const handleSaveEditedTasks = async () => {
     if (!selectedOrderForEdit || !selectedOrderForEdit.tasks) return;
@@ -364,7 +388,7 @@ export default function MecanicPage() {
               s.name &&
               t.sectorName &&
               s.name.trim().toLowerCase() ===
-                t.sectorName.trim().toLowerCase()
+              t.sectorName.trim().toLowerCase()
           );
           if (foundSector) t.idSector = foundSector.id;
         }
@@ -375,7 +399,7 @@ export default function MecanicPage() {
               tk.description &&
               t.taskDescription &&
               tk.description.trim().toLowerCase() ===
-                t.taskDescription.trim().toLowerCase()
+              t.taskDescription.trim().toLowerCase()
           );
           if (foundTask) t.idTask = foundTask.id;
         }
@@ -392,10 +416,10 @@ export default function MecanicPage() {
           typeof t.state === "number"
             ? t.state
             : (t.state || "").toLowerCase() === "pendiente"
-            ? 1
-            : (t.state || "").toLowerCase().includes("proceso")
-            ? 2
-            : 3;
+              ? 1
+              : (t.state || "").toLowerCase().includes("proceso")
+                ? 2
+                : 3;
 
         await OrderTaskService.update(t.id, {
           idOrder: selectedOrderForEdit.id,
@@ -438,8 +462,8 @@ export default function MecanicPage() {
           const vehiclesData = Array.isArray(clientVehicles.data)
             ? clientVehicles.data
             : Array.isArray(clientVehicles.data?.data)
-            ? clientVehicles.data.data
-            : [];
+              ? clientVehicles.data.data
+              : [];
 
           const foundVehicle = vehiclesData.find(
             (v) => v.licensePlate === selectedOrderForEdit.vehicle
@@ -450,6 +474,7 @@ export default function MecanicPage() {
               idClient: foundClient.id,
               idVehicle: foundVehicle.id,
               idOrderTask: 0,
+              modifiedBy: localStorage.getItem("userName") || null,
             });
           }
         }
@@ -526,6 +551,13 @@ export default function MecanicPage() {
 
   // =================== FILTRO Y BÚSQUEDA ===================
   const filteredOrders = workOrders.filter((order) => {
+    // Ocultar órdenes finalizadas en la vista de mecánico
+    const isFinal =
+      typeof order.state === "number"
+        ? order.state === 3
+        : (order.state || "").toString().toLowerCase() === "finalizado";
+
+    if (isFinal) return false;
     if (!search || search.trim() === "") return true;
     const searchLower = search.toLowerCase().trim();
     const clientMatch = (order.client || "").toLowerCase().includes(searchLower);
@@ -548,7 +580,14 @@ export default function MecanicPage() {
     return (
       <Table.Tr key={order.id}>
         <Table.Td>{order.client}</Table.Td>
-        <Table.Td>{order.vehicle}</Table.Td>
+        <Table.Td>
+          {order.vehicle}
+          {(order.vehicleBrand || order.vehicleModel) && (
+            <div style={{ fontSize: 12, color: '#666' }}>
+              {order.vehicleBrand || ''} {order.vehicleModel || ''}
+            </div>
+          )}
+        </Table.Td>
         <Table.Td>{formatDate(order.createdAt ?? order.creationDate)}</Table.Td>
         <Table.Td>
           <Badge
@@ -556,37 +595,48 @@ export default function MecanicPage() {
               order.state === 1
                 ? "red"
                 : order.state === 2
-                ? "yellow"
-                : order.state === 3
-                ? "green"
-                : "gray"
+                  ? "yellow"
+                  : order.state === 3
+                    ? "green"
+                    : "gray"
             }
             variant="filled"
           >
             {order.state === 1
               ? "Pendiente"
               : order.state === 2
-              ? "En proceso"
-              : order.state === 3
-              ? "Finalizado"
-              : "Sin tareas"}
+                ? "En proceso"
+                : order.state === 3
+                  ? "Finalizado"
+                  : "Sin tareas"}
           </Badge>
         </Table.Td>
         <Table.Td style={{ textAlign: "center" }}>
-          <Button
-            color={isFinal ? "gray" : "green"}
-            size="xs"
-            leftSection={<IconNut size={14} />}
-            onClick={() => handleEditClick(order.id)}
-            disabled={isFinal}
-            title={
-              isFinal
-                ? "La orden está finalizada y no puede modificarse"
-                : "Ver / Modificar orden"
-            }
-          >
-            VER / MODIFICAR ORDEN
-          </Button>
+          <Group position="center" spacing="xs">
+            <Button
+              color="gray"
+              size="xs"
+              leftSection={<IconEye size={14} />}
+              onClick={() => handleViewOrder(order.id)}
+              title="Ver orden"
+            >
+              Ver
+            </Button>
+            <Button
+              color={isFinal ? "gray" : "green"}
+              size="xs"
+              leftSection={<IconPencil size={14} />}
+              onClick={() => handleEditClick(order.id)}
+              disabled={isFinal}
+              title={
+                isFinal
+                  ? "La orden está finalizada y no puede modificarse"
+                  : "Modificar orden"
+              }
+            >
+              Modificar
+            </Button>
+          </Group>
         </Table.Td>
       </Table.Tr>
     );
@@ -656,12 +706,12 @@ export default function MecanicPage() {
           page={page}
           onPageChange={(e, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[10, 25, 50, 100]} 
           onRowsPerPageChange={(e) => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
           }}
         />
-
         {/* 🔴 Modal Cerrar Sesión */}
         <Modal
           opened={logoutModalOpened}
@@ -681,7 +731,106 @@ export default function MecanicPage() {
           </Group>
         </Modal>
 
-        {/* 🟢 Modal Editar */}
+        {/* � Modal Ver (solo lectura) */}
+        <Modal
+          opened={viewModalOpened}
+          onClose={closeView}
+          title="Detalle de Orden"
+          centered
+          size="xl"
+        >
+          {selectedOrder ? (
+            <>
+              <Text>
+                <b>Cliente:</b> {selectedOrder.client}
+              </Text>
+              <Text>
+                <b>Vehículo:</b> {selectedOrder.vehicle}
+              </Text>
+
+              {selectedOrder.vehicleBrand || selectedOrder.vehicleModel ? (
+                <Text>
+                  <b>Marca / Modelo:</b> {selectedOrder.vehicleBrand || "-"} {selectedOrder.vehicleModel || ""}
+                </Text>
+              ) : null}
+
+
+              <Group gap="xs" align="center" mt="sm">
+                <Text fw={500}>Estado:</Text>
+                <Badge
+                  color={
+                    selectedOrder.state === 1
+                      ? "red"
+                      : selectedOrder.state === 2
+                        ? "yellow"
+                        : "green"
+                  }
+                  variant="filled"
+                >
+                  {stateNumberToText(selectedOrder.state)}
+                </Badge>
+              </Group>
+
+              <Text mt="md" fw={600}>
+                Tareas
+              </Text>
+              <Table highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Sector</Table.Th>
+                    <Table.Th>Trabajo a realizar</Table.Th>
+                    <Table.Th>Estado</Table.Th>
+                    <Table.Th>Detalles / Observaciones </Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {selectedOrder.tasks?.length > 0 ? (
+                    selectedOrder.tasks.map((t, i) => (
+                      <Table.Tr key={i}>
+                        <Table.Td>{t.sectorName}</Table.Td>
+                        <Table.Td>{t.taskDescription}</Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={
+                              stateTextToNumber(t.state) === 1
+                                ? "red"
+                                : stateTextToNumber(t.state) === 2
+                                  ? "yellow"
+                                  : "green"
+                            }
+                            variant="filled"
+                          >
+                            {t.state || "Sin estado"}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td
+                          style={{
+                            maxWidth: "400px",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            overflowWrap: "break-word",
+                          }}
+                        >
+                          {t.note || "-"}
+                        </Table.Td>
+                      </Table.Tr>
+                    ))
+                  ) : (
+                    <Table.Tr>
+                      <Table.Td colSpan={4} align="center">
+                        Sin tareas
+                      </Table.Td>
+                    </Table.Tr>
+                  )}
+                </Table.Tbody>
+              </Table>
+            </>
+          ) : (
+            <Text>Cargando orden...</Text>
+          )}
+        </Modal>
+
+        {/* �🟢 Modal Editar */}
         <Modal
           opened={editModalOpened}
           onClose={closeEdit}
@@ -699,9 +848,9 @@ export default function MecanicPage() {
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Sector</Table.Th>
-                    <Table.Th>Tarea</Table.Th>
+                    <Table.Th>Trabajo a realizar</Table.Th>
                     <Table.Th>Estado</Table.Th>
-                    <Table.Th>Nota</Table.Th>
+                    <Table.Th>Detalles / Observaciones </Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -709,7 +858,7 @@ export default function MecanicPage() {
                     selectedOrderForEdit.tasks.map((t, i) => {
                       const isFinal =
                         (t.state || "").toString().toLowerCase() ===
-                          "finalizado" || t.state === 3;
+                        "finalizado" || t.state === 3;
 
                       return (
                         <Table.Tr key={i}>
@@ -727,11 +876,11 @@ export default function MecanicPage() {
                                   ? "1"
                                   : (t.state || "").toLowerCase() ===
                                     "en proceso"
-                                  ? "2"
-                                  : (t.state || "").toLowerCase() ===
-                                    "finalizado"
-                                  ? "3"
-                                  : ""
+                                    ? "2"
+                                    : (t.state || "").toLowerCase() ===
+                                      "finalizado"
+                                      ? "3"
+                                      : ""
                               }
                               disabled={isFinal}
                               onChange={(val) => {
@@ -766,13 +915,16 @@ export default function MecanicPage() {
                             )}
                           </Table.Td>
                           <Table.Td>
-                            <TextInput
+                            <Textarea
                               value={t.note || ""}
                               disabled={isFinal}
+                              autosize
+                              minRows={2}
+                              maxRows={6}
+                              resize="none"
+                              placeholder="Agregar observaciones..."
                               onChange={(e) => {
-                                const updated = [
-                                  ...selectedOrderForEdit.tasks,
-                                ];
+                                const updated = [...selectedOrderForEdit.tasks];
                                 updated[i].note = e.currentTarget.value;
                                 setSelectedOrderForEdit((prev) => ({
                                   ...prev,
@@ -818,7 +970,7 @@ export default function MecanicPage() {
         >
           <Text>
             ¿Seguro que deseas marcar esta tarea como{" "}
-            <b>FINALIZADA</b>? Una vez finalizada no debería modificarse.
+            <b>FINALIZADA</b>? Una vez finalizada no podra MODIFICARSE.
           </Text>
 
           <Group justify="flex-end" mt="md">
