@@ -765,9 +765,6 @@ export default function MecanicPage() {
               <Text>
                 <b>Vehículo:</b> {selectedOrder.vehicle}
               </Text>
-              <Text>
-                <b>Marca:</b> {selectedOrder.vehicle.Brand}
-              </Text>
               {selectedOrder.vehicleBrand || selectedOrder.vehicleModel ? (
                 <Text>
                   <b>Marca / Modelo:</b> {selectedOrder.vehicleBrand || "-"} {selectedOrder.vehicleModel || ""}
