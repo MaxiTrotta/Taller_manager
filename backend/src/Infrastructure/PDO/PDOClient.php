@@ -62,6 +62,6 @@ final class PDOClient {
 
     private function env(string $key): ?string
     {
-        return $_ENV[$key] ?? $_SERVER[$key] ?? null;
+        return $_SERVER[$key] ?? $_ENV[$key] ?? null;
     }
 }
