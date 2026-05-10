@@ -37,6 +37,8 @@ final class PDOClient {
         $user = $this->env('MYSQLUSER')       ?? $this->env('DATABASE_USER');
         $pass = $this->env('MYSQLPASSWORD')   ?? $this->env('DATABASE_PASSWORD');
 
+        error_log("DATABASE DEBUG - HOST: $host, PORT: $port, DB: $db, USER: $user");
+
         $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
         try {
