@@ -11,7 +11,7 @@ export default defineConfig({
 
   preview: {
     allowedHosts: [
-      'ortiz.up.railway.app'
+      'ortiz-test.up.railway.app'
     ]
   }
 })
