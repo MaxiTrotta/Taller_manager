@@ -12,5 +12,9 @@ export const WorkOrderCreatorService = {
     api.put(`/orders/${id}`, payload, {
       headers: { "Content-Type": "application/json" },
     }),
+  close: (id, payload) =>
+    api.post(`/orders/close/${id}`, payload, {
+      headers: { "Content-Type": "application/json" },
+    }),
   delete: (id) => api.delete(`/orders/${id}`),
 };

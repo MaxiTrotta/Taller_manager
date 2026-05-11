@@ -15,7 +15,7 @@ import {
   Overlay,
   Badge,
 } from "@mantine/core";
-import { IconPlus, IconTrash, IconEye, IconPencil } from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconEye, IconPencil, IconCheck } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import TablePagination from "@mui/material/TablePagination";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -37,12 +37,13 @@ const stateTextToNumber = (s) => {
   if (t === "pendiente" || t === "1") return 1;
   if (t.includes("proceso") || t === "2") return 2;
   if (t === "finalizado" || t === "3") return 3;
+  if (t === "cerrado" || t === "4") return 4;
   return 1;
 };
 
 
 const stateNumberToText = (n) =>
-  n === 1 ? "Pendiente" : n === 2 ? "En proceso" : "Finalizado";
+  n === 1 ? "Pendiente" : n === 2 ? "En proceso" : n === 3 ? "Finalizado" : n === 4 ? "Cerrado" : "Pendiente";
 
 export default function WorkOrdersTable() {
 
@@ -103,7 +104,10 @@ export default function WorkOrdersTable() {
   const [editOrderErrors, setEditOrderErrors] = useState({ tasks: [] });
 
   // FILTROS
-  const [vehicleFilter, setVehicleFilter] = useState("");
+
+  const [searchFilter, setSearchFilter] = useState("");
+
+  // const [vehicleFilter, setVehicleFilter] = useState("");
   const [dateFilter, setDateFilter] = useState(""); // YYYY-MM-DD
   // default date range: last 7 days
   const _today = new Date();
@@ -111,7 +115,7 @@ export default function WorkOrdersTable() {
   const _sevenDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const _sevenDaysAgoStr = _sevenDaysAgo.toISOString().slice(0, 10);
 
-  const [nameFilter, setNameFilter] = useState("");
+  // const [nameFilter, setNameFilter] = useState("");
   const [taskIdFilter, setTaskIdFilter] = useState("");
   const [startDate, setStartDate] = useState(_sevenDaysAgoStr); // YYYY-MM-DD
   const [endDate, setEndDate] = useState(_todayStr); // YYYY-MM-DD
@@ -151,7 +155,18 @@ export default function WorkOrdersTable() {
     setLoading(true);
     try {
       const res = await WorkOrderCreatorService.getAll();
-      setWorkOrders(Array.isArray(res.data) ? res.data : []);
+      const orders = Array.isArray(res.data) ? res.data : [];
+
+      const normalized = orders.map((o) => {
+        const vehicle = o.vehicle || o.vehicleData || {};
+        const vehicleBrand =
+          o.vehicleBrand || o.vehicle_brand || vehicle.brand || o.brand || "";
+        const vehicleModel =
+          o.vehicleModel || o.vehicle_model || vehicle.model || o.model || "";
+        return { ...o, vehicleBrand, vehicleModel };
+      });
+
+      setWorkOrders(normalized);
     } catch (err) {
       console.error("Error al cargar órdenes:", err);
       setWorkOrders([]);
@@ -278,6 +293,87 @@ export default function WorkOrdersTable() {
     }
   };
 
+  // =================== CERRAR ORDEN ===================
+  const handleCloseOrder = async (order) => {
+    if (!order || !order.id) return;
+    const confirmClose = window.confirm(
+      `¿Confirmas cerrar la orden #${order.id}? Esta acción marcará la orden como cerrada.`
+    );
+    if (!confirmClose) return;
+    setBlocking(true);
+    try {
+      // Obtener la orden completa para extraer idClient / idVehicle
+      const res = await WorkOrderCreatorService.getById(order.id);
+      const fullOrder = res.data || {};
+      let idClient = fullOrder.idClient || fullOrder.id_client || null;
+      let idVehicle = fullOrder.idVehicle || fullOrder.id_vehicle || null;
+
+      // Si no vienen los ids, intentar resolver por nombre/patente
+      if (!idClient) {
+        // buscar en clients cargados en el componente
+        const foundClient = clients.find((c) => c.name === fullOrder.client || c.name === order.client);
+        if (foundClient) idClient = foundClient.id;
+        else {
+          // intentar cargar todos los clientes y buscar
+          try {
+            const resClients = await ClientCreatorService.getAll();
+            const allClients = resClients.data || [];
+            const fc = allClients.find((c) => c.name === fullOrder.client || c.name === order.client);
+            if (fc) idClient = fc.id;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
+      if (!idVehicle) {
+        // si tenemos idClient, buscar vehículos del cliente
+        if (idClient) {
+          try {
+            const resVehicles = await VehicleCreatorService.getAllByClient(idClient);
+            const vehs = Array.isArray(resVehicles.data) ? resVehicles.data : (resVehicles.data?.data || []);
+            const fv = vehs.find((v) => v.licensePlate === fullOrder.vehicle || v.licensePlate === order.vehicle);
+            if (fv) idVehicle = fv.id;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
+      if (!idClient || !idVehicle) {
+        showToast("No se pudo determinar idClient o idVehicle de la orden", "red");
+        setBlocking(false);
+        return;
+      }
+
+      const payload = {
+        idClient: parseInt(idClient),
+        idVehicle: parseInt(idVehicle),
+        idOrderTask: 0,
+        modifiedBy: localStorage.getItem("userName") || null,
+      };
+
+      // Ejecutar close en backend para persistir isClosed flag
+      await WorkOrderCreatorService.close(order.id, payload);
+
+      // Actualizar inmediatamente la UI localmente para mostrar estado cerrado
+      setWorkOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, state: 4, isClosed: true } : o
+        )
+      );
+
+      // Refrescar la lista en segundo plano por si hay otros cambios
+      fetchOrders();
+      showToast(`Orden #${order.id} cerrada correctamente`, "green");
+    } catch (err) {
+      console.error("Error cerrando orden:", err);
+      showToast("No se pudo cerrar la orden", "red");
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   // =================== EDITAR ORDEN ===================
   const handleEditClick = async (id) => {
     setLoading(true);
@@ -401,6 +497,7 @@ export default function WorkOrdersTable() {
             idSector: t.idSector,
             state: stateNumber,
             note: t.note || "",
+            modifiedBy: localStorage.getItem("userName") || null,
           });
         } else if (t.idTask && t.idSector) {
           await OrderTaskService.create({
@@ -410,6 +507,7 @@ export default function WorkOrdersTable() {
             state: 1,
             note: t.note || "",
             deleted: 0,
+            modifiedBy: localStorage.getItem("userName") || null,
           });
         }
       }
@@ -424,7 +522,9 @@ export default function WorkOrdersTable() {
         selectedOrderForEdit.id
       );
       const updatedOrder = resUpdated.data;
-      updatedOrder.creationDate = new Date().toISOString();
+      // reflect the modification timestamp and user locally
+      updatedOrder.modifiedAt = new Date().toISOString();
+      updatedOrder.modifiedBy = localStorage.getItem("userName") || null;
 
       setWorkOrders((prev) => {
         const rest = prev.filter((o) => o.id !== updatedOrder.id);
@@ -465,11 +565,16 @@ export default function WorkOrdersTable() {
   // =================== TABLA / FILTROS ===================
   const filteredAndSorted = (workOrders || [])
     .filter((o) => {
-      const byVehicle = vehicleFilter
-        ? (o.vehicle || "")
-          .toString()
+      // const byVehicle = vehicleFilter
+      //   ? (o.vehicle || "")
+      //     .toString()
+      //     .toLowerCase()
+      //     .includes(vehicleFilter.toLowerCase())
+      //   : true;
+      const bySearch = searchFilter
+        ? `${o.client || ""} ${o.vehicle || ""} ${o.vehicleBrand || ""} ${o.vehicleModel || ""}`
           .toLowerCase()
-          .includes(vehicleFilter.toLowerCase())
+          .includes(searchFilter.toLowerCase())
         : true;
 
       const byDate = (() => {
@@ -486,12 +591,12 @@ export default function WorkOrdersTable() {
         }
       })();
 
-      const byName = nameFilter
-        ? (o.client || "")
-          .toString()
-          .toLowerCase()
-          .includes(nameFilter.toLowerCase())
-        : true;
+      // const byName = nameFilter
+      //   ? (o.client || "")
+      //     .toString()
+      //     .toLowerCase()
+      //     .includes(nameFilter.toLowerCase())
+      //   : true;
 
       const byTaskId = taskIdFilter
         ? (o.tasks || []).some((t) => {
@@ -500,12 +605,13 @@ export default function WorkOrdersTable() {
         })
         : true;
 
-      return byVehicle && byDate;
+      const notClosed = Number(o.state) !== 4;
+      return bySearch && byDate && byTaskId && notClosed;
     })
     .sort((a, b) => {
-      const da = a.creationDate ? new Date(a.creationDate).getTime() : 0;
-      const db = b.creationDate ? new Date(b.creationDate).getTime() : 0;
-      return db - da; // más recientes primero
+      const ta = a.modifiedAt ? new Date(a.modifiedAt).getTime() : (a.creationDate ? new Date(a.creationDate).getTime() : 0);
+      const tb = b.modifiedAt ? new Date(b.modifiedAt).getTime() : (b.creationDate ? new Date(b.creationDate).getTime() : 0);
+      return tb - ta; // ordenar por última modificación (más reciente primero)
     });
 
   const paginated = filteredAndSorted.slice(
@@ -526,13 +632,24 @@ export default function WorkOrdersTable() {
           : "-"}
       </Table.Td>
       <Table.Td>
+        {order.modifiedAt
+          ? new Date(order.modifiedAt).toLocaleString("es-ES", {
+            hour12: false,
+          })
+          : "-"}
+      </Table.Td>
+      <Table.Td>
         <Badge
           color={
             order.state === 1
               ? "red"
               : order.state === 2
                 ? "yellow"
-                : "green"
+                : order.state === 3
+                  ? "green"
+                  : order.state === 4
+                    ? "violet"
+                    : "gray"
           }
           variant="filled"
         >
@@ -547,6 +664,16 @@ export default function WorkOrdersTable() {
             onClick={() => handleViewOrder(order.id)}
           >
             <IconEye size={16} />
+          </ActionIcon>
+          {/* Close order button: left of edit */}
+          <ActionIcon
+            color="teal"
+            variant="subtle"
+            title="Cerrar orden"
+            onClick={() => handleCloseOrder(order)}
+            disabled={order.isClosed || order.state !== 3}
+          >
+            <IconCheck size={16} />
           </ActionIcon>
           <ActionIcon
             color="gray"
@@ -617,13 +744,13 @@ export default function WorkOrdersTable() {
         {/* Filtros */}
         <Group mb="sm">
           <TextInput
-            placeholder="Buscar por vehículo (patente, marca, etc.)"
-            value={vehicleFilter}
+            placeholder="Buscar cliente, patente, marca o modelo..."
+            value={searchFilter}
             onChange={(e) => {
-              setVehicleFilter(e.currentTarget.value);
+              setSearchFilter(e.currentTarget.value);
               setPage(0);
             }}
-            style={{ width: 300 }}
+            style={{ width: 420 }}
           />
           {/* <TextInput
             type="date"
@@ -663,8 +790,9 @@ export default function WorkOrdersTable() {
             variant="outline"
             color="gray"
             onClick={() => {
-              setVehicleFilter("");
-              setDateFilter("");
+              setSearchFilter("");
+              setStartDate(_sevenDaysAgoStr);
+              setEndDate(_todayStr);
               setPage(0);
             }}
           >
@@ -679,7 +807,8 @@ export default function WorkOrdersTable() {
               <Table.Th>ID</Table.Th>
               <Table.Th>Cliente</Table.Th>
               <Table.Th>Vehículo</Table.Th>
-              <Table.Th>Fecha de creación / Modificación</Table.Th>
+              <Table.Th>Fecha de creación</Table.Th>
+              <Table.Th>Fecha de modificación</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th>Acciones</Table.Th>
             </Table.Tr>

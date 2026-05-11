@@ -450,6 +450,7 @@ export default function MecanicPage() {
             stateNumber === 3
               ? t.finalizedAt || new Date().toISOString()
               : null,
+          modifiedBy: localStorage.getItem("userName") || null,
         });
 
         // Notificación por cada tarea que se finaliza
@@ -504,7 +505,9 @@ export default function MecanicPage() {
         const resUpdated = await WorkOrderCreatorService.getById(
           selectedOrderForEdit.id
         );
-        const updatedOrder = resUpdated.data;
+  const updatedOrder = resUpdated.data;
+  updatedOrder.modifiedAt = new Date().toISOString();
+  updatedOrder.modifiedBy = localStorage.getItem("userName") || null;
 
         // Si todas las tareas quedaron finalizadas, marcamos la orden como finalizada en el FRONT
         const allFinished = (updatedOrder.tasks || []).every((tt) => {
@@ -568,22 +571,33 @@ export default function MecanicPage() {
   };
 
   // =================== FILTRO Y BÚSQUEDA ===================
-  const filteredOrders = workOrders.filter((order) => {
-    // Ocultar órdenes finalizadas en la vista de mecánico
-    const isFinal =
-      typeof order.state === "number"
-        ? order.state === 3
-        : (order.state || "").toString().toLowerCase() === "finalizado";
+const filteredOrders = workOrders.filter((order) => {
+  // Ocultar órdenes finalizadas en la vista de mecánico
+  const isHidden =
+    typeof order.state === "number"
+      ? order.state === 3 || order.state === 4
+      : ["finalizado", "Cerrado"].includes(
+          (order.state || "").toString().toLowerCase()
+        );
 
-    if (isFinal) return false;
-    if (!search || search.trim() === "") return true;
-    const searchLower = search.toLowerCase().trim();
-    const clientMatch = (order.client || "").toLowerCase().includes(searchLower);
-    const vehicleMatch = (order.vehicle || "").toLowerCase().includes(searchLower);
-    return clientMatch || vehicleMatch;
-  });
+  if (isHidden) return false;
 
-  // =================== FILAS ===================
+  if (!search || search.trim() === "") return true;
+
+  const searchLower = search.toLowerCase().trim();
+
+  const clientMatch = (order.client || "")
+    .toLowerCase()
+    .includes(searchLower);
+
+  const vehicleMatch = (order.vehicle || "")
+    .toLowerCase()
+    .includes(searchLower);
+
+  return clientMatch || vehicleMatch;
+});
+
+// =================== FILAS ===================
   const paginated = filteredOrders.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -760,11 +774,12 @@ export default function MecanicPage() {
           {selectedOrder ? (
             <>
               <Text>
-                <b>Cliente.:</b> {selectedOrder.client}
+                <b>Cliente:</b> {selectedOrder.client}
               </Text>
               <Text>
                 <b>Vehículo:</b> {selectedOrder.vehicle}
               </Text>
+
               {selectedOrder.vehicleBrand || selectedOrder.vehicleModel ? (
                 <Text>
                   <b>Marca / Modelo:</b> {selectedOrder.vehicleBrand || "-"} {selectedOrder.vehicleModel || ""}
