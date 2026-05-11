@@ -63,7 +63,7 @@ export function NavbarSimpleColored() {
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <a href="/dashboard" style={{ display: "flex", justifyContent: "center" }}>
-              <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
+              <img src="/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
             <Text 
               size="sm" 
@@ -75,7 +75,7 @@ export function NavbarSimpleColored() {
             </Text>
           </div> 
           <Code fw={700} className={classes.version}>
-            v 1.0
+            v 1.1
           </Code>
         </Group>
         {links}
