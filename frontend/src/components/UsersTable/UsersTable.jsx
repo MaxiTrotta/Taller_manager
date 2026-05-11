@@ -164,7 +164,11 @@ export default function UsersTable() {
     setBlocking(true);
     try {
       const response = await usersService.getAll();
-      const arr = Array.isArray(response.data) ? response.data : [];
+      const arr = Array.isArray(response.data)
+  ? response.data.filter(
+      (u) => u.email.toLowerCase() !== "admin@test.com"
+    )
+  : [];
       setUsers(arr);
       setSortedUsers(
         sortData(arr, {
