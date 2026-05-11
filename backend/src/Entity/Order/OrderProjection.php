@@ -17,6 +17,7 @@ final class OrderProjection {
         private readonly ?string $modifiedBy = null,
         private readonly ?string $modifiedAt = null,
         private array $orderTaskProjection = [],
+        private bool $isClosed = false,
     ) {
     }
 
@@ -25,6 +26,10 @@ final class OrderProjection {
         return $this->id;
     }
 
+    public function isClosed(): bool
+    {
+        return $this->isClosed;
+    }
     public function client(): string
     {
         return $this->client;
@@ -77,19 +82,25 @@ final class OrderProjection {
 
     public function getOrderTaskState():int
     {
+        // 0 = SIN TAREAS
+        // 1 = PENDIENTE
+        // 2 = EN PROCESO
+        // 3 = FINALIZADO
+        // 4 = CERRADO
+
         if (empty($this->orderTaskProjection)) {
-            return 0; // PENDIENTE
+            return 0;
         }
-        # 0 = SIN TAREAS
-        # 1 = PENDIENTE
-        # 2 = EN PROCESO
-        # 3 = FINALIZADO
-        $state = 1; // por defecto Pendiente
+
+        // Si la orden está marcada como cerrada, devolvemos 4
+        if ($this->isClosed === true) {
+            return 4;
+        }
+
         $cantidadFinalizados = 0;
         foreach ($this->orderTaskProjection as $task) {
             $taskState = strtoupper(trim((string)$task->state()));
-            if ($taskState === 'EN PROCESO' || $taskState === 'EN PROCESO') {
-                // si alguna tarea está en proceso, la orden está en proceso
+            if ($taskState === 'EN PROCESO') {
                 return 2;
             } elseif ($taskState === 'FINALIZADO') {
                 $cantidadFinalizados++;
@@ -97,9 +108,9 @@ final class OrderProjection {
         }
 
         if ($cantidadFinalizados === count($this->orderTaskProjection)) {
-            $state = 3; // todas finalizadas
+            return 3;
         }
 
-        return $state;
+        return 1;
     }
 }

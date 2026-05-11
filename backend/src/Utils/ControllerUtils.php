@@ -48,14 +48,28 @@ final readonly class ControllerUtils {
 
     private static function getPostData(): array
     {
-        $json = file_get_contents('php://input');
-        
-        if (empty($json)) {
-            return [];
+        // Read raw request body
+        $input = file_get_contents('php://input');
+
+        // If there's no raw body, rely on PHP's parsed $_POST (typical for form submissions)
+        if ($input === false || $input === null || $input === '') {
+            return $_POST ?? [];
         }
-        
-        $postData = json_decode($json, true);
-        return $postData;
+
+        // Try parse as JSON first
+        $postData = json_decode($input, true);
+        if (is_array($postData)) {
+            return $postData;
+        }
+
+        // If not JSON, try form-encoded body (e.g. "a=1&b=2")
+        parse_str($input, $parsed);
+        if (is_array($parsed) && !empty($parsed)) {
+            return $parsed;
+        }
+
+        // Fallback to $_POST if available
+        return $_POST ?? [];
     }
 
     public static function getFile(string $name, bool $required = true, mixed $default = null): mixed 

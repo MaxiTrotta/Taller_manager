@@ -36,6 +36,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                 o.id AS idOrder,
                 c.name AS clientName,
                 v.licensePlate AS vehiclePlate,
+                o.isClosed AS isClosed,
                 v.brand AS vehicleBrand,
                 v.model AS vehicleModel,
                 o.creationDate AS creationDate,
@@ -108,6 +109,7 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
                 o.id AS idOrder,
                 c.name AS clientName,
                 v.licensePlate AS vehiclePlate,
+                o.isClosed AS isClosed,
                 v.brand AS vehicleBrand,
                 v.model AS vehicleModel,
                 o.creationDate AS creationDate,
@@ -179,6 +181,43 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             "modifiedBy" => $order->modifiedBy(),
             "deleted" => $order->isDeleted(),
             "id" => $order->id()
+        ];
+
+        $this->execute($query, $parameters);
+    }
+
+    public function markClosed(int $id, ?string $modifiedBy = null): void
+    {
+        $query = <<<UPDATE_QUERY
+            UPDATE order_base
+            SET isClosed = 1,
+                modifiedAt = :modifiedAt,
+                modifiedBy = :modifiedBy
+            WHERE id = :id
+        UPDATE_QUERY;
+
+        $parameters = [
+            'modifiedAt' => (new DateTime())->format('Y-m-d H:i:s'),
+            'modifiedBy' => $modifiedBy,
+            'id' => $id
+        ];
+
+        $this->execute($query, $parameters);
+    }
+
+    public function touchModified(int $idOrder, ?string $modifiedBy = null): void
+    {
+        $query = <<<UPDATE_QUERY
+            UPDATE order_base
+            SET modifiedAt = :modifiedAt,
+                modifiedBy = :modifiedBy
+            WHERE id = :id
+        UPDATE_QUERY;
+
+        $parameters = [
+            'modifiedAt' => (new DateTime())->format('Y-m-d H:i:s'),
+            'modifiedBy' => $modifiedBy,
+            'id' => $idOrder
         ];
 
         $this->execute($query, $parameters);
@@ -267,7 +306,9 @@ final readonly class OrderRepository extends PDOManager implements OrderReposito
             $formattedDate, // string ISO 8601 o null
             $primitive["createdBy"] ?? null,
             $primitive["modifiedBy"] ?? null,
-            $primitive["modifiedAt"] ?? null
+            $primitive["modifiedAt"] ?? null,
+            [],
+            isset($primitive['isClosed']) ? (bool)$primitive['isClosed'] : false
         );
     }
 
