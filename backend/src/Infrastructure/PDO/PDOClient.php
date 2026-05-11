@@ -38,6 +38,7 @@ final class PDOClient {
         $pass = $this->env('MYSQLPASSWORD')   ?? $this->env('DATABASE_PASSWORD');
 
         error_log("DATABASE DEBUG - HOST: $host, PORT: $port, DB: $db, USER: $user");
+        file_put_contents('/tmp/db_debug.log', "HOST: $host, PORT: $port, DB: $db, USER: $user\n", FILE_APPEND);
 
         $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
