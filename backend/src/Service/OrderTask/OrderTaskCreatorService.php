@@ -8,9 +8,11 @@ use Src\Infrastructure\Repository\OrderTask\OrderTaskRepository;
 
 final readonly class OrderTaskCreatorService {
     private OrderTaskRepository $repository;
+    private \Src\Infrastructure\Repository\Order\OrderRepository $orderRepository;
 
     public function __construct() {
         $this->repository = new OrderTaskRepository();
+        $this->orderRepository = new \Src\Infrastructure\Repository\Order\OrderRepository();
     }
 
     public function create(
@@ -22,6 +24,7 @@ final readonly class OrderTaskCreatorService {
             ?int $idSector,
             ?int $idTask,
             ?string $note,
+            ?string $modifiedBy = null
         ): void
     {
         $orderTask = OrderTask::create(
@@ -35,5 +38,10 @@ final readonly class OrderTaskCreatorService {
                 $note
             );
         $this->repository->insert($orderTask);
+
+        // touch parent order modification timestamp
+        if ($idOrder) {
+            $this->orderRepository->touchModified($idOrder, $modifiedBy);
+        }
     }
 }
