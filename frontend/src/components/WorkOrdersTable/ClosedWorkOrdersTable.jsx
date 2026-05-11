@@ -39,6 +39,7 @@ export default function ClosedWorkOrdersTable() {
   // view modal
   const [viewModalOpened, setViewModalOpened] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -71,7 +72,7 @@ export default function ClosedWorkOrdersTable() {
   }, []);
 
   const handleViewOrder = async (id) => {
-    setLoading(true);
+    setModalLoading(true);
     try {
       const res = await WorkOrderCreatorService.getById(id);
       setSelectedOrder(res.data);
@@ -79,7 +80,7 @@ export default function ClosedWorkOrdersTable() {
     } catch (err) {
       console.error("Error al traer orden:", err);
     } finally {
-      setLoading(false);
+      setModalLoading(false);
     }
   };
 
@@ -217,7 +218,11 @@ export default function ClosedWorkOrdersTable() {
                 </Table.Td>
                 <Table.Td>
                   <Group gap={0} justify="flex-end">
-                    <ActionIcon color="gray" variant="subtle" onClick={() => handleViewOrder(order.id)}>
+                    <ActionIcon color="gray" variant="subtle" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleViewOrder(order.id);
+                    }}>
                       <IconEye size={16} />
                     </ActionIcon>
                   </Group>
@@ -246,7 +251,11 @@ export default function ClosedWorkOrdersTable() {
       </ScrollArea>
 
       <Modal opened={viewModalOpened} onClose={() => setViewModalOpened(false)} title="Detalle de Orden de Trabajo" centered size="xl">
-        {selectedOrder ? (
+        {modalLoading ? (
+          <Center style={{ padding: 20 }}>
+            <Loader />
+          </Center>
+        ) : selectedOrder ? (
           <>
             <Text>
               <b>Cliente:</b> {selectedOrder.client}
