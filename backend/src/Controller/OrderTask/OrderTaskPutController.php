@@ -20,6 +20,7 @@ final readonly class OrderTaskPutController {
         $idSector = ControllerUtils::getPost("idSector");
         $idTask = ControllerUtils::getPost("idTask");
         $note = ControllerUtils::getPost("note");
+    $modifiedBy = ControllerUtils::getPost('modifiedBy', false, null);
 
         // Si el cliente envía el estado como número (1,2,3), lo convertimos a texto para mantener consistencia
         if (is_numeric($state)) {
@@ -39,7 +40,8 @@ final readonly class OrderTaskPutController {
             $idSector,
             $idTask,
             $note,
-            $id
+            $id,
+            $modifiedBy
         );
     }
 }
