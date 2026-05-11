@@ -164,7 +164,11 @@ export default function UsersTable() {
     setBlocking(true);
     try {
       const response = await usersService.getAll();
-      const arr = Array.isArray(response.data) ? response.data : [];
+      const arr = Array.isArray(response.data)
+        ? response.data.filter(
+          (u) => u.email.toLowerCase() !== "admin@test.com"
+        )
+        : [];
       setUsers(arr);
       setSortedUsers(
         sortData(arr, {
@@ -266,7 +270,7 @@ export default function UsersTable() {
 
     // Validaciones
     setPasswordError("");
-    
+
     if (!newPassword || newPassword.trim() === "") {
       setPasswordError("La contraseña no puede estar vacía");
       return;
@@ -330,12 +334,12 @@ export default function UsersTable() {
   async function handleRegister(formData) {
     try {
       setRegisterError("");
-      
+
       // Validar email duplicado antes de enviar
       const emailExists = users.some(
         (u) => u.email.toLowerCase() === formData.email.toLowerCase()
       );
-      
+
       if (emailExists) {
         setRegisterError("El email ya está registrado");
         registerForm.setError("email", {
@@ -365,12 +369,12 @@ export default function UsersTable() {
         error?.response?.data?.message ||
         error?.message ||
         "Error al registrar el usuario. El email puede estar en uso.";
-      
+
       setRegisterError(errorMessage);
-      
+
       // Si el error es de email duplicado del backend
-      if (errorMessage.toLowerCase().includes("email") || 
-          errorMessage.toLowerCase().includes("ya se encuentra")) {
+      if (errorMessage.toLowerCase().includes("email") ||
+        errorMessage.toLowerCase().includes("ya se encuentra")) {
         registerForm.setError("email", {
           type: "manual",
           message: errorMessage,

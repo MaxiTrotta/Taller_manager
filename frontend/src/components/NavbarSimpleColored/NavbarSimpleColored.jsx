@@ -11,6 +11,7 @@ import {
   IconSettings,
   IconSwitchHorizontal,
   IconChartBar,
+  IconCurrencyDollar,
 } from '@tabler/icons-react';
 import { Code, Group, Text } from '@mantine/core';
 import classes from './NavbarSimpleColored.module.css';
@@ -26,6 +27,9 @@ const data = [
   { link: '/empleado', label: 'Empleados', icon: IconFingerprint },
   { link: '/usuarios', label: 'Usuarios', icon: IconKey },
   { link: '/tareas', label: 'Tareas', icon: IconListCheck },
+  // { link: '/presupuesto', label: 'Presupuesto', icon: IconCurrencyDollar },
+  { link: '/ordenes_cerradas', label: 'Órdenes Cerradas', icon: IconCurrencyDollar },
+  
 ];
 export function NavbarSimpleColored() {
   const navigate = useNavigate();
@@ -59,7 +63,7 @@ export function NavbarSimpleColored() {
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <a href="/dashboard" style={{ display: "flex", justifyContent: "center" }}>
-              <img src="/Logo.png" alt="Logo Ortiz Hnos" />
+              <img src="/public/Logo.png" alt="Logo Ortiz Hnos" />
             </a>
             <Text 
               size="sm" 

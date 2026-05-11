@@ -10,10 +10,12 @@ import { RegisterPage } from "./pages/RegisterPage/RegisterPage";
 import { TableSort } from './components/TableSort/TableSort'
 import EmployeesTable from './components/EmployeesTable/EmployeesTable';
 import WorkOrdersTable from './components/WorkOrdersTable/WorkOrdersTable';
+import ClosedWorkOrdersTable from './components/WorkOrdersTable/ClosedWorkOrdersTable';
 import MecanicPage from './pages/MacanicPage/MecanicPage';
 import UsersTable from './components/UsersTable/UsersTable';
 import { TasksTable } from './components/TasksTable/TasksTable';
 import Dashboard from './components/Dashboard/Dashboard';
+import BudgetsTable from './components/BudgetsTable/BudgetsTable';
 
 function App() {
 	return (
@@ -36,6 +38,8 @@ function App() {
 					<Route path="/ordenes" element={<WorkOrdersTable />} />
 					<Route path="/cliente" element={<TableSort />} />
 					<Route path="/tareas" element={<TasksTable />} />
+					{/* <Route path="/presupuesto" element={<BudgetsTable />} /> */}
+					<Route path="/ordenes_cerradas" element={<ClosedWorkOrdersTable />} />
 					
 				</Route>					{/* RUTA SOLO MECANICOS */}
 					<Route element={<MecanicRoute />}>

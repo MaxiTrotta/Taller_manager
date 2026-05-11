@@ -131,7 +131,16 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(0,0,0,0.7)",
+                      border: "none",
+                      boxShadow: "none",
+                      color: "#fff"
+                    }}
+                    wrapperStyle={{ outline: "none" }}
+                  />
+
                   <Legend />
                   <Line type="monotone" dataKey="count" stroke="#45B7D1" name="Órdenes" />
                 </LineChart>
@@ -149,14 +158,14 @@ export default function Dashboard() {
               </Text>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie 
-                    data={ordersStatus} 
-                    cx="50%" 
-                    cy="50%" 
-                    labelLine={false} 
-                    label={({ name, count }) => `${name}: ${count}`} 
-                    outerRadius={80} 
-                    fill="#8884d8" 
+                  <Pie
+                    data={ordersStatus}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, count }) => `${name}: ${count}`}
+                    outerRadius={80}
+                    fill="#8884d8"
                     dataKey="count"
                   >
                     {ordersStatus.map((entry, index) => (
@@ -182,7 +191,16 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="taskName" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(0,0,0,0.7)",
+                      border: "none",
+                      boxShadow: "none",
+                      color: "#fff"
+                    }}
+                    wrapperStyle={{ outline: "none" }}
+                  />
+
                   <Legend />
                   <Bar dataKey="count" fill="#f71919ff" name="Cantidad" />
                 </BarChart>
@@ -203,7 +221,16 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis dataKey="sectorName" type="category" width={100} />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(0,0,0,0.7)",
+                      border: "none",
+                      boxShadow: "none",
+                      color: "#fff"
+                    }}
+                    wrapperStyle={{ outline: "none" }}
+                  />
+
                   <Legend />
                   <Bar dataKey="count" fill="#FFA07A" name="Cantidad de trabajos" />
                 </BarChart>
@@ -224,7 +251,16 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="clientName" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(0,0,0,0.7)",
+                      border: "none",
+                      boxShadow: "none",
+                      color: "#fff"
+                    }}
+                    wrapperStyle={{ outline: "none" }}
+                  />
+
                   <Legend />
                   <Bar dataKey="orderCount" fill="#45B7D1" name="Cantidad de órdenes" />
                 </BarChart>
