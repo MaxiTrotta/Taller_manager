@@ -66,7 +66,7 @@ final readonly class Router
      * Example: domain/1/2 -> [1, 2]
      */
     private function getParameters(Route $route, string $url): array
- {
+    {
         // Normalizar URL: eliminar query string y quedarnos sólo con el path
         // Ej: /vehicles?clientId=1 -> /vehicles
         $path = parse_url($url, PHP_URL_PATH) ?: $url;

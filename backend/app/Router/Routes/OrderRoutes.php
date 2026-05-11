@@ -40,6 +40,18 @@ final readonly class OrderRoutes {
         ]
       ],
       [
+        "name" => "order_close",
+        "url" => "/orders/close",
+        "controller" => "Order/OrderCloseController.php",
+        "method" => "POST",
+        "parameters" => [
+          [
+            "name" => "id",
+            "type" => "int"
+          ]
+        ]
+      ],
+      [
         "name" => "order_delete",
         "url" => "/orders",
         "controller" => "Order/OrderDeleteController.php",
